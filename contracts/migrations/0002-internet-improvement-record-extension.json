@@ -1,0 +1,23 @@
+{
+  "migration_id": "statewright-internet-improvement-record-extension-v1",
+  "schema_version": 1,
+  "extension_contract": "schemas/statewright-v1/internet-improvement-extension.schema.json",
+  "frozen_contract_modified": false,
+  "added_object_types": [
+    "internet-algorithm-candidate",
+    "internet-extraction-receipt",
+    "internet-fetch-job",
+    "internet-fetch-lease",
+    "internet-fetch-receipt",
+    "internet-policy-assessment",
+    "internet-retrieval-receipt",
+    "internet-reasoning-analysis",
+    "internet-source-fragment",
+    "internet-source-policy",
+    "internet-source-snapshot",
+    "internet-watch"
+  ],
+  "authority_effect": "none",
+  "canonical_algorithm_effect": "none",
+  "human_approval_required": false
+}

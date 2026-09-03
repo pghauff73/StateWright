@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "dependencies": [
+    {
+      "name": "Catch2",
+      "usage": "test-only",
+      "source": "https://github.com/catchorg/Catch2.git",
+      "version": "3.8.1",
+      "commit": "2b60af89e23d28eefc081bc930831ee9d45ea58b",
+      "license": "BSL-1.0",
+      "offline_override": "FETCHCONTENT_SOURCE_DIR_CATCH2"
+    },
+    {
+      "name": "nlohmann/json",
+      "usage": "runtime",
+      "source": "https://github.com/nlohmann/json.git",
+      "version": "3.12.0",
+      "commit": "55f93686c01528224f448c19128836e7df245f72",
+      "license": "MIT",
+      "offline_override": "FETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON"
+    },
+    {
+      "name": "OpenSSL",
+      "usage": "runtime-system",
+      "minimum_version": "3.0.0",
+      "license": "Apache-2.0",
+      "discovery": "find_package(OpenSSL 3 REQUIRED COMPONENTS Crypto)"
+    },
+    {
+      "name": "SQLite",
+      "usage": "runtime-system",
+      "minimum_version": "3.35.0",
+      "license": "public-domain",
+      "discovery": "find_package(SQLite3 REQUIRED)"
+    },
+    {
+      "name": "libcurl",
+      "usage": "runtime-system",
+      "minimum_version": "8.0.0",
+      "license": "curl",
+      "discovery": "find_package(CURL REQUIRED)"
+    },
+    {
+      "name": "GMP and GMPXX",
+      "usage": "runtime-system",
+      "minimum_version": "6.2.0",
+      "license": "LGPL-3.0-or-later OR GPL-2.0-or-later",
+      "discovery": "find_library(GMP_LIBRARY) and find_library(GMPXX_LIBRARY)"
+    },
+    {
+      "name": "POSIX Threads",
+      "usage": "runtime-system",
+      "license": "system",
+      "discovery": "find_package(Threads REQUIRED)"
+    }
+  ]
+}

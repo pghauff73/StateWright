@@ -1,0 +1,6692 @@
+{
+  "authority": "ourd.egcf.catalog.command_contract",
+  "commands": {
+    "agent.consensus@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "agent.local"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "agent.critic@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "agent.local"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "agent.debate@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "agent.local"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "agent.merge@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "agent.local"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "agent.review@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "agent.local"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "agent.spawn@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "agent.local"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "agent.specialise@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "agent.local"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "agent.terminate@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "agent.local"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "algorithm.benchmark@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "algorithm.compare@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "algorithm.compose@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "algorithm.evolve@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "registry.propose"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "algorithm.explain@1": {
+      "aliases": [
+        "explain-choice"
+      ],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "selection_id"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "algorithm.qualify@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "algorithm_id",
+        "tests"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "registry.qualify"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "algorithm.register@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "definition"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "registry.propose"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "algorithm.retire@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "verification",
+        "rollback_receipt"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "human",
+        "facets": [
+          "registry.admin"
+        ],
+        "level": "C3",
+        "risk": "L1",
+        "rollback": "compensating"
+      }
+    },
+    "algorithm.search@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "command_id"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "algorithm.select@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "command_id"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "assurance.generate@1": {
+      "aliases": [
+        "assurance-case",
+        "attest",
+        "justify",
+        "prove"
+      ],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "cad.mesh@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.cad"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "cad.simplify@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.cad"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "cad.topology@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.cad"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "cad.validate@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.cad"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "capability.audit@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "capability.check@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "capability.describe@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "name"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "capability.explain@1": {
+      "aliases": [
+        "authority"
+      ],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "capability.grant@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "verification",
+        "rollback_receipt"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "human",
+        "facets": [
+          "governance.admin"
+        ],
+        "level": "C5",
+        "risk": "L2",
+        "rollback": "compensating"
+      }
+    },
+    "capability.graph@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "capability.list@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "capability.request@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "human",
+        "facets": [
+          "governance.propose"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "capability.revoke@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "verification",
+        "rollback_receipt"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "human",
+        "facets": [
+          "governance.admin"
+        ],
+        "level": "C5",
+        "risk": "L2",
+        "rollback": "compensating"
+      }
+    },
+    "cfel.classify@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "observed"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "cfel.compare@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "cfel.diagnose@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "cfel.learn@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "cfel.observe@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "cfel.recover@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "cfel.regression@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "cfel.stability@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "debug.bisect@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.debug"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "debug.compare@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.debug"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "debug.hypotheses@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.debug"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "debug.minimise@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.debug"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "debug.reproduce@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.debug"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "debug.rootcause@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.debug"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "debug.trace@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.debug"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "debug.verify@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.debug"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "decision.conflicts@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "governance.read"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "decision.create@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "question",
+        "choice"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "governance.propose"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "decision.explain@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "decision_id"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "governance.read"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "decision.history@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "governance.read"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "decision.query@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "governance.read"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "decision.supersede@1": {
+      "aliases": [
+        "supersede"
+      ],
+      "evidence_requirements": [
+        "provenance",
+        "verification",
+        "rollback_receipt"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "old_id",
+        "choice",
+        "rationale"
+      ],
+      "settings": {
+        "approval": "human",
+        "facets": [
+          "governance.write"
+        ],
+        "level": "C3",
+        "risk": "L1",
+        "rollback": "compensating"
+      }
+    },
+    "eon.authorise@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "plan_id",
+        "approver",
+        "authority",
+        "human_confirmation"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "eon.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "eon.compare@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "eon.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "eon.compile@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "changes"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "eon.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "eon.draft@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "eon.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "eon.execute@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "verification",
+        "rollback_receipt"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "changes"
+      ],
+      "settings": {
+        "approval": "human",
+        "facets": [
+          "filesystem.write",
+          "process.execute"
+        ],
+        "level": "C3",
+        "risk": "L1",
+        "rollback": "exact"
+      }
+    },
+    "eon.rollback@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "verification",
+        "rollback_receipt"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "transaction_id"
+      ],
+      "settings": {
+        "approval": "human",
+        "facets": [
+          "filesystem.write"
+        ],
+        "level": "C3",
+        "risk": "L1",
+        "rollback": "exact"
+      }
+    },
+    "eon.simulate@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "changes"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "eon.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "eon.validate@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "changes"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "eon.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "evidence.classify@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "evidence.collect@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id",
+        "content"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "evidence.compare@1": {
+      "aliases": [
+        "differentiate"
+      ],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "evidence.confidence@1": {
+      "aliases": [
+        "confidence"
+      ],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "evidence.conflicts@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "evidence.export@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "evidence.graph@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "evidence.history@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "experiment.analyse@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "experiment.benchmark@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "experiment.compare@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "experiment.covering@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "parameters"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "experiment.design@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "experiment.factorial@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "experiment.ofat@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "experiment.repeat@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "geometry.analyse@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.geometry"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "geometry.fit@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.geometry"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "geometry.optimise@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.geometry"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "grammar.compare@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.grammar"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "grammar.parse@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.grammar"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "grammar.transform@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.grammar"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "grammar.verify@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.grammar"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "hrt.ambiguity@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.reason"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "hrt.assumptions@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.reason"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "hrt.claims@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.reason"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "hrt.clarify@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.reason"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "hrt.explain@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.reason"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "hrt.interpret@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.reason"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "hrt.provenance@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.reason"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "hrt.summary@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.reason"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ieps.counterexamples@1": {
+      "aliases": [
+        "challenge",
+        "counterexample"
+      ],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ieps.coverage@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ieps.gate@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ieps.generate@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id",
+        "requirements"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ieps.mutation@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ieps.oracle@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id",
+        "name",
+        "category"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ieps.qualify@1": {
+      "aliases": [
+        "qualify"
+      ],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "subject_id"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ieps.shrink@1": {
+      "aliases": [
+        "shrink"
+      ],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ieps.uniqueness@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "evidence.analyse"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "invariant.compare@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "governance.read"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "invariant.conflicts@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "governance.read"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "invariant.discover@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "statements"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "governance.read"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "invariant.register@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "verification",
+        "rollback_receipt"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "name",
+        "statement",
+        "validator",
+        "evidence_ids",
+        "falsifier"
+      ],
+      "settings": {
+        "approval": "human",
+        "facets": [
+          "governance.write"
+        ],
+        "level": "C3",
+        "risk": "L1",
+        "rollback": "compensating"
+      }
+    },
+    "invariant.supersede@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "verification",
+        "rollback_receipt"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "human",
+        "facets": [
+          "governance.write"
+        ],
+        "level": "C3",
+        "risk": "L1",
+        "rollback": "compensating"
+      }
+    },
+    "invariant.validate@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "invariant_id",
+        "success"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "governance.read"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "iurm.baseline@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "iurm.dimensions@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "iurm.interactions@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "iurm.mvd@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "iurm.optimise@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "iurm.screen@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "iurm.sensitivity@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "iurm.vary@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.experiment"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ourd.boundaries@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.model"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ourd.dependencies@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.model"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ourd.exclusions@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.model"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ourd.graph@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.model"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ourd.impact@1": {
+      "aliases": [
+        "impact-map"
+      ],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.model"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ourd.model@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.model"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ourd.objects@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.model"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ourd.relations@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.model"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ourd.scope@1": {
+      "aliases": [
+        "scope"
+      ],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.model"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "ourd.trace@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.model"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "performance.benchmark@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.performance"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "performance.gpu@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.performance"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "performance.hotspots@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.performance"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "performance.io@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.performance"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "performance.memory@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.performance"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "performance.profile@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.performance"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "performance.regression@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.performance"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "physics.simulate@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.run"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "repo.evolution@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "filesystem.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "repo.graph@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "filesystem.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "repo.history@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "filesystem.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "repo.hotspots@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "filesystem.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "repo.metrics@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "filesystem.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "repo.ownership@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "filesystem.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "repo.symbols@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "filesystem.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "repo.timeline@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "filesystem.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "robotics.plan@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.robotics"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "robotics.verify@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.robotics"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "security.audit@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.security"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "security.permissions@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.security"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "security.provenance@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.security"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "security.sast@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.security"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "security.sbom@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.security"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "security.secrets@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.security"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "security.taint@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.security"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "security.threat-model@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.security"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "simulate.api@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.run"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "exact"
+      }
+    },
+    "simulate.chaos@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.run"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "exact"
+      }
+    },
+    "simulate.dependency@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.run"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "exact"
+      }
+    },
+    "simulate.filesystem@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.run"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "exact"
+      }
+    },
+    "simulate.hardware@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.run"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "exact"
+      }
+    },
+    "simulate.migration@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "before",
+        "operations"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.run"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "exact"
+      }
+    },
+    "simulate.network@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.run"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "exact"
+      }
+    },
+    "simulate.rollback@1": {
+      "aliases": [
+        "rollback-plan"
+      ],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "simulation"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.run"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "exact"
+      }
+    },
+    "simulate.worktree@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "simulation_label"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "simulation.run"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "exact"
+      }
+    },
+    "verify.differential@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "verification.run"
+        ],
+        "level": "C1",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "verify.fuzz@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "verification.run"
+        ],
+        "level": "C1",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "verify.integration@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "verification.run"
+        ],
+        "level": "C1",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "verify.metamorphic@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "verification.run"
+        ],
+        "level": "C1",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "verify.mutation@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "verification.run"
+        ],
+        "level": "C1",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "verify.performance@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "verification.run"
+        ],
+        "level": "C1",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "verify.property@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "verification.run"
+        ],
+        "level": "C1",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "verify.regression@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "verification.run"
+        ],
+        "level": "C1",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "verify.security@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "verification.run"
+        ],
+        "level": "C1",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "verify.unit@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "verification.run"
+        ],
+        "level": "C1",
+        "risk": "L1",
+        "rollback": "none"
+      }
+    },
+    "vision.detect@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.vision"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "vision.segment@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.vision"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "vision.track@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "analysis.vision"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "workflow.branch@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "workflow.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "workflow.compile@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "workflow.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "workflow.create@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "name",
+        "nodes"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "workflow.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "workflow.execute@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "plan_id"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "workflow.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "workflow.merge@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "workflow.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "workflow.monitor@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "workflow.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "workflow.pause@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "workflow.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "workflow.replay@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "plan_id"
+      ],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "workflow.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "workflow.resume@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "policy",
+        "facets": [
+          "workflow.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    }
+  },
+  "input_field_schemas": {
+    "acceleration": {
+      "type": "number"
+    },
+    "activate": {
+      "type": "boolean"
+    },
+    "active_dimension": {
+      "type": "string"
+    },
+    "administrative": {
+      "type": "boolean"
+    },
+    "after": {
+      "type": [
+        "object",
+        "string",
+        "null"
+      ]
+    },
+    "agent_id": {
+      "type": "string"
+    },
+    "agreements": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "algorithm_id": {
+      "type": "string"
+    },
+    "algorithm_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "alternatives": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "ambiguities": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "approval_facts": {
+      "type": "object"
+    },
+    "approval_id": {
+      "type": "string"
+    },
+    "approver": {
+      "type": "string"
+    },
+    "assets": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "assumptions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "authority": {
+      "type": "string"
+    },
+    "baseline": {
+      "type": "object"
+    },
+    "before": {
+      "type": "object"
+    },
+    "benchmarks": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "boundaries": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "budget": {
+      "type": "object"
+    },
+    "candidates": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "capability_facts": {
+      "type": "object"
+    },
+    "category": {
+      "type": "string"
+    },
+    "changed": {
+      "type": "boolean"
+    },
+    "changes": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "checkpoint": {
+      "type": "boolean"
+    },
+    "choice": {
+      "type": "string"
+    },
+    "claim_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "command": {
+      "type": "string"
+    },
+    "command_capabilities": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "command_id": {
+      "type": "string"
+    },
+    "commands": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "comparisons": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "constraints": {
+      "type": [
+        "object",
+        "array"
+      ]
+    },
+    "content": {
+      "type": [
+        "object",
+        "array",
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "context": {
+      "type": "object"
+    },
+    "count": {
+      "type": "integer"
+    },
+    "counterexamples": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "current": {
+      "type": [
+        "object",
+        "array",
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "decision_id": {
+      "type": "string"
+    },
+    "definition": {
+      "type": [
+        "object",
+        "string"
+      ]
+    },
+    "description": {
+      "type": "string"
+    },
+    "design": {
+      "type": [
+        "object",
+        "array",
+        "string"
+      ]
+    },
+    "designs": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "detections": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "dimension": {
+      "type": "string"
+    },
+    "dimensions": {
+      "type": "string"
+    },
+    "disagreements": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "duration": {
+      "type": "number"
+    },
+    "environment": {
+      "type": "object"
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "evidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "excluded_scope": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exclusions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "expected": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "faces": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "falsifier": {
+      "type": "string"
+    },
+    "frames": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "freshness_seconds": {
+      "type": "integer"
+    },
+    "frozen_dimensions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "goal": {
+      "type": [
+        "string",
+        "array"
+      ]
+    },
+    "grid": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "human_confirmation": {
+      "type": "boolean"
+    },
+    "hypotheses": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "independence_group": {
+      "type": "string"
+    },
+    "invariant_id": {
+      "type": "string"
+    },
+    "invariant_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "invariants": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "justification": {
+      "type": "string"
+    },
+    "known_failures": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "lesson": {
+      "type": "string"
+    },
+    "level": {
+      "type": "string"
+    },
+    "limit": {
+      "type": "integer"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "mandatory": {
+      "type": "boolean"
+    },
+    "method": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string"
+    },
+    "model_identity": {
+      "type": "object"
+    },
+    "mutations": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "name": {
+      "type": "string"
+    },
+    "new_record": {
+      "type": "object"
+    },
+    "nodes": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "objective": {
+      "type": "string"
+    },
+    "objects": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "observed": {
+      "type": "string"
+    },
+    "old_id": {
+      "type": "string"
+    },
+    "operations": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "oracle": {
+      "type": "string"
+    },
+    "other": {
+      "type": [
+        "object",
+        "array",
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "outcome": {
+      "type": "string"
+    },
+    "outcomes": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "outputs": {
+      "type": "object"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "parameters": {
+      "type": "object"
+    },
+    "path": {
+      "type": [
+        "string",
+        "array"
+      ]
+    },
+    "pause_at_checkpoint": {
+      "type": "boolean"
+    },
+    "pixels": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "points": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "policy": {
+      "type": "string"
+    },
+    "position": {
+      "type": "number"
+    },
+    "positions": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "postconditions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "preconditions": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "predicate_results": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "preserve": {
+      "type": "boolean"
+    },
+    "producer": {
+      "type": "string"
+    },
+    "qualified_by": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string"
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "recovery_plan": {
+      "type": [
+        "object",
+        "array",
+        "string"
+      ]
+    },
+    "relations": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "repeats": {
+      "type": "integer"
+    },
+    "replacements": {
+      "type": "object"
+    },
+    "request": {
+      "type": "string"
+    },
+    "required_items": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "required_tests": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "requirement_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "requirements": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "result": {
+      "type": [
+        "object",
+        "array",
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "results": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "resume": {
+      "type": "boolean"
+    },
+    "retry_count": {
+      "type": "integer"
+    },
+    "reviews": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "revisions": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "risk": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "rollback": {
+      "type": "string"
+    },
+    "rollback_argument": {
+      "type": "object"
+    },
+    "root_cause": {
+      "type": "string"
+    },
+    "samples": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "scope": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "selection_id": {
+      "type": "string"
+    },
+    "sequence": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "simulated": {
+      "type": "boolean"
+    },
+    "simulation": {
+      "type": "object"
+    },
+    "source": {
+      "type": "string"
+    },
+    "source_snapshot_hash": {
+      "type": "string"
+    },
+    "start": {
+      "type": [
+        "string",
+        "array"
+      ]
+    },
+    "statement": {
+      "type": "string"
+    },
+    "statements": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "steps": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "strength": {
+      "type": "integer"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "subject_id": {
+      "type": "string"
+    },
+    "success": {
+      "type": "boolean"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string"
+    },
+    "target_faces": {
+      "type": "integer"
+    },
+    "tests": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "text": {
+      "type": "string"
+    },
+    "threats": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "threshold": {
+      "type": "number"
+    },
+    "timeout": {
+      "type": "number"
+    },
+    "tolerance": {
+      "type": "number"
+    },
+    "top_claim": {
+      "type": "string"
+    },
+    "trace": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "transaction_id": {
+      "type": "string"
+    },
+    "uncertainties": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "uncovered": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "units": {
+      "type": "object"
+    },
+    "updates": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "use_limit": {
+      "type": "integer"
+    },
+    "validator": {
+      "type": "object"
+    },
+    "values": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "velocity": {
+      "type": "number"
+    },
+    "version": {
+      "type": "integer"
+    },
+    "vertices": {
+      "items": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "workflow_definition_id": {
+      "type": "string"
+    },
+    "workflow_definition_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "output_envelope_schema": {
+    "additionalProperties": false,
+    "properties": {
+      "command_id": {
+        "type": "string"
+      },
+      "ok": {
+        "type": "boolean"
+      },
+      "provenance": {
+        "type": "object"
+      },
+      "read_only": {
+        "type": "boolean"
+      },
+      "result": {
+        "type": [
+          "object",
+          "array",
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "ok",
+      "command_id",
+      "read_only",
+      "result",
+      "provenance"
+    ],
+    "type": "object"
+  },
+  "schema_version": 1
+}

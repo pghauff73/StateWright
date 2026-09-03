@@ -1,0 +1,14 @@
+root ::= function-call
+function-call ::= "{\"type\":\"function_call\",\"name\":" string ",\"arguments\":" object (",\"call_id\":" string)? "}"
+object ::= "{" members? "}"
+members ::= pair ("," pair)*
+pair ::= string ":" value
+value ::= object | array | string | number | "true" | "false" | "null"
+array ::= "[" elements? "]"
+elements ::= value ("," value)*
+string ::= "\"" characters "\""
+characters ::= character*
+character ::= [^"\\\x7F\x00-\x1F] | "\\" escape
+escape ::= ["\\/bfnrt] | "u" hex hex hex hex
+hex ::= [0-9a-fA-F]
+number ::= "-"? ("0" | [1-9] [0-9]*) ("." [0-9]+)? ([eE] [+-]? [0-9]+)?

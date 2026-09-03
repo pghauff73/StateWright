@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "change_id": "statewright-brain-feed-record-extension-v1",
+  "status": "IMPLEMENTED_NON_BREAKING_EXTENSION",
+  "frozen_contract": "schemas/egcf-v1/objects.schema.json",
+  "frozen_contract_sha256": "629ad344d24e15d956db272e88a4ed4d8b25cdd732072886de4f57327a5e1278",
+  "extension_contract": "schemas/statewright-v1/objects-extension.schema.json",
+  "added_object_types": [
+    "brain-feed-batch",
+    "brain-feed-disposition",
+    "brain-feed-item"
+  ],
+  "compatibility": "Existing EGCF v1 objects and envelopes are unchanged; StateWright loads the extension as an additive registry layer.",
+  "authority": "The extension records ingestion dispositions only and cannot approve, qualify, promote, or mutate workspace files.",
+  "approved_by": "implementation-plan scope",
+  "implemented_on": "2026-09-02"
+}

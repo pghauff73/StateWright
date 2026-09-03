@@ -1,0 +1,65 @@
+{
+  "$defs": {
+    "brain-feed-batch": {
+      "additionalProperties": false,
+      "properties": {
+        "admitted_count": {"type": "integer"},
+        "batch_id": {"type": "string"},
+        "batch_signature": {"type": "string"},
+        "canonical_algorithm_admissions": {"type": "integer"},
+        "dispositions": {"items": {"type": "object"}, "type": "array"},
+        "duplicate_count": {"type": "integer"},
+        "item_count": {"type": "integer"},
+        "quarantined_count": {"type": "integer"},
+        "source_label": {"type": "string"},
+        "source_signature": {"type": "string"},
+        "staged_count": {"type": "integer"},
+        "status": {"type": "string"},
+        "strict": {"type": "boolean"}
+      },
+      "required": ["batch_id", "source_signature", "source_label", "strict", "item_count", "admitted_count", "staged_count", "quarantined_count", "duplicate_count", "dispositions", "status", "canonical_algorithm_admissions", "batch_signature"],
+      "type": "object"
+    },
+    "brain-feed-disposition": {
+      "additionalProperties": false,
+      "properties": {
+        "admitted": {"type": "boolean"},
+        "canonical_algorithm_admission_attempted": {"type": "boolean"},
+        "content_signature": {"type": "string"},
+        "disposition_signature": {"type": "string"},
+        "duplicate": {"type": "boolean"},
+        "duplicate_of_item_signature": {"type": "string"},
+        "item_id": {"type": "string"},
+        "item_signature": {"type": "string"},
+        "kind": {"type": "string"},
+        "quarantined": {"type": "boolean"},
+        "reasons": {"items": {"type": "string"}, "type": "array"},
+        "route": {"type": "string"},
+        "staged": {"type": "boolean"},
+        "status": {"type": "string"},
+        "target_refs": {"items": {"type": "string"}, "type": "array"}
+      },
+      "required": ["item_id", "item_signature", "content_signature", "kind", "status", "route", "target_refs", "reasons", "duplicate_of_item_signature", "canonical_algorithm_admission_attempted", "disposition_signature", "quarantined", "staged", "admitted", "duplicate"],
+      "type": "object"
+    },
+    "brain-feed-item": {
+      "additionalProperties": false,
+      "properties": {
+        "content_signature": {"type": "string"},
+        "depends_on": {"items": {"type": "string"}, "type": "array"},
+        "evidence_from": {"items": {"type": "string"}, "type": "array"},
+        "item_id": {"type": "string"},
+        "item_signature": {"type": "string"},
+        "kind": {"type": "string"},
+        "payload": {"type": "object"},
+        "source_path": {"type": "string"}
+      },
+      "required": ["item_id", "kind", "payload", "depends_on", "evidence_from", "source_path", "content_signature", "item_signature"],
+      "type": "object"
+    }
+  },
+  "$id": "https://example.invalid/statewright/v1/objects-extension.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StateWright EGCF durable object extensions",
+  "type": "object"
+}

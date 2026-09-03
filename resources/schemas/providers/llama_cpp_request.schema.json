@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oiec-stm-agent.local/schemas/providers/llama_cpp_request.schema.json",
+  "title": "OIEC llama.cpp JSONL request",
+  "type": "object",
+  "required": ["protocol_version", "op", "request_id"],
+  "properties": {
+    "protocol_version": {"const": 1},
+    "op": {"enum": ["describe", "complete", "cancel", "reset_context", "shutdown"]},
+    "request_id": {"type": "string", "minLength": 1, "maxLength": 160},
+    "target_request_id": {"type": "string", "maxLength": 160},
+    "prompt": {"type": "string"},
+    "context_tokens": {"type": "integer", "minimum": 256, "maximum": 262144},
+    "max_output_tokens": {"type": "integer", "minimum": 1, "maximum": 32768},
+    "deadline_ms": {"type": "integer", "minimum": 1, "maximum": 3600000},
+    "seed": {"type": "integer"},
+    "temperature": {"type": "number", "minimum": 0, "maximum": 2},
+    "top_p": {"type": "number", "minimum": 0, "maximum": 1},
+    "top_k": {"type": "integer", "minimum": 1, "maximum": 100000},
+    "grammar": {
+      "enum": [
+        "oiec_reasoning_response",
+        "oiec_tool_response",
+        "oiec_compact_tool_response"
+      ]
+    },
+    "use_chat_template": {"type": "boolean"}
+  },
+  "additionalProperties": false
+}

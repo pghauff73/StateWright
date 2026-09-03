@@ -1,0 +1,4330 @@
+{
+  "authority_case": {
+    "authority_hash": "fec38464a7d5f2cc0f8962376b4987d2a1401fb618951b088242419e0e068475",
+    "manifest": {
+      "allow_interactive_l2": false,
+      "allow_l1_auto_apply": false,
+      "allow_yolo": false,
+      "allowed_paths": [
+        "**"
+      ],
+      "authority_hash": "fec38464a7d5f2cc0f8962376b4987d2a1401fb618951b088242419e0e068475",
+      "command_capabilities": [],
+      "expires_at": "",
+      "forbidden_paths": [
+        ".ourd-agent/**"
+      ],
+      "goal": "Read-only repository inspection",
+      "mandatory_evidence": [],
+      "mandatory_tests": [],
+      "max_automatic_risk": "L0",
+      "max_retries_per_action": 1,
+      "operator": "unconfigured",
+      "read_capabilities": [
+        "workspace.list",
+        "workspace.read",
+        "workspace.search",
+        "git.status",
+        "git.diff"
+      ],
+      "read_only": true,
+      "schema_version": 1,
+      "semantic_capabilities": [],
+      "semantic_capability_ceiling": "C1",
+      "source_snapshot_hash": "322316bfc23be6650aac7f8df828a65736cf6efbffe098469d8d3a0703a429b5",
+      "task_id": "read-only"
+    }
+  },
+  "canonical_json_cases": [
+    {
+      "canonical": "{}",
+      "payload": {},
+      "sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    {
+      "canonical": "{\"a\":1,\"b\":2}",
+      "payload": {
+        "a": 1,
+        "b": 2
+      },
+      "sha256": "43258cff783fe7036d8a43033f830adfc60ec037382473548ac742b888292777"
+    },
+    {
+      "canonical": "{\"enabled\":true,\"message\":\"München — 日本語\",\"missing\":null}",
+      "payload": {
+        "enabled": true,
+        "message": "München — 日本語",
+        "missing": null
+      },
+      "sha256": "b14258ae6f2988a9d14275db50609b2c8193ed67a408a48645083327a5ba40f4"
+    },
+    {
+      "canonical": "{\"count\":4,\"nested\":[{\"a\":1,\"z\":3},[3,2,1]]}",
+      "payload": {
+        "count": 4,
+        "nested": [
+          {
+            "a": 1,
+            "z": 3
+          },
+          [
+            3,
+            2,
+            1
+          ]
+        ]
+      },
+      "sha256": "6058177491c21df33092f81216b7dba908da10b5e166cf17408cd3d594415e5e"
+    }
+  ],
+  "egcf_command_case": {
+    "definition": {
+      "algorithm_query": {
+        "command_id": "algorithm.search@1"
+      },
+      "aliases": [],
+      "approval_policy": "automatic",
+      "budget_policy": {
+        "actions": 1,
+        "retries": 0
+      },
+      "capability_query": {
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0"
+      },
+      "description": "EGCF semantic command algorithm.search",
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "acceleration": {
+            "type": "number"
+          },
+          "activate": {
+            "type": "boolean"
+          },
+          "active_dimension": {
+            "type": "string"
+          },
+          "administrative": {
+            "type": "boolean"
+          },
+          "after": {
+            "type": [
+              "object",
+              "string",
+              "null"
+            ]
+          },
+          "agent_id": {
+            "type": "string"
+          },
+          "agreements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "algorithm_id": {
+            "type": "string"
+          },
+          "algorithm_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "alternatives": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ambiguities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "approval_facts": {
+            "type": "object"
+          },
+          "approval_id": {
+            "type": "string"
+          },
+          "approver": {
+            "type": "string"
+          },
+          "assets": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "authority": {
+            "type": "string"
+          },
+          "baseline": {
+            "type": "object"
+          },
+          "before": {
+            "type": "object"
+          },
+          "benchmarks": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "boundaries": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "budget": {
+            "type": "object"
+          },
+          "candidates": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "capability_facts": {
+            "type": "object"
+          },
+          "category": {
+            "type": "string"
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "changes": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "checkpoint": {
+            "type": "boolean"
+          },
+          "choice": {
+            "type": "string"
+          },
+          "claim_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "command": {
+            "type": "string"
+          },
+          "command_capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "command_id": {
+            "type": "string"
+          },
+          "commands": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "comparisons": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "constraints": {
+            "type": [
+              "object",
+              "array"
+            ]
+          },
+          "content": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "context": {
+            "type": "object"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "counterexamples": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "current": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "decision_id": {
+            "type": "string"
+          },
+          "definition": {
+            "type": [
+              "object",
+              "string"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "design": {
+            "type": [
+              "object",
+              "array",
+              "string"
+            ]
+          },
+          "designs": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "detections": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "dimension": {
+            "type": "string"
+          },
+          "dimensions": {
+            "type": "string"
+          },
+          "disagreements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "environment": {
+            "type": "object"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "excluded_scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "exclusions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "expected": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "faces": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "falsifier": {
+            "type": "string"
+          },
+          "frames": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "freshness_seconds": {
+            "type": "integer"
+          },
+          "frozen_dimensions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "goal": {
+            "type": [
+              "string",
+              "array"
+            ]
+          },
+          "grid": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "human_confirmation": {
+            "type": "boolean"
+          },
+          "hypotheses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "independence_group": {
+            "type": "string"
+          },
+          "invariant_id": {
+            "type": "string"
+          },
+          "invariant_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "invariants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "justification": {
+            "type": "string"
+          },
+          "known_failures": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "lesson": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "mandatory": {
+            "type": "boolean"
+          },
+          "method": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "model_identity": {
+            "type": "object"
+          },
+          "mutations": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "new_record": {
+            "type": "object"
+          },
+          "nodes": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "objective": {
+            "type": "string"
+          },
+          "objects": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "observed": {
+            "type": "string"
+          },
+          "old_id": {
+            "type": "string"
+          },
+          "operations": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "oracle": {
+            "type": "string"
+          },
+          "other": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "outcomes": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "outputs": {
+            "type": "object"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object"
+          },
+          "path": {
+            "type": [
+              "string",
+              "array"
+            ]
+          },
+          "pause_at_checkpoint": {
+            "type": "boolean"
+          },
+          "pixels": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "plan_id": {
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "policy": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "positions": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "postconditions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "preconditions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "predicate_results": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "preserve": {
+            "type": "boolean"
+          },
+          "producer": {
+            "type": "string"
+          },
+          "qualified_by": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "recovery_plan": {
+            "type": [
+              "object",
+              "array",
+              "string"
+            ]
+          },
+          "relations": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "repeats": {
+            "type": "integer"
+          },
+          "replacements": {
+            "type": "object"
+          },
+          "request": {
+            "type": "string"
+          },
+          "required_items": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "required_tests": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "requirement_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "requirements": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "result": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "results": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "resume": {
+            "type": "boolean"
+          },
+          "retry_count": {
+            "type": "integer"
+          },
+          "reviews": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "revisions": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "risk": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "rollback": {
+            "type": "string"
+          },
+          "rollback_argument": {
+            "type": "object"
+          },
+          "root_cause": {
+            "type": "string"
+          },
+          "samples": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "selection_id": {
+            "type": "string"
+          },
+          "sequence": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "simulated": {
+            "type": "boolean"
+          },
+          "simulation": {
+            "type": "object"
+          },
+          "source": {
+            "type": "string"
+          },
+          "source_snapshot_hash": {
+            "type": "string"
+          },
+          "start": {
+            "type": [
+              "string",
+              "array"
+            ]
+          },
+          "statement": {
+            "type": "string"
+          },
+          "statements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "strength": {
+            "type": "integer"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "target_faces": {
+            "type": "integer"
+          },
+          "tests": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "text": {
+            "type": "string"
+          },
+          "threats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "threshold": {
+            "type": "number"
+          },
+          "timeout": {
+            "type": "number"
+          },
+          "tolerance": {
+            "type": "number"
+          },
+          "top_claim": {
+            "type": "string"
+          },
+          "trace": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "transaction_id": {
+            "type": "string"
+          },
+          "uncertainties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "uncovered": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "units": {
+            "type": "object"
+          },
+          "updates": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "use_limit": {
+            "type": "integer"
+          },
+          "validator": {
+            "type": "object"
+          },
+          "values": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "velocity": {
+            "type": "number"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "vertices": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "workflow_definition_id": {
+            "type": "string"
+          },
+          "workflow_definition_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "command_id"
+        ],
+        "type": "object"
+      },
+      "intent_kinds": [
+        "algorithm.search",
+        "algorithm"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "lifecycle_policy": {
+        "compressible": true
+      },
+      "name": "search",
+      "namespace": "algorithm",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "command_id": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "provenance": {
+            "type": "object"
+          },
+          "read_only": {
+            "type": "boolean"
+          },
+          "result": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command_id",
+          "read_only",
+          "result",
+          "provenance"
+        ],
+        "type": "object"
+      },
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "risk_policy": "L0",
+      "rollback_policy": "none",
+      "version": 1
+    },
+    "description": {
+      "algorithm_query": {
+        "command_id": "algorithm.search@1"
+      },
+      "aliases": [],
+      "approval_policy": "automatic",
+      "budget_policy": {
+        "actions": 1,
+        "retries": 0
+      },
+      "capability_query": {
+        "facets": [
+          "registry.read"
+        ],
+        "level": "C0"
+      },
+      "command_id": "algorithm.search@1",
+      "description": "EGCF semantic command algorithm.search",
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "acceleration": {
+            "type": "number"
+          },
+          "activate": {
+            "type": "boolean"
+          },
+          "active_dimension": {
+            "type": "string"
+          },
+          "administrative": {
+            "type": "boolean"
+          },
+          "after": {
+            "type": [
+              "object",
+              "string",
+              "null"
+            ]
+          },
+          "agent_id": {
+            "type": "string"
+          },
+          "agreements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "algorithm_id": {
+            "type": "string"
+          },
+          "algorithm_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "alternatives": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ambiguities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "approval_facts": {
+            "type": "object"
+          },
+          "approval_id": {
+            "type": "string"
+          },
+          "approver": {
+            "type": "string"
+          },
+          "assets": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "authority": {
+            "type": "string"
+          },
+          "baseline": {
+            "type": "object"
+          },
+          "before": {
+            "type": "object"
+          },
+          "benchmarks": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "boundaries": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "budget": {
+            "type": "object"
+          },
+          "candidates": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "capability_facts": {
+            "type": "object"
+          },
+          "category": {
+            "type": "string"
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "changes": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "checkpoint": {
+            "type": "boolean"
+          },
+          "choice": {
+            "type": "string"
+          },
+          "claim_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "command": {
+            "type": "string"
+          },
+          "command_capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "command_id": {
+            "type": "string"
+          },
+          "commands": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "comparisons": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "constraints": {
+            "type": [
+              "object",
+              "array"
+            ]
+          },
+          "content": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "context": {
+            "type": "object"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "counterexamples": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "current": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "decision_id": {
+            "type": "string"
+          },
+          "definition": {
+            "type": [
+              "object",
+              "string"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "design": {
+            "type": [
+              "object",
+              "array",
+              "string"
+            ]
+          },
+          "designs": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "detections": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "dimension": {
+            "type": "string"
+          },
+          "dimensions": {
+            "type": "string"
+          },
+          "disagreements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "environment": {
+            "type": "object"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "excluded_scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "exclusions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "expected": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "faces": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "falsifier": {
+            "type": "string"
+          },
+          "frames": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "freshness_seconds": {
+            "type": "integer"
+          },
+          "frozen_dimensions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "goal": {
+            "type": [
+              "string",
+              "array"
+            ]
+          },
+          "grid": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "human_confirmation": {
+            "type": "boolean"
+          },
+          "hypotheses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "independence_group": {
+            "type": "string"
+          },
+          "invariant_id": {
+            "type": "string"
+          },
+          "invariant_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "invariants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "justification": {
+            "type": "string"
+          },
+          "known_failures": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "lesson": {
+            "type": "string"
+          },
+          "level": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "mandatory": {
+            "type": "boolean"
+          },
+          "method": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "model_identity": {
+            "type": "object"
+          },
+          "mutations": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "new_record": {
+            "type": "object"
+          },
+          "nodes": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "objective": {
+            "type": "string"
+          },
+          "objects": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "observed": {
+            "type": "string"
+          },
+          "old_id": {
+            "type": "string"
+          },
+          "operations": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "oracle": {
+            "type": "string"
+          },
+          "other": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "outcomes": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "outputs": {
+            "type": "object"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "object"
+          },
+          "path": {
+            "type": [
+              "string",
+              "array"
+            ]
+          },
+          "pause_at_checkpoint": {
+            "type": "boolean"
+          },
+          "pixels": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "plan_id": {
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "policy": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "positions": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "postconditions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "preconditions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "predicate_results": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "preserve": {
+            "type": "boolean"
+          },
+          "producer": {
+            "type": "string"
+          },
+          "qualified_by": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "recovery_plan": {
+            "type": [
+              "object",
+              "array",
+              "string"
+            ]
+          },
+          "relations": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "repeats": {
+            "type": "integer"
+          },
+          "replacements": {
+            "type": "object"
+          },
+          "request": {
+            "type": "string"
+          },
+          "required_items": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "required_tests": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "requirement_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "requirements": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "result": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          "results": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "resume": {
+            "type": "boolean"
+          },
+          "retry_count": {
+            "type": "integer"
+          },
+          "reviews": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "revisions": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "risk": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "rollback": {
+            "type": "string"
+          },
+          "rollback_argument": {
+            "type": "object"
+          },
+          "root_cause": {
+            "type": "string"
+          },
+          "samples": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "selection_id": {
+            "type": "string"
+          },
+          "sequence": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "simulated": {
+            "type": "boolean"
+          },
+          "simulation": {
+            "type": "object"
+          },
+          "source": {
+            "type": "string"
+          },
+          "source_snapshot_hash": {
+            "type": "string"
+          },
+          "start": {
+            "type": [
+              "string",
+              "array"
+            ]
+          },
+          "statement": {
+            "type": "string"
+          },
+          "statements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "strength": {
+            "type": "integer"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "subject_id": {
+            "type": "string"
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "target_faces": {
+            "type": "integer"
+          },
+          "tests": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "text": {
+            "type": "string"
+          },
+          "threats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "threshold": {
+            "type": "number"
+          },
+          "timeout": {
+            "type": "number"
+          },
+          "tolerance": {
+            "type": "number"
+          },
+          "top_claim": {
+            "type": "string"
+          },
+          "trace": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "transaction_id": {
+            "type": "string"
+          },
+          "uncertainties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "uncovered": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "units": {
+            "type": "object"
+          },
+          "updates": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "use_limit": {
+            "type": "integer"
+          },
+          "validator": {
+            "type": "object"
+          },
+          "values": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "velocity": {
+            "type": "number"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "vertices": {
+            "items": {
+              "type": [
+                "object",
+                "array",
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            "type": "array"
+          },
+          "workflow_definition_id": {
+            "type": "string"
+          },
+          "workflow_definition_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "command_id"
+        ],
+        "type": "object"
+      },
+      "intent_kinds": [
+        "algorithm.search",
+        "algorithm"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "lifecycle_policy": {
+        "compressible": true
+      },
+      "name": "search",
+      "namespace": "algorithm",
+      "object_id": "command-definition:sha256:ed54aa4334ca6482fd3d88f1a6a6876f91ad23046e4176f31945fd055442c1ad",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "command_id": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "provenance": {
+            "type": "object"
+          },
+          "read_only": {
+            "type": "boolean"
+          },
+          "result": {
+            "type": [
+              "object",
+              "array",
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "command_id",
+          "read_only",
+          "result",
+          "provenance"
+        ],
+        "type": "object"
+      },
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "capability_grant_matches_scope",
+        "qualified_algorithm_available"
+      ],
+      "risk_policy": "L0",
+      "rollback_policy": "none",
+      "version": 1
+    },
+    "object_id": "command-definition:sha256:ed54aa4334ca6482fd3d88f1a6a6876f91ad23046e4176f31945fd055442c1ad"
+  },
+  "event_case": {
+    "event": {
+      "action_id": "action-1",
+      "event_hash": "2387a50beb63393f2151340b860acfbeb496a3729770c0711acc465115873766",
+      "event_id": "12345678-1234-4234-9234-123456789abc",
+      "event_type": "test",
+      "payload": {
+        "access_token": "<redacted>",
+        "max_tokens": 12000,
+        "safe": "OPENAI_API_KEY=<redacted> Bearer <redacted>"
+      },
+      "payload_hash": "b230d118f0d7fa9fea2df001f7385baa9a99a471e7245ef79ef6cd636d7c3da8",
+      "previous_hash": "",
+      "run_id": "run-1",
+      "timestamp": "2026-09-02T00:00:00Z",
+      "transaction_id": "tx-1"
+    },
+    "input_payload": {
+      "access_token": "secret-value",
+      "max_tokens": 12000,
+      "safe": "OPENAI_API_KEY=another-secret Bearer abcdef123456"
+    }
+  },
+  "operational_hypothesis_case": {
+    "added_hypothesis_ids": [
+      "hypothesis:dfc0674ec58b1da243c4c27b958deb20cab0665bd3014544cddf2f208a0b3769"
+    ],
+    "evidence_fingerprint": "8b9178902feff9c25df505dc6a371b71a967ea6eb4810ce36f6ed58fed89b086",
+    "hypothesis": {
+      "assumptions": [
+        "deterministic parser"
+      ],
+      "evidence_balance_bp": 0,
+      "evidence_conflict_bp": 0,
+      "evidence_links": [],
+      "evidence_support_bp": 0,
+      "falsifiers": [
+        "clean parse succeeds"
+      ],
+      "hypothesis_id": "hypothesis:dfc0674ec58b1da243c4c27b958deb20cab0665bd3014544cddf2f208a0b3769",
+      "model_prior_bp": 3000,
+      "predictions": [
+        "reproduction fails"
+      ],
+      "proposition": "Parser precedence is wrong",
+      "signature": "c253f02b4e530f0174648f3a36885651d7aacfd6a4dfc941e08fc9f443c3aabe",
+      "status": "ACTIVE",
+      "verification_status": "UNVERIFIED_PROPOSITION"
+    },
+    "initial_state": {
+      "hypotheses": [
+        {
+          "assumptions": [
+            "deterministic parser"
+          ],
+          "evidence_balance_bp": 0,
+          "evidence_conflict_bp": 0,
+          "evidence_links": [],
+          "evidence_support_bp": 0,
+          "falsifiers": [
+            "clean parse succeeds"
+          ],
+          "hypothesis_id": "hypothesis:dfc0674ec58b1da243c4c27b958deb20cab0665bd3014544cddf2f208a0b3769",
+          "model_prior_bp": 3000,
+          "predictions": [
+            "reproduction fails"
+          ],
+          "proposition": "Parser precedence is wrong",
+          "signature": "c253f02b4e530f0174648f3a36885651d7aacfd6a4dfc941e08fc9f443c3aabe",
+          "status": "ACTIVE",
+          "verification_status": "UNVERIFIED_PROPOSITION"
+        }
+      ],
+      "max_hypotheses": 2,
+      "signature": "5a54f82f764abc000184a0c679538a8c6ba4bf9af9e41adbacebaf51e711b1b4"
+    },
+    "public_projection": {
+      "hypotheses": [
+        {
+          "assumptions": [
+            "deterministic parser"
+          ],
+          "evidence_balance_bp": 7000,
+          "evidence_conflict_bp": 0,
+          "evidence_links": [
+            {
+              "evidence_id": "e1",
+              "quality_bp": 7000,
+              "relation": "supports",
+              "relation_epistemic_status": "MODEL_PROPOSED_RELATION_TO_VERIFIED_EVIDENCE"
+            }
+          ],
+          "evidence_support_bp": 7000,
+          "falsifiers": [
+            "clean parse succeeds"
+          ],
+          "hypothesis_id": "hypothesis:dfc0674ec58b1da243c4c27b958deb20cab0665bd3014544cddf2f208a0b3769",
+          "model_prior_bp": 3000,
+          "predictions": [
+            "reproduction fails"
+          ],
+          "proposition": "Parser precedence is wrong",
+          "status": "SUPPORTED_BY_LINKED_EVIDENCE",
+          "verification_status": "UNVERIFIED_PROPOSITION"
+        }
+      ],
+      "max_hypotheses": 2,
+      "signature": "40a8a686ef4ca632205579c2b4dee3c264ba9a7add86a951357aafbe72d21284"
+    },
+    "supported_state": {
+      "hypotheses": [
+        {
+          "assumptions": [
+            "deterministic parser"
+          ],
+          "evidence_balance_bp": 7000,
+          "evidence_conflict_bp": 0,
+          "evidence_links": [
+            {
+              "evidence_fingerprint": "8b9178902feff9c25df505dc6a371b71a967ea6eb4810ce36f6ed58fed89b086",
+              "evidence_id": "e1",
+              "quality_bp": 7000,
+              "relation": "supports",
+              "relation_epistemic_status": "MODEL_PROPOSED_RELATION_TO_VERIFIED_EVIDENCE",
+              "signature": "f9150487974c922c92ef5d1cd80645663521da01c2f12fe2465e8fc9edcee1ff",
+              "source_snapshot_hash": "snapshot"
+            }
+          ],
+          "evidence_support_bp": 7000,
+          "falsifiers": [
+            "clean parse succeeds"
+          ],
+          "hypothesis_id": "hypothesis:dfc0674ec58b1da243c4c27b958deb20cab0665bd3014544cddf2f208a0b3769",
+          "model_prior_bp": 3000,
+          "predictions": [
+            "reproduction fails"
+          ],
+          "proposition": "Parser precedence is wrong",
+          "signature": "0f780bb6ea2eec81ed08e54358bb6a17bd6527fdc6c5a3f602aae912b90290bb",
+          "status": "SUPPORTED_BY_LINKED_EVIDENCE",
+          "verification_status": "UNVERIFIED_PROPOSITION"
+        }
+      ],
+      "max_hypotheses": 2,
+      "signature": "40a8a686ef4ca632205579c2b4dee3c264ba9a7add86a951357aafbe72d21284"
+    }
+  },
+  "oracle_commit": "957111e2d5d11dec719c7f993f51644e701fc256",
+  "reasoning_adapter_case": {
+    "arithmetic": {
+      "adapter": "decimal-arithmetic-v1",
+      "claim": "evaluate 2 + 3 * 4",
+      "counterexample": [],
+      "details": [],
+      "evidence_id": "adapter-evidence:b508ddc3993d219c1b76e6d6b388af7ed9f3c7ace505a3bd626f51d546fd7b20",
+      "result": "14",
+      "schema_version": 1,
+      "signature": "720123178109128e502523d50b75b81838a396e5d8720505758a7a449fb86960",
+      "status": "PASS",
+      "tolerance": ""
+    },
+    "dimensional": {
+      "adapter": "dimensional-analysis-v1",
+      "claim": "dimensions match for force per mass",
+      "counterexample": [],
+      "details": [],
+      "evidence_id": "adapter-evidence:0b2933af7c27c090e5bb9d65e4f14b39f51a4248140d481b33dc10e70a517b11",
+      "result": "left=(('L', 1), ('T', -2)); right=(('L', 1), ('T', -2))",
+      "schema_version": 1,
+      "signature": "d2d0c85348052c0bf30844285433fa0d0fb88b13a78305e659ad3342afb720f5",
+      "status": "PASS",
+      "tolerance": ""
+    },
+    "finite_domain": {
+      "adapter": "finite-domain-v1",
+      "claim": "finite-domain predicate: x + y < 3",
+      "counterexample": [],
+      "details": [],
+      "evidence_id": "adapter-evidence:31735cae48874397e4d68e3d6cadeb1a88eb284e5e937cb9a63b89025da5399b",
+      "result": "all 4 assignments passed",
+      "schema_version": 1,
+      "signature": "93e2a83ee5aa6d4c1cdfd26793f68cfdbe72f8011158b8d0c76240315cfe288f",
+      "status": "PASS",
+      "tolerance": ""
+    },
+    "predicate": {
+      "adapter": "decimal-arithmetic-v1",
+      "claim": "evaluate x > 1 and x < 5",
+      "counterexample": [],
+      "details": [],
+      "evidence_id": "adapter-evidence:123563f440a5fcd4a6f2af65e5a69bda94cf19e8e19159298ad567429c16cf0e",
+      "result": "True",
+      "schema_version": 1,
+      "signature": "4f6f635300c5f02b3d77ef936dcaaccf5ce8b2a0cba6f8325aebe7ad7f898ab8",
+      "status": "PASS",
+      "tolerance": ""
+    },
+    "residual": {
+      "adapter": "numerical-residual-v1",
+      "claim": "numerical residual for x*x == x + 1",
+      "counterexample": [
+        [
+          "x",
+          "2"
+        ]
+      ],
+      "details": [],
+      "evidence_id": "adapter-evidence:d9c3eda4ed44be2f0f10b374c97dc1e0cea232d105a281dfc5481ff54d7f8709",
+      "result": "residual 1 exceeds tolerance",
+      "schema_version": 1,
+      "signature": "f4929761c4b6089a0f644d1b4da06dce73f80e436bfa47c141a73174b9007c4e",
+      "status": "FAIL",
+      "tolerance": "1E-12"
+    },
+    "symbolic": {
+      "adapter": "sympy-equivalence-v1",
+      "claim": "(x + 1)^2 == x*x + 2*x + 1",
+      "counterexample": [],
+      "details": [],
+      "evidence_id": "adapter-evidence:0da780e99b3df965a35a4371b05eec17cda7f4db34cd701a478f908665b6f153",
+      "result": "0",
+      "schema_version": 1,
+      "signature": "269992e426ab8ed147d85f5a55c9139d0ab0fcce9abbae2f3011b298cdf6e97b",
+      "status": "PASS",
+      "tolerance": ""
+    }
+  },
+  "reasoning_causal_case": {
+    "assessment": {
+      "blockers": [],
+      "claim": "temperature increases yield",
+      "confidence_bp": 8500,
+      "evidence_ids": [
+        "experiment:1"
+      ],
+      "intervention_supported": true,
+      "signature": "7e016946ce238cd70f52f765fe74b31b8be339f848078a900909c38147fcd22e"
+    },
+    "edge": {
+      "edge_id": "edge:temperature-yield",
+      "evidence_ids": [
+        "experiment:1"
+      ],
+      "relation": "causes",
+      "signature": "9453df445de044aec49a888bb34562bd25262dae7c1be80f4f0f017d314c9213",
+      "source_id": "temperature",
+      "target_id": "yield",
+      "temporal_ordered": true
+    },
+    "intervention": {
+      "assigned_value": "350 K",
+      "assumptions": [],
+      "intervention_id": "intervention:temperature",
+      "signature": "59abb08972d1193068629ea37fbf2846a0230cf86348f504f9654f6e92459923",
+      "variable_id": "temperature"
+    }
+  },
+  "reasoning_certification_case": {
+    "ablation": {
+      "ablation_id": "full_sr",
+      "adaptive_compute_enabled": true,
+      "diversity_filter_enabled": true,
+      "falsifier_batch_size": 1,
+      "falsifier_enabled": true,
+      "hypothesis_state_enabled": true,
+      "path_count": 4,
+      "proposer_batch_size": 1,
+      "schema_version": 1,
+      "signature": "5f5f11a2db021d3c5bc6081ba9ee951f2e58983f668717cff10ddc2bc88d5c48",
+      "synthesis_verification_enabled": true,
+      "verifier_batch_size": 2,
+      "verifier_enabled": true
+    },
+    "assembled_topology": {
+      "edges": [
+        {
+          "edge_id": "edge:07756dddca7e26d52d0138c9eddac509b0787080c1aeee7679004868e180e156",
+          "inference_id": "inference:9ba6838e60019a5c48befddd61576a70e88459767647bfa533f6974efa33140c",
+          "inference_mode": "deductive",
+          "relation": "supports",
+          "signature": "19df438f36273722c5953aa641b3e1a39a51651b3fab2817caac2ecf9c7132e2",
+          "source_id": "hypothesis:h1",
+          "target_id": "step:winner:winner:step"
+        },
+        {
+          "edge_id": "edge:66d1e04d1ab7d52bf3ce306e65ed40c55d87d91d9a207f275c49940023c50267",
+          "inference_id": "inference:fbc6fc88fb38a9278129a214bd08875e267ce4bf05c960be91ba9f3ab423c1d3",
+          "inference_mode": "abductive",
+          "relation": "explains",
+          "signature": "6819dfb4b999610679bb48bc37417f3096cdee5a64ef865bffd399465c38b530",
+          "source_id": "hypothesis:h1",
+          "target_id": "question:problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb"
+        },
+        {
+          "edge_id": "edge:7ac9108ca49168c283b51c9ce1f2bf1a41b561892bc3b7a4e3974a074e4f2e41",
+          "inference_id": "inference:1668b6d8fad523aa34ea591fd0a159e8020f83735787f7c88dc97fddd03db1db",
+          "inference_mode": "constraint",
+          "relation": "requires",
+          "signature": "3e0d72020d2b48134bb57fd57bd660954dc9a51da48f8ba55b545704aea68fa1",
+          "source_id": "premise:problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb",
+          "target_id": "question:problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb"
+        },
+        {
+          "edge_id": "edge:bf761ad63238ea3fb4b5c65af0fd774e02e2b446c3ae4f449c5fdc5402462688",
+          "inference_id": "inference:108abf21142d748dab80d19395fae6e3d44a4cbaf99d4402f65d418b1c845b6b",
+          "inference_mode": "deductive",
+          "relation": "requires",
+          "signature": "f087b71c7d4a86f93c4ec64b3a94927a14c248fbeab17fc03da9188f4c5ae64e",
+          "source_id": "premise:problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb",
+          "target_id": "step:winner:winner:step"
+        },
+        {
+          "edge_id": "edge:c95df2236bcaee874d6a1570ac002952ba8e30abee8d8af355cf833e224b81e7",
+          "inference_id": "inference:b831e499785f213b35f7fdbef5a12c77435fc729f1fa38f0a01ad19dea5d066d",
+          "inference_mode": "inductive",
+          "relation": "supports",
+          "signature": "fa922c1980547153d6371f427038a283a2be9e580150768f073f92bb18c0cc53",
+          "source_id": "evidence:e1",
+          "target_id": "hypothesis:h1"
+        },
+        {
+          "edge_id": "edge:ee2f6f3113af511e418180d92ef42a8f52287d4b935950a250abdb2e7ffdfa08",
+          "inference_id": "inference:3e1138cdf2f898287b8bab3b5f465b3d6ce81a2b49fdfbb4fca4a781910734a3",
+          "inference_mode": "deductive",
+          "relation": "entails",
+          "signature": "878bc84246de74d3724d59a3c8b36cb1ed19dd2bd883ec00379275234c81a2d8",
+          "source_id": "step:winner:winner:step",
+          "target_id": "conclusion:winner"
+        },
+        {
+          "edge_id": "edge:ee52101ff98162b3b1c5c83a772e081e49e0bbd8fed0b3f382b987946ef44360",
+          "inference_id": "inference:b7d0e19908c0ca67262261c6764fec3af6a20fd7561eb644ea1d47950928b0d1",
+          "inference_mode": "constraint",
+          "relation": "supports",
+          "signature": "27e0a958f80c1c757622253a9d9bcde9976e5d4b4af0cbd877d66fb32ceff1d4",
+          "source_id": "conclusion:winner",
+          "target_id": "decision:problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb"
+        },
+        {
+          "edge_id": "edge:f5d9c3a573b9843cf34a31bc5f6b975a82bafc87a9f32712c59e51a9bb679a6b",
+          "inference_id": "inference:11e65cb2883cb26dafd538874fd3a3e6d6c97df8a8042200b635c9dbd315aa1b",
+          "inference_mode": "deductive",
+          "relation": "supports",
+          "signature": "a7cbe20f2ec2d6a5ef913806f6babc12c1ae6402578a2dbd86f761e44b660fa2",
+          "source_id": "evidence:e1",
+          "target_id": "step:winner:winner:step"
+        }
+      ],
+      "nodes": [
+        {
+          "confidence_bp": 0,
+          "content": "The bounded claim is supported.",
+          "evidence_ids": [],
+          "hypothetical": false,
+          "kind": "conclusion",
+          "material": true,
+          "node_id": "conclusion:winner",
+          "path_id": "winner",
+          "signature": "d1f0a72dba6857897fef0d4bab4c3f46d4c080bb809b1659b00752b499ccefef",
+          "validated": false
+        },
+        {
+          "confidence_bp": 0,
+          "content": "The bounded claim is supported.",
+          "evidence_ids": [],
+          "hypothetical": false,
+          "kind": "decision",
+          "material": true,
+          "node_id": "decision:problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb",
+          "path_id": "winner",
+          "signature": "bb55be9cb0e36fcc4d5154f978cb8ac253aff7e1bdcd2a5d130c757d9b44afb2",
+          "validated": false
+        },
+        {
+          "confidence_bp": 0,
+          "content": "Evidence artifact e1",
+          "evidence_ids": [
+            "e1"
+          ],
+          "hypothetical": false,
+          "kind": "evidence",
+          "material": false,
+          "node_id": "evidence:e1",
+          "path_id": "",
+          "signature": "c6e00e9034edaccf0fc726e289e6ea55ffc30a54ddcf9601683315cfa29abfc0",
+          "validated": false
+        },
+        {
+          "confidence_bp": 8000,
+          "content": "The bounded claim is supported",
+          "evidence_ids": [
+            "e1"
+          ],
+          "hypothetical": true,
+          "kind": "hypothesis",
+          "material": false,
+          "node_id": "hypothesis:h1",
+          "path_id": "",
+          "signature": "4213bf598bb93cc7cd2145a137568ca7172e9cf814458a1ae34564c722d7a7f3",
+          "validated": false
+        },
+        {
+          "confidence_bp": 0,
+          "content": "A bounded claim is supported by e1.",
+          "evidence_ids": [],
+          "hypothetical": false,
+          "kind": "premise",
+          "material": false,
+          "node_id": "premise:problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb",
+          "path_id": "",
+          "signature": "529f0c0f917bbd85ac99905491c7f73dda93cc4f606b4098845ca370e9cc254f",
+          "validated": true
+        },
+        {
+          "confidence_bp": 0,
+          "content": "Return the supported conclusion.",
+          "evidence_ids": [],
+          "hypothetical": false,
+          "kind": "question",
+          "material": false,
+          "node_id": "question:problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb",
+          "path_id": "",
+          "signature": "6b007bf3b6b4805ee7116ea2cb776131e0f05fa3764b9a81d052508297ce7f52",
+          "validated": false
+        },
+        {
+          "confidence_bp": 9000,
+          "content": "e1 supports the bounded claim",
+          "evidence_ids": [
+            "e1"
+          ],
+          "hypothetical": false,
+          "kind": "claim",
+          "material": false,
+          "node_id": "step:winner:winner:step",
+          "path_id": "winner",
+          "signature": "0ff2ee9857b298bd3af5daa543035082e97f779e1d28476d9a9f503af06116da",
+          "validated": false
+        }
+      ],
+      "problem_id": "problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb",
+      "schema_version": 2,
+      "signature": "9cc7b204e9ccbdd08707f757c8e9676293b5b89b91c821ac03b22a18c745eb7c"
+    },
+    "budget": {
+      "candidate_count": 2,
+      "falsifier_count": 2,
+      "max_branch_factor": 16,
+      "max_compute_bp": 10000,
+      "max_context_items": 128,
+      "max_falsifier_passes": 2,
+      "max_generation_attempts": 4,
+      "max_hypotheses": 16,
+      "max_provider_calls": 16,
+      "max_steps_per_path": 8,
+      "max_tokens": 12000,
+      "max_tool_calls": 20,
+      "max_topology_edges": 512,
+      "max_topology_nodes": 256,
+      "max_verifier_passes": 2,
+      "maximum_candidates": 4,
+      "minimum_candidates": 1,
+      "minimum_voi_bp": 100,
+      "operation_costs_bp": [
+        [
+          "GENERATE_HYPOTHESIS",
+          1500
+        ],
+        [
+          "REFINE_DIMENSION",
+          2000
+        ],
+        [
+          "RETRIEVE_EVIDENCE",
+          1000
+        ],
+        [
+          "RUN_READ_ONLY_EXPERIMENT",
+          2500
+        ],
+        [
+          "SEARCH_COUNTEREXAMPLE",
+          1500
+        ],
+        [
+          "STOP",
+          0
+        ],
+        [
+          "VERIFY_AGAIN",
+          1000
+        ]
+      ],
+      "schema_version": 1,
+      "signature": "f40fcf8c0e47d8ea4f354651e6d272286cc073515be97116e94ec4bf8c53fdca",
+      "verifier_count": 2
+    },
+    "candidate_set": {
+      "ablation_config_hash": "5f5f11a2db021d3c5bc6081ba9ee951f2e58983f668717cff10ddc2bc88d5c48",
+      "ablation_id": "full_sr",
+      "contradiction_ids": [],
+      "diversity_config_hash": "487c31c0baf2b9ce1c0fe5c875b92582b526811282c0fc46f8ce54ea5eaaa3f3",
+      "falsifier_reports": [
+        {
+          "alternative_explanations": [],
+          "boundary_cases": [],
+          "contradicted_step_ids": [],
+          "counterexamples": [],
+          "evidence_reversal_conditions": [],
+          "invalid_invariants": [],
+          "path_id": "winner",
+          "report_id": "falsifier:a9fec00913e6c8a5bfc0ecc88b7b7b43e7fe6855adb01cbcb08e07497ddbe37c",
+          "residual_uncertainty_bp": 1000,
+          "reversed_causal_directions": [],
+          "searched_falsifiers": [
+            "declared conflict"
+          ],
+          "severity_bp": 1000,
+          "signature": "ba9c69a337ee899bc8e8b00935fef9c7e9295106f40121aecd7c341044d9e807",
+          "survival_bp": 9000,
+          "unresolved_defeat_conditions": [],
+          "unresolved_defeat_evidence_ids": [],
+          "verdict": "SURVIVES"
+        }
+      ],
+      "hypothesis_updates": [],
+      "metrics": [
+        {
+          "consistency_bp": 10000,
+          "cost_bp": 500,
+          "diversity_bp": 0,
+          "evidence_support_bp": 10000,
+          "falsifier_bp": 9000,
+          "goal_relevance_bp": 9000,
+          "path_id": "winner",
+          "risk_bp": 0,
+          "score_config_hash": "762c8aff0b2ef61401d2d0322bd258baac82ef737237d63bb62030ac84e7915e",
+          "score_config_id": "oiec-sr-score-v1",
+          "signature": "0f880f6911ede4313af873c4c602ac9629a8c8ccc2bb1e4d244a3d0afa043131",
+          "total_score_bp": 9075,
+          "uncertainty_bp": 1000,
+          "verifier_bp": 10000
+        }
+      ],
+      "paths": [
+        {
+          "conclusion": "The bounded claim is supported.",
+          "diversity_bp": 0,
+          "estimated_cost_bp": 500,
+          "goal_relevance_bp": 9000,
+          "hypothesis_ids": [
+            "h1"
+          ],
+          "path_id": "winner",
+          "perspective": "direct",
+          "provider_confidence_bp": 0,
+          "risk_bp": 0,
+          "signature": "",
+          "steps": [
+            {
+              "assumptions": [],
+              "claim": "e1 supports the bounded claim",
+              "confidence_bp": 9000,
+              "evidence_ids": [
+                "e1"
+              ],
+              "falsifier": "A conflicting declared observation defeats the claim.",
+              "inference": "deductive",
+              "premises": [
+                "problem",
+                "h1"
+              ],
+              "signature": "",
+              "step_id": "winner:step"
+            }
+          ],
+          "structure_signature": "344373d3767af167b646eec95188ae5f733417ab786a1e7c56fc102dfe919407",
+          "topology_edge_ids": [],
+          "topology_node_ids": []
+        }
+      ],
+      "problem_id": "problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb",
+      "rejected_path_ids": [],
+      "schema_version": 1,
+      "score_config_hash": "762c8aff0b2ef61401d2d0322bd258baac82ef737237d63bb62030ac84e7915e",
+      "score_config_id": "oiec-sr-score-v1",
+      "selected_path_id": "winner",
+      "signature": "5c87781d130408aa70093bbb5337894d811de4128b0a3187ed73009cf1c82364",
+      "surviving_path_ids": [
+        "winner"
+      ],
+      "synthesis": {
+        "accepted_node_ids": [
+          "winner:step"
+        ],
+        "confidence_bp": 10000,
+        "failure_reasons": [],
+        "fallback_used": true,
+        "merged_conclusion": "The bounded claim is supported.",
+        "rejected_node_ids": [],
+        "remaining_uncertainties": [],
+        "schema_version": 1,
+        "signature": "46126de42ba45412838895cc48d5612691bcea127c8dad0ab2d198f6101746ac",
+        "source_path_ids": [
+          "winner"
+        ],
+        "synthesized_path_id": "winner",
+        "topology_signature": "344373d3767af167b646eec95188ae5f733417ab786a1e7c56fc102dfe919407",
+        "verified": true,
+        "verifier_report_id": "verifier:0ba772d3e1a868366045029c0eb4bc1132cd7c52368b225cf255a55942ef00a9",
+        "winning_path_id": "winner"
+      },
+      "synthesis_source_path_ids": [
+        "winner"
+      ],
+      "synthesized_conclusion": "The bounded claim is supported.",
+      "verifier_reports": [
+        {
+          "completeness_bp": 10000,
+          "consistency_bp": 10000,
+          "contradictions": [],
+          "evidence_support_bp": 10000,
+          "failures": [],
+          "inference_quality_bp": 10000,
+          "missing_assumptions": [],
+          "path_id": "winner",
+          "premise_validity_bp": 10000,
+          "report_id": "verifier:0ba772d3e1a868366045029c0eb4bc1132cd7c52368b225cf255a55942ef00a9",
+          "score_bp": 10000,
+          "signature": "90908683ea2710ab0f8349e9fab98231672a3f8c1271bc711c302fd1ebaa9341",
+          "step_scores": [
+            [
+              "winner:step",
+              10000
+            ]
+          ],
+          "unsupported_nodes": [],
+          "verdict": "ACCEPT",
+          "weakest_step_bp": 10000
+        }
+      ]
+    },
+    "certificate": {
+      "ablation_config_hash": "5f5f11a2db021d3c5bc6081ba9ee951f2e58983f668717cff10ddc2bc88d5c48",
+      "ablation_id": "full_sr",
+      "active_hypothesis_ids": [
+        "h1"
+      ],
+      "boundary_signature": "boundary",
+      "candidate_count": 1,
+      "candidate_set_signature": "5c87781d130408aa70093bbb5337894d811de4128b0a3187ed73009cf1c82364",
+      "compute_spent_bp": 500,
+      "contradiction_count": 0,
+      "decision": "ACCEPT",
+      "derived_confidence_bp": 9700,
+      "dimension_signature": "dimension",
+      "disagreement_bp": 0,
+      "evidence_coverage_bp": 10000,
+      "falsification_score_bp": 9000,
+      "falsifier_report_ids": [
+        "falsifier:a9fec00913e6c8a5bfc0ecc88b7b7b43e7fe6855adb01cbcb08e07497ddbe37c"
+      ],
+      "hypothesis_signature": "a1117e387462e8051b19180efd2cf647beb50d8859317853012798007b191b8d",
+      "problem_hash": "0e6e18a392e325e3858d0f9c7ef74ac06bba45043d27718ed7a89b1d339372de",
+      "reasoning_topology_hash": "9ad898183d5eeb2231190d4daae8dab771353a0aa1935b4d7294804ce1fdefa3",
+      "reasons": [
+        "assumptions_resolved",
+        "derived_confidence",
+        "falsifier_survived",
+        "process_verified",
+        "synthesis_verified",
+        "uncertainty_not_increased"
+      ],
+      "residual_risk_bp": 0,
+      "schema_version": 2,
+      "score_config_hash": "762c8aff0b2ef61401d2d0322bd258baac82ef737237d63bb62030ac84e7915e",
+      "score_config_id": "oiec-sr-score-v1",
+      "signature": "51bf75cdcab658667004a0d5ab9526bb3fba38958c60e774bd4112da062ff2e8",
+      "surviving_candidate_count": 1,
+      "synthesis_signature": "46126de42ba45412838895cc48d5612691bcea127c8dad0ab2d198f6101746ac",
+      "terminal_state": "SOLUTION",
+      "topology_signature": "9ad898183d5eeb2231190d4daae8dab771353a0aa1935b4d7294804ce1fdefa3",
+      "uncertainty_after_bp": 1000,
+      "uncertainty_before_bp": 2000,
+      "unresolved_assumptions": [],
+      "unresolved_contradiction_ids": [],
+      "verifier_report_ids": [
+        "verifier:0ba772d3e1a868366045029c0eb4bc1132cd7c52368b225cf255a55942ef00a9"
+      ],
+      "verifier_score_bp": 10000,
+      "winning_candidate_id": "winner",
+      "winning_path_id": "winner"
+    },
+    "hypothesis": {
+      "assumptions": [],
+      "conflicting_evidence": [],
+      "falsifiers": [],
+      "hypothesis_id": "h1",
+      "posterior_bp": 8000,
+      "predictions": [],
+      "prior_bp": 5000,
+      "proposition": "The bounded claim is supported",
+      "signature": "e22575df653cbd9c6b5e3c811fa744c3ce01cf6177fdf72a2fce62229ae65ff9",
+      "status": "ACTIVE",
+      "supporting_evidence": [
+        "e1"
+      ]
+    },
+    "operation_choice": {
+      "cost_bp": 1000,
+      "expected_quality_gain_bp": 2000,
+      "operation": "VERIFY_AGAIN",
+      "read_only": true,
+      "requires_iurm": false,
+      "schema_version": 1,
+      "signature": "94f02ccd9d140f60f41d262384e8230e6f843cb6797e5bac0df82a4323a551f6",
+      "value_bp": 1000
+    },
+    "problem": {
+      "boundary_signature": "boundary",
+      "difficulty_bp": 1000,
+      "dimension_signature": "dimension",
+      "evidence_ids": [
+        "e1"
+      ],
+      "goal": "Return the supported conclusion.",
+      "mutually_exclusive_hypotheses": false,
+      "problem_id": "problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb",
+      "schema_version": 1,
+      "signature": "0e6e18a392e325e3858d0f9c7ef74ac06bba45043d27718ed7a89b1d339372de",
+      "source_snapshot_hash": "snapshot",
+      "statement": "A bounded claim is supported by e1.",
+      "uncertainty_bp": 2000
+    },
+    "synthesis": {
+      "accepted_node_ids": [
+        "winner:step"
+      ],
+      "confidence_bp": 10000,
+      "failure_reasons": [],
+      "fallback_used": true,
+      "merged_conclusion": "The bounded claim is supported.",
+      "rejected_node_ids": [],
+      "remaining_uncertainties": [],
+      "schema_version": 1,
+      "signature": "46126de42ba45412838895cc48d5612691bcea127c8dad0ab2d198f6101746ac",
+      "source_path_ids": [
+        "winner"
+      ],
+      "synthesized_path_id": "winner",
+      "topology_signature": "344373d3767af167b646eec95188ae5f733417ab786a1e7c56fc102dfe919407",
+      "verified": true,
+      "verifier_report_id": "verifier:0ba772d3e1a868366045029c0eb4bc1132cd7c52368b225cf255a55942ef00a9",
+      "winning_path_id": "winner"
+    },
+    "topology": {
+      "edges": [
+        {
+          "edge_id": "edge:c3d6c7438ca3dfd13efd62a269dac943f264a0769e6d175f6e14dc2255444d72",
+          "inference_id": "inference:d505c741d92ab9fa8a684c92dc1c740255878e9ee005f0d48ef1119e4463c8a4",
+          "inference_mode": "deductive",
+          "relation": "entails",
+          "signature": "2b023360dcc3792e48d578538ec259733fc6c6274cfca074c51a878690fcd275",
+          "source_id": "premise:certificate",
+          "target_id": "conclusion:winner"
+        }
+      ],
+      "nodes": [
+        {
+          "confidence_bp": 0,
+          "content": "The bounded claim is supported.",
+          "evidence_ids": [],
+          "hypothetical": false,
+          "kind": "conclusion",
+          "material": true,
+          "node_id": "conclusion:winner",
+          "path_id": "winner",
+          "signature": "d1f0a72dba6857897fef0d4bab4c3f46d4c080bb809b1659b00752b499ccefef",
+          "validated": false
+        },
+        {
+          "confidence_bp": 0,
+          "content": "A bounded claim is supported by e1.",
+          "evidence_ids": [],
+          "hypothetical": false,
+          "kind": "premise",
+          "material": false,
+          "node_id": "premise:certificate",
+          "path_id": "",
+          "signature": "57d4d7b9dc781659a529b91e58f1a56067b7f92f84550ae467c260624e25ef47",
+          "validated": true
+        }
+      ],
+      "problem_id": "problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb",
+      "schema_version": 2,
+      "signature": "9ad898183d5eeb2231190d4daae8dab771353a0aa1935b4d7294804ce1fdefa3"
+    }
+  },
+  "reasoning_context_case": {
+    "context": {
+      "candidate_summaries": [],
+      "collision_ids": [
+        "collision:a",
+        "collision:z"
+      ],
+      "constraints": [
+        "boundary:boundary",
+        "dimension:dimension",
+        "goal:Return the supported conclusion."
+      ],
+      "evidence_ids": [
+        "e1",
+        "e2"
+      ],
+      "hypothesis_ids": [
+        "h-context"
+      ],
+      "max_chars_per_item": 512,
+      "max_items": 4,
+      "max_total_chars": 4096,
+      "problem_hash": "0e6e18a392e325e3858d0f9c7ef74ac06bba45043d27718ed7a89b1d339372de",
+      "schema_version": 1,
+      "signature": "2cfea689ca42a9683c1828d7e1c1a161b367ecd5a086dd329d5c1582899dd8ee",
+      "topology_node_ids": [],
+      "unresolved_questions": [
+        "confirm calibration"
+      ]
+    },
+    "hypothesis": {
+      "assumptions": [
+        "  confirm   calibration  "
+      ],
+      "conflicting_evidence": [],
+      "falsifiers": [],
+      "hypothesis_id": "h-context",
+      "posterior_bp": 5000,
+      "predictions": [],
+      "prior_bp": 5000,
+      "proposition": "Calibration should be confirmed",
+      "signature": "8a34bbaf1ca00a53ea6367c1967bd400ce6531a11caec2e800b4317f5c372408",
+      "status": "ACTIVE",
+      "supporting_evidence": []
+    },
+    "operation": {
+      "cost_bp": 0,
+      "expected_quality_gain_bp": 1000,
+      "operation": "REFINE_DIMENSION",
+      "read_only": true,
+      "requires_iurm": true,
+      "schema_version": 1,
+      "signature": "c9347c308b870bc1e7d2e7d0a290c8a9f1a5ce7a773bf6aa731f557304f88e51",
+      "value_bp": 1000
+    }
+  },
+  "reasoning_evaluation_case": {
+    "agreement_bp": 5000,
+    "confidence_bp": 8150,
+    "contradictions": [
+      {
+        "conflict_type": "causal",
+        "contradiction_id": "contradiction:658c3f75b1ec142e77525ca7f541b4a7a681cb1d57db7b4153c3da7fc42f58c7",
+        "evidence_left": [
+          "e1"
+        ],
+        "evidence_right": [],
+        "left_claim_id": "p1:conclusion",
+        "resolution_evidence_ids": [],
+        "resolution_status": "UNRESOLVED",
+        "right_claim_id": "falsifier:p1:alternative:0",
+        "schema_version": 1,
+        "severity_bp": 6500,
+        "signature": "eedd3c71e1c9bedbffb02dd591401e038b1e5cd84d3174745e399e0c6f75932f"
+      },
+      {
+        "conflict_type": "logical",
+        "contradiction_id": "contradiction:68f1da7d123c35ae20cb157ab6e7ce1265358b9d5d16456ad634f7926d6c633b",
+        "evidence_left": [
+          "e1"
+        ],
+        "evidence_right": [],
+        "left_claim_id": "p1:conclusion",
+        "resolution_evidence_ids": [],
+        "resolution_status": "UNRESOLVED",
+        "right_claim_id": "verifier:p1:contradiction:0",
+        "schema_version": 1,
+        "severity_bp": 8000,
+        "signature": "315df5a110f9b174a0b320925205e8fef9da789c3a21cf3b47a76c422a8ce8fe"
+      }
+    ],
+    "derived_budget": {
+      "candidate_count": 4,
+      "falsifier_count": 2,
+      "max_branch_factor": 4,
+      "max_compute_bp": 10000,
+      "max_context_items": 128,
+      "max_falsifier_passes": 2,
+      "max_generation_attempts": 8,
+      "max_hypotheses": 8,
+      "max_provider_calls": 16,
+      "max_steps_per_path": 5,
+      "max_tokens": 12000,
+      "max_tool_calls": 20,
+      "max_topology_edges": 160,
+      "max_topology_nodes": 80,
+      "max_verifier_passes": 2,
+      "maximum_candidates": 6,
+      "minimum_candidates": 1,
+      "minimum_voi_bp": 100,
+      "operation_costs_bp": [
+        [
+          "GENERATE_HYPOTHESIS",
+          1500
+        ],
+        [
+          "REFINE_DIMENSION",
+          2000
+        ],
+        [
+          "RETRIEVE_EVIDENCE",
+          1000
+        ],
+        [
+          "RUN_READ_ONLY_EXPERIMENT",
+          2500
+        ],
+        [
+          "SEARCH_COUNTEREXAMPLE",
+          1500
+        ],
+        [
+          "STOP",
+          0
+        ],
+        [
+          "VERIFY_AGAIN",
+          1000
+        ]
+      ],
+      "schema_version": 1,
+      "signature": "5744c726b186fd2825d27c36eb09a541b9c514dff614e55c0254d53043338a1e",
+      "verifier_count": 4
+    },
+    "diverse_paths": [
+      {
+        "conclusion": "Evidence supports bounded action",
+        "diversity_bp": 4778,
+        "estimated_cost_bp": 500,
+        "goal_relevance_bp": 9000,
+        "hypothesis_ids": [
+          "h1"
+        ],
+        "path_id": "p1",
+        "perspective": "direct",
+        "provider_confidence_bp": 0,
+        "risk_bp": 0,
+        "signature": "",
+        "steps": [
+          {
+            "assumptions": [
+              "Bounded input"
+            ],
+            "claim": "Evidence supports the bounded action",
+            "confidence_bp": 9000,
+            "evidence_ids": [
+              "e1"
+            ],
+            "falsifier": "A counterexample defeats the claim.",
+            "inference": "deductive",
+            "premises": [
+              "problem",
+              "h1"
+            ],
+            "signature": "",
+            "step_id": "p1:step"
+          }
+        ],
+        "structure_signature": "",
+        "topology_edge_ids": [],
+        "topology_node_ids": []
+      },
+      {
+        "conclusion": "Bounded action follows from the causal account",
+        "diversity_bp": 4778,
+        "estimated_cost_bp": 750,
+        "goal_relevance_bp": 8500,
+        "hypothesis_ids": [
+          "h1"
+        ],
+        "path_id": "p2",
+        "perspective": "causal",
+        "provider_confidence_bp": 0,
+        "risk_bp": 0,
+        "signature": "",
+        "steps": [
+          {
+            "assumptions": [],
+            "claim": "A causal account supports the action",
+            "confidence_bp": 8500,
+            "evidence_ids": [
+              "e1"
+            ],
+            "falsifier": "Reverse causality defeats the claim.",
+            "inference": "causal",
+            "premises": [
+              "problem",
+              "h1"
+            ],
+            "signature": "",
+            "step_id": "p2:step"
+          }
+        ],
+        "structure_signature": "",
+        "topology_edge_ids": [],
+        "topology_node_ids": []
+      }
+    ],
+    "diversity_configuration": {
+      "assumption_weight": 10,
+      "conclusion_weight": 10,
+      "config_id": "oiec-sr-diversity-v1",
+      "duplicate_threshold_bp": 9001,
+      "evidence_weight": 25,
+      "falsifier_weight": 10,
+      "hypothesis_weight": 25,
+      "inference_weight": 20,
+      "schema_version": 1,
+      "signature": "a6ddc1a0031c7fdbad5007a873846cfd2c894c5163e1aaa2cfc149481bb57dd1"
+    },
+    "metrics": {
+      "consistency_bp": 9500,
+      "cost_bp": 500,
+      "diversity_bp": 4778,
+      "evidence_support_bp": 10000,
+      "falsifier_bp": 8000,
+      "goal_relevance_bp": 9000,
+      "path_id": "p1",
+      "risk_bp": 0,
+      "score_config_hash": "762c8aff0b2ef61401d2d0322bd258baac82ef737237d63bb62030ac84e7915e",
+      "score_config_id": "oiec-sr-score-v1",
+      "signature": "f5580a9fd04f81e6ca69b5196f917d82c7b10bc1bf8097eaa14f59133b00b7f3",
+      "total_score_bp": 8713,
+      "uncertainty_bp": 1500,
+      "verifier_bp": 9000
+    },
+    "path": {
+      "conclusion": "Evidence supports bounded action",
+      "diversity_bp": 0,
+      "estimated_cost_bp": 500,
+      "goal_relevance_bp": 9000,
+      "hypothesis_ids": [
+        "h1"
+      ],
+      "path_id": "p1",
+      "perspective": "direct",
+      "provider_confidence_bp": 0,
+      "risk_bp": 0,
+      "signature": "",
+      "steps": [
+        {
+          "assumptions": [
+            "Bounded input"
+          ],
+          "claim": "Evidence supports the bounded action",
+          "confidence_bp": 9000,
+          "evidence_ids": [
+            "e1"
+          ],
+          "falsifier": "A counterexample defeats the claim.",
+          "inference": "deductive",
+          "premises": [
+            "problem",
+            "h1"
+          ],
+          "signature": "",
+          "step_id": "p1:step"
+        }
+      ],
+      "structure_signature": "",
+      "topology_edge_ids": [],
+      "topology_node_ids": []
+    },
+    "resolved_contradiction": {
+      "conflict_type": "causal",
+      "contradiction_id": "contradiction:658c3f75b1ec142e77525ca7f541b4a7a681cb1d57db7b4153c3da7fc42f58c7",
+      "evidence_left": [
+        "e1"
+      ],
+      "evidence_right": [],
+      "left_claim_id": "p1:conclusion",
+      "resolution_evidence_ids": [
+        "e2"
+      ],
+      "resolution_status": "RESOLVED",
+      "right_claim_id": "falsifier:p1:alternative:0",
+      "schema_version": 1,
+      "severity_bp": 6500,
+      "signature": "9956dd3abc3ee458ae5922ebfad4ddf428d1bff818d677752e56468000c69ce8"
+    },
+    "score_configuration": {
+      "compute_penalty": 5,
+      "config_id": "oiec-sr-score-v1",
+      "consistency_weight": 15,
+      "diversity_weight": 5,
+      "evidence_weight": 25,
+      "falsifier_weight": 15,
+      "goal_weight": 10,
+      "minimum_survivor_bp": 5000,
+      "schema_version": 1,
+      "signature": "762c8aff0b2ef61401d2d0322bd258baac82ef737237d63bb62030ac84e7915e",
+      "uncertainty_penalty": 15,
+      "verifier_weight": 30
+    },
+    "step": {
+      "assumptions": [
+        "Bounded input"
+      ],
+      "claim": "Evidence supports the bounded action",
+      "confidence_bp": 9000,
+      "evidence_ids": [
+        "e1"
+      ],
+      "falsifier": "A counterexample defeats the claim.",
+      "inference": "deductive",
+      "premises": [
+        "problem",
+        "h1"
+      ],
+      "signature": "",
+      "step_id": "p1:step"
+    },
+    "structure_material": {
+      "assumptions": [
+        "bounded input"
+      ],
+      "conclusion": "action bounded evidence supports",
+      "evidence_ids": [
+        "e1"
+      ],
+      "falsifiers": [
+        "a claim counterexample defeats the"
+      ],
+      "hypothesis_ids": [
+        "h1"
+      ],
+      "inference_modes": [
+        "deductive"
+      ],
+      "strategy": "direct"
+    },
+    "structure_signature": "1142dc6fa1fc96ae4c5c051236bbc2a3597839605aab429addace8ec21c53053",
+    "voi_bp": 1250
+  },
+  "reasoning_generator_case": {
+    "batch_tool": {
+      "description": "Submit one deterministic OIEC-SR role micro-batch result.",
+      "name": "submit_oiec_reasoning_batch",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates": {
+            "items": {},
+            "type": "array"
+          }
+        },
+        "required": [],
+        "type": "object"
+      }
+    },
+    "direct_contract": {
+      "contract_id": "oiec-sr-perspective:direct:v1",
+      "contract_type": "declared_perspective",
+      "fallback_inference_modes": [
+        "constraint",
+        "defeasible"
+      ],
+      "falsifier_focus": "Identify the smallest supplied fact change that defeats the conclusion.",
+      "objective": "Derive the shortest supported answer from explicit task facts.",
+      "primary_inference_mode": "deductive",
+      "required_path_shape": [
+        "Begin with the decisive supplied premise or constraint.",
+        "Use no intermediate mechanism unless the conclusion requires one."
+      ]
+    },
+    "hypothesis_context": {
+      "assumptions": [],
+      "conflicting_evidence": [],
+      "falsifiers": [],
+      "hypothesis_id": "h1",
+      "posterior_bp": 8000,
+      "predictions": [],
+      "proposition": "The bounded claim is supported",
+      "status": "ACTIVE",
+      "supporting_evidence": [
+        "e1"
+      ]
+    },
+    "independent_probe_contract": {
+      "contract_id": "oiec-sr-perspective:independent-probe:a07f2de8d972:v1",
+      "contract_type": "independent_probe",
+      "fallback_inference_modes": [
+        "constraint",
+        "defeasible"
+      ],
+      "falsifier_focus": "State a concrete task-grounded defeat condition focused on alternative explanation.",
+      "objective": "Construct an independent task-grounded audit path rather than paraphrasing another path.",
+      "primary_inference_mode": "deductive",
+      "required_path_shape": [
+        "Center the path on alternative explanation.",
+        "Use only declared premises, hypotheses, and evidence identifiers."
+      ]
+    },
+    "object_tool": {
+      "description": "Submit one deterministic OIEC-SR structured reasoning object.",
+      "name": "submit_oiec_reasoning_object",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "conclusion": {},
+          "steps": {}
+        },
+        "required": [
+          "conclusion"
+        ],
+        "type": "object"
+      },
+      "type": "function"
+    },
+    "parsed_path": {
+      "conclusion": "The bounded claim is supported.",
+      "diversity_bp": 0,
+      "estimated_cost_bp": 500,
+      "goal_relevance_bp": 9000,
+      "hypothesis_ids": [
+        "h1"
+      ],
+      "path_id": "path:344373d3767af167b646eec95188ae5f733417ab786a1e7c56fc102dfe919407",
+      "perspective": "direct",
+      "provider_confidence_bp": 8500,
+      "risk_bp": 1000,
+      "signature": "03642a3b919dac3a60525542f6d2ebca39e1a43c3932b98ad4ff980ac2dafa68",
+      "steps": [
+        {
+          "assumptions": [],
+          "claim": "e1 supports the bounded claim",
+          "confidence_bp": 9000,
+          "evidence_ids": [
+            "e1"
+          ],
+          "falsifier": "A conflicting declared observation defeats the claim.",
+          "inference": "deductive",
+          "premises": [
+            "problem",
+            "h1"
+          ],
+          "signature": "445c508dab500edb1258b59238288d7e35da385f67143a9ab7abdbc158264a99",
+          "step_id": "candidate:step"
+        }
+      ],
+      "structure_signature": "344373d3767af167b646eec95188ae5f733417ab786a1e7c56fc102dfe919407",
+      "topology_edge_ids": [],
+      "topology_node_ids": []
+    },
+    "perspective_names": [
+      "direct",
+      "mechanistic",
+      "counterexample_first",
+      "assumption_inversion",
+      "causal",
+      "mathematical",
+      "evidence_synthesis",
+      "abductive",
+      "independent_probe_09",
+      "independent_probe_10"
+    ],
+    "problem_context": {
+      "difficulty_bp": 1000,
+      "evidence_ids": [
+        "e1"
+      ],
+      "goal": "Return the supported conclusion.",
+      "mutually_exclusive_hypotheses": false,
+      "premise_id": "problem",
+      "statement": "A bounded claim is supported by e1.",
+      "uncertainty_bp": 2000
+    }
+  },
+  "reasoning_hypothesis_case": {
+    "initial_state": {
+      "evidence_ids": [],
+      "hypotheses": [
+        {
+          "assumptions": [],
+          "conflicting_evidence": [],
+          "falsifiers": [],
+          "hypothesis_id": "a",
+          "posterior_bp": 6000,
+          "predictions": [],
+          "prior_bp": 6000,
+          "proposition": "A",
+          "signature": "7e59bd7155fc75e62f976ed4f7931b8a27b7f3a5170b75e0ee9fff55f19cca9e",
+          "status": "ACTIVE",
+          "supporting_evidence": []
+        },
+        {
+          "assumptions": [],
+          "conflicting_evidence": [],
+          "falsifiers": [],
+          "hypothesis_id": "b",
+          "posterior_bp": 4000,
+          "predictions": [],
+          "prior_bp": 4000,
+          "proposition": "B",
+          "signature": "f773b4e492dbcee9f8eae7a16517f4430599c3f5ad309fe94d167a3778e7e4af",
+          "status": "ACTIVE",
+          "supporting_evidence": []
+        }
+      ],
+      "max_hypotheses": 2,
+      "mutually_exclusive": true,
+      "problem_id": "problem",
+      "schema_version": 1,
+      "signature": "7e23edb75e240a75cae4bdcd4a7433c747c6733f6f2c5b161b0c308e7932f364",
+      "uncertainty_bp": 4000,
+      "update_ids": []
+    },
+    "update_record": {
+      "collision_ids": [],
+      "evidence_ids": [
+        "e1"
+      ],
+      "hypothesis_id": "a",
+      "likelihood_if_false_bp": 2000,
+      "likelihood_if_true_bp": 8000,
+      "operation": "BAYES_EVIDENCE_UPDATE",
+      "polarity": "support",
+      "previous_hypothesis_signature": "16de673d125fef71d8a2ec2999e3b7c89f8e29b2acf6fd3475cd1fad890fdac4",
+      "previous_posterior_bp": 5000,
+      "previous_status": "ACTIVE",
+      "problem_id": "problem",
+      "reason": "",
+      "schema_version": 1,
+      "signature": "c6e622fbd30bc1170f5ddda15bc899322ebbce919bb23df415c25019a39ed0bc",
+      "update_id": "hypothesis-update:5cf1f2407b05abbf8d688b7fd25c006cc7cc93cf7f39f0bf95bd7fb33a878a41",
+      "updated_hypothesis_signature": "1ad6eaa53a911e0a594272a3ee6e28962a969161708c9ad5c7974fc2aa7a2a9e",
+      "updated_posterior_bp": 8000,
+      "updated_status": "SUPPORTED"
+    },
+    "updated_state": {
+      "evidence_ids": [
+        "e1"
+      ],
+      "hypotheses": [
+        {
+          "assumptions": [],
+          "conflicting_evidence": [],
+          "falsifiers": [],
+          "hypothesis_id": "a",
+          "posterior_bp": 8000,
+          "predictions": [],
+          "prior_bp": 5000,
+          "proposition": "A",
+          "signature": "1ad6eaa53a911e0a594272a3ee6e28962a969161708c9ad5c7974fc2aa7a2a9e",
+          "status": "SUPPORTED",
+          "supporting_evidence": [
+            "e1"
+          ]
+        }
+      ],
+      "max_hypotheses": 1,
+      "mutually_exclusive": false,
+      "problem_id": "problem",
+      "schema_version": 1,
+      "signature": "532c5c5632557075bc4352248ba2e787e0526fab7444dfbbda5381edccedd07e",
+      "uncertainty_bp": 4000,
+      "update_ids": [
+        "hypothesis-update:5cf1f2407b05abbf8d688b7fd25c006cc7cc93cf7f39f0bf95bd7fb33a878a41"
+      ]
+    }
+  },
+  "reasoning_search_case": {
+    "ablation_pipelines": [
+      "super_reasoning_kernel_grounded_topology_v2_task_isolated:one_path_only:94ca38c74cf84b07cce9121595e01736bb4c78d496b647bf71110e2e65b3c63a",
+      "super_reasoning_kernel_grounded_topology_v2_task_isolated:without_hypothesis_state:840e1253d217ce661c1328a59c3bc45948c2a88b68b1be86b61c82aa20352c40",
+      "super_reasoning_kernel_grounded_topology_v2_task_isolated:without_verifier:30b241e8688a79036e352f5c8ce172d8554a2c4b7a432cb46c97c79881dc3157",
+      "super_reasoning_kernel_grounded_topology_v2_task_isolated:without_falsifier:0cda30bb5353c1ca8fc0a3f62fd0e6b4dbef7e75ebc8c23c2999ecc3ed3014a0",
+      "super_reasoning_kernel_grounded_topology_v2_task_isolated:without_diversity_filter:570d7d750f876aaaca5fefed1037e824ca88558633a265f8ac27f70ace18ee5b",
+      "super_reasoning_kernel_grounded_topology_v2_task_isolated:without_synthesis_verification:421887d398c2c1cd56ef7f81108d4cc93dcae6164cb66dd343f95c07aca1ffe3",
+      "super_reasoning_kernel_grounded_topology_v2_task_isolated:without_adaptive_compute:89ab431511e1e7c91fea90b87d66036c09fc7a00163efb6280388fdd4d2bca2d",
+      "super_reasoning_kernel_grounded_topology_v2_task_isolated:full_sr:5f5f11a2db021d3c5bc6081ba9ee951f2e58983f668717cff10ddc2bc88d5c48"
+    ],
+    "assembled_candidate_set": {
+      "ablation_config_hash": "5f5f11a2db021d3c5bc6081ba9ee951f2e58983f668717cff10ddc2bc88d5c48",
+      "ablation_id": "full_sr",
+      "contradiction_ids": [],
+      "diversity_config_hash": "487c31c0baf2b9ce1c0fe5c875b92582b526811282c0fc46f8ce54ea5eaaa3f3",
+      "falsifier_reports": [
+        {
+          "alternative_explanations": [],
+          "boundary_cases": [],
+          "contradicted_step_ids": [],
+          "counterexamples": [],
+          "evidence_reversal_conditions": [],
+          "invalid_invariants": [],
+          "path_id": "winner",
+          "report_id": "falsifier:a9fec00913e6c8a5bfc0ecc88b7b7b43e7fe6855adb01cbcb08e07497ddbe37c",
+          "residual_uncertainty_bp": 1000,
+          "reversed_causal_directions": [],
+          "searched_falsifiers": [
+            "declared conflict"
+          ],
+          "severity_bp": 1000,
+          "signature": "ba9c69a337ee899bc8e8b00935fef9c7e9295106f40121aecd7c341044d9e807",
+          "survival_bp": 9000,
+          "unresolved_defeat_conditions": [],
+          "unresolved_defeat_evidence_ids": [],
+          "verdict": "SURVIVES"
+        }
+      ],
+      "hypothesis_updates": [],
+      "metrics": [
+        {
+          "consistency_bp": 10000,
+          "cost_bp": 500,
+          "diversity_bp": 0,
+          "evidence_support_bp": 10000,
+          "falsifier_bp": 9000,
+          "goal_relevance_bp": 9000,
+          "path_id": "winner",
+          "risk_bp": 0,
+          "score_config_hash": "762c8aff0b2ef61401d2d0322bd258baac82ef737237d63bb62030ac84e7915e",
+          "score_config_id": "oiec-sr-score-v1",
+          "signature": "0f880f6911ede4313af873c4c602ac9629a8c8ccc2bb1e4d244a3d0afa043131",
+          "total_score_bp": 9075,
+          "uncertainty_bp": 1000,
+          "verifier_bp": 10000
+        }
+      ],
+      "paths": [
+        {
+          "conclusion": "The bounded claim is supported.",
+          "diversity_bp": 0,
+          "estimated_cost_bp": 500,
+          "goal_relevance_bp": 9000,
+          "hypothesis_ids": [
+            "h1"
+          ],
+          "path_id": "winner",
+          "perspective": "direct",
+          "provider_confidence_bp": 0,
+          "risk_bp": 0,
+          "signature": "",
+          "steps": [
+            {
+              "assumptions": [],
+              "claim": "e1 supports the bounded claim",
+              "confidence_bp": 9000,
+              "evidence_ids": [
+                "e1"
+              ],
+              "falsifier": "A conflicting declared observation defeats the claim.",
+              "inference": "deductive",
+              "premises": [
+                "problem",
+                "h1"
+              ],
+              "signature": "",
+              "step_id": "winner:step"
+            }
+          ],
+          "structure_signature": "344373d3767af167b646eec95188ae5f733417ab786a1e7c56fc102dfe919407",
+          "topology_edge_ids": [],
+          "topology_node_ids": []
+        }
+      ],
+      "problem_id": "problem:b6c64ee2fc6b2662e06e588e4e292ee1e47fd1a76f19cccf1aee6cd23dee42bb",
+      "rejected_path_ids": [],
+      "schema_version": 1,
+      "score_config_hash": "762c8aff0b2ef61401d2d0322bd258baac82ef737237d63bb62030ac84e7915e",
+      "score_config_id": "oiec-sr-score-v1",
+      "selected_path_id": "winner",
+      "signature": "5c87781d130408aa70093bbb5337894d811de4128b0a3187ed73009cf1c82364",
+      "surviving_path_ids": [
+        "winner"
+      ],
+      "synthesis": {
+        "accepted_node_ids": [
+          "winner:step"
+        ],
+        "confidence_bp": 10000,
+        "failure_reasons": [],
+        "fallback_used": true,
+        "merged_conclusion": "The bounded claim is supported.",
+        "rejected_node_ids": [],
+        "remaining_uncertainties": [],
+        "schema_version": 1,
+        "signature": "46126de42ba45412838895cc48d5612691bcea127c8dad0ab2d198f6101746ac",
+        "source_path_ids": [
+          "winner"
+        ],
+        "synthesized_path_id": "winner",
+        "topology_signature": "344373d3767af167b646eec95188ae5f733417ab786a1e7c56fc102dfe919407",
+        "verified": true,
+        "verifier_report_id": "verifier:0ba772d3e1a868366045029c0eb4bc1132cd7c52368b225cf255a55942ef00a9",
+        "winning_path_id": "winner"
+      },
+      "synthesis_source_path_ids": [
+        "winner"
+      ],
+      "synthesized_conclusion": "The bounded claim is supported.",
+      "verifier_reports": [
+        {
+          "completeness_bp": 10000,
+          "consistency_bp": 10000,
+          "contradictions": [],
+          "evidence_support_bp": 10000,
+          "failures": [],
+          "inference_quality_bp": 10000,
+          "missing_assumptions": [],
+          "path_id": "winner",
+          "premise_validity_bp": 10000,
+          "report_id": "verifier:0ba772d3e1a868366045029c0eb4bc1132cd7c52368b225cf255a55942ef00a9",
+          "score_bp": 10000,
+          "signature": "90908683ea2710ab0f8349e9fab98231672a3f8c1271bc711c302fd1ebaa9341",
+          "step_scores": [
+            [
+              "winner:step",
+              10000
+            ]
+          ],
+          "unsupported_nodes": [],
+          "verdict": "ACCEPT",
+          "weakest_step_bp": 10000
+        }
+      ]
+    },
+    "bypass_falsifier": {
+      "alternative_explanations": [],
+      "boundary_cases": [],
+      "contradicted_step_ids": [],
+      "counterexamples": [],
+      "evidence_reversal_conditions": [],
+      "invalid_invariants": [],
+      "path_id": "winner",
+      "report_id": "falsifier:e277e8c4a3a9950b98f767b6e69306b305ad0aeeb20efe32dfac6d5e905217bd",
+      "residual_uncertainty_bp": 0,
+      "reversed_causal_directions": [],
+      "searched_falsifiers": [],
+      "severity_bp": 0,
+      "signature": "c2e7e0ae40a81348d061f96ec3d1d50945442a97413c61561ac2b55107bf7e10",
+      "survival_bp": 10000,
+      "unresolved_defeat_conditions": [],
+      "unresolved_defeat_evidence_ids": [],
+      "verdict": "SURVIVES"
+    },
+    "bypass_verifier": {
+      "completeness_bp": 10000,
+      "consistency_bp": 10000,
+      "contradictions": [],
+      "evidence_support_bp": 10000,
+      "failures": [],
+      "inference_quality_bp": 10000,
+      "missing_assumptions": [],
+      "path_id": "winner",
+      "premise_validity_bp": 10000,
+      "report_id": "verifier:1ad2a7613eea5e82b829031f7785ede8fd82135c96d691252e660a6ecc443559",
+      "score_bp": 10000,
+      "signature": "784ca780764ad0f1dcf3ac22f568229616d67c8d18af956120cf3b7c62320c45",
+      "step_scores": [
+        [
+          "winner:step",
+          10000
+        ]
+      ],
+      "unsupported_nodes": [],
+      "verdict": "ACCEPT",
+      "weakest_step_bp": 10000
+    },
+    "rejected_falsifier": {
+      "alternative_explanations": [],
+      "boundary_cases": [],
+      "contradicted_step_ids": [],
+      "counterexamples": [],
+      "evidence_reversal_conditions": [],
+      "invalid_invariants": [],
+      "path_id": "winner",
+      "report_id": "falsifier:4a7e38ae28bff4082445ccb63f6df9915bd0e49ee511622a52ca2e0ad689b423",
+      "residual_uncertainty_bp": 0,
+      "reversed_causal_directions": [],
+      "searched_falsifiers": [],
+      "severity_bp": 0,
+      "signature": "da472a039252ba6ebc81611c6b4c6597cf595b997b8712f35027109459994559",
+      "survival_bp": 0,
+      "unresolved_defeat_conditions": [
+        "candidate did not reach falsifier stage"
+      ],
+      "unresolved_defeat_evidence_ids": [],
+      "verdict": "REJECT"
+    },
+    "standard_ablations": [
+      {
+        "ablation_id": "one_path_only",
+        "adaptive_compute_enabled": true,
+        "diversity_filter_enabled": true,
+        "falsifier_batch_size": 1,
+        "falsifier_enabled": true,
+        "hypothesis_state_enabled": true,
+        "path_count": 1,
+        "proposer_batch_size": 1,
+        "schema_version": 1,
+        "signature": "94ca38c74cf84b07cce9121595e01736bb4c78d496b647bf71110e2e65b3c63a",
+        "synthesis_verification_enabled": true,
+        "verifier_batch_size": 2,
+        "verifier_enabled": true
+      },
+      {
+        "ablation_id": "without_hypothesis_state",
+        "adaptive_compute_enabled": true,
+        "diversity_filter_enabled": true,
+        "falsifier_batch_size": 1,
+        "falsifier_enabled": true,
+        "hypothesis_state_enabled": false,
+        "path_count": 4,
+        "proposer_batch_size": 1,
+        "schema_version": 1,
+        "signature": "840e1253d217ce661c1328a59c3bc45948c2a88b68b1be86b61c82aa20352c40",
+        "synthesis_verification_enabled": true,
+        "verifier_batch_size": 2,
+        "verifier_enabled": true
+      },
+      {
+        "ablation_id": "without_verifier",
+        "adaptive_compute_enabled": true,
+        "diversity_filter_enabled": true,
+        "falsifier_batch_size": 1,
+        "falsifier_enabled": true,
+        "hypothesis_state_enabled": true,
+        "path_count": 4,
+        "proposer_batch_size": 1,
+        "schema_version": 1,
+        "signature": "30b241e8688a79036e352f5c8ce172d8554a2c4b7a432cb46c97c79881dc3157",
+        "synthesis_verification_enabled": true,
+        "verifier_batch_size": 2,
+        "verifier_enabled": false
+      },
+      {
+        "ablation_id": "without_falsifier",
+        "adaptive_compute_enabled": true,
+        "diversity_filter_enabled": true,
+        "falsifier_batch_size": 1,
+        "falsifier_enabled": false,
+        "hypothesis_state_enabled": true,
+        "path_count": 4,
+        "proposer_batch_size": 1,
+        "schema_version": 1,
+        "signature": "0cda30bb5353c1ca8fc0a3f62fd0e6b4dbef7e75ebc8c23c2999ecc3ed3014a0",
+        "synthesis_verification_enabled": true,
+        "verifier_batch_size": 2,
+        "verifier_enabled": true
+      },
+      {
+        "ablation_id": "without_diversity_filter",
+        "adaptive_compute_enabled": true,
+        "diversity_filter_enabled": false,
+        "falsifier_batch_size": 1,
+        "falsifier_enabled": true,
+        "hypothesis_state_enabled": true,
+        "path_count": 4,
+        "proposer_batch_size": 1,
+        "schema_version": 1,
+        "signature": "570d7d750f876aaaca5fefed1037e824ca88558633a265f8ac27f70ace18ee5b",
+        "synthesis_verification_enabled": true,
+        "verifier_batch_size": 2,
+        "verifier_enabled": true
+      },
+      {
+        "ablation_id": "without_synthesis_verification",
+        "adaptive_compute_enabled": true,
+        "diversity_filter_enabled": true,
+        "falsifier_batch_size": 1,
+        "falsifier_enabled": true,
+        "hypothesis_state_enabled": true,
+        "path_count": 4,
+        "proposer_batch_size": 1,
+        "schema_version": 1,
+        "signature": "421887d398c2c1cd56ef7f81108d4cc93dcae6164cb66dd343f95c07aca1ffe3",
+        "synthesis_verification_enabled": false,
+        "verifier_batch_size": 2,
+        "verifier_enabled": true
+      },
+      {
+        "ablation_id": "without_adaptive_compute",
+        "adaptive_compute_enabled": false,
+        "diversity_filter_enabled": true,
+        "falsifier_batch_size": 1,
+        "falsifier_enabled": true,
+        "hypothesis_state_enabled": true,
+        "path_count": 4,
+        "proposer_batch_size": 1,
+        "schema_version": 1,
+        "signature": "89ab431511e1e7c91fea90b87d66036c09fc7a00163efb6280388fdd4d2bca2d",
+        "synthesis_verification_enabled": true,
+        "verifier_batch_size": 2,
+        "verifier_enabled": true
+      },
+      {
+        "ablation_id": "full_sr",
+        "adaptive_compute_enabled": true,
+        "diversity_filter_enabled": true,
+        "falsifier_batch_size": 1,
+        "falsifier_enabled": true,
+        "hypothesis_state_enabled": true,
+        "path_count": 4,
+        "proposer_batch_size": 1,
+        "schema_version": 1,
+        "signature": "5f5f11a2db021d3c5bc6081ba9ee951f2e58983f668717cff10ddc2bc88d5c48",
+        "synthesis_verification_enabled": true,
+        "verifier_batch_size": 2,
+        "verifier_enabled": true
+      }
+    ]
+  },
+  "reasoning_synthesis_case": {
+    "path": {
+      "conclusion": "The bounded claim is supported.",
+      "diversity_bp": 0,
+      "estimated_cost_bp": 500,
+      "goal_relevance_bp": 9000,
+      "hypothesis_ids": [
+        "h1"
+      ],
+      "path_id": "synthesis-path:b360a300fabbcf6d7945edf03728a37a3d4ae22db72cf61a7cde7ffac7d5ae62",
+      "perspective": "synthesis",
+      "provider_confidence_bp": 0,
+      "risk_bp": 0,
+      "signature": "dfe055909182811fe3874b41e3e26a903b2fc7dcb97b28a12a3edd5554813cf7",
+      "steps": [
+        {
+          "assumptions": [],
+          "claim": "e1 supports the bounded claim",
+          "confidence_bp": 9000,
+          "evidence_ids": [
+            "e1"
+          ],
+          "falsifier": "A conflicting declared observation defeats the claim.",
+          "inference": "deductive",
+          "premises": [
+            "problem",
+            "h1"
+          ],
+          "signature": "",
+          "step_id": "winner:step"
+        }
+      ],
+      "structure_signature": "b360a300fabbcf6d7945edf03728a37a3d4ae22db72cf61a7cde7ffac7d5ae62",
+      "topology_edge_ids": [],
+      "topology_node_ids": []
+    },
+    "payload": {
+      "accepted_step_ids": [
+        "winner:step"
+      ],
+      "conclusion": "The bounded claim is supported.",
+      "confidence_bp": 8500,
+      "rejected_step_ids": [],
+      "remaining_uncertainties": [
+        "Residual uncertainty"
+      ],
+      "source_path_ids": [
+        "winner"
+      ]
+    },
+    "result": {
+      "accepted_node_ids": [
+        "winner:step"
+      ],
+      "confidence_bp": 8500,
+      "failure_reasons": [
+        "synthesis verification disabled by qualification ablation"
+      ],
+      "fallback_used": false,
+      "merged_conclusion": "The bounded claim is supported.",
+      "rejected_node_ids": [],
+      "remaining_uncertainties": [
+        "Residual uncertainty"
+      ],
+      "schema_version": 1,
+      "signature": "9b44defa0a71fc4b80b8713fd2e7444566758b4641cdbb571e6a05d4a55dbbeb",
+      "source_path_ids": [
+        "winner"
+      ],
+      "synthesized_path_id": "synthesis-path:b360a300fabbcf6d7945edf03728a37a3d4ae22db72cf61a7cde7ffac7d5ae62",
+      "topology_signature": "b360a300fabbcf6d7945edf03728a37a3d4ae22db72cf61a7cde7ffac7d5ae62",
+      "verified": false,
+      "verifier_report_id": "",
+      "winning_path_id": "winner"
+    }
+  },
+  "reasoning_topology_case": {
+    "edge": {
+      "edge_id": "edge:c4f3106495b144e9b8819965e6f33ff31a4fdb2b7509ac628abbcb4c36f8f1ce",
+      "inference_id": "inference:81b3823da171ea1d4767450a47d3a6f15eb7af9f05cda494f446b60a36ae7825",
+      "inference_mode": "deductive",
+      "relation": "entails",
+      "signature": "d5161097bb193bbf15c2d152ac8b98b64817d172688b2631e521e90042cad890",
+      "source_id": "premise:p",
+      "target_id": "conclusion:p"
+    },
+    "inference_id": "inference:81b3823da171ea1d4767450a47d3a6f15eb7af9f05cda494f446b60a36ae7825",
+    "nodes": [
+      {
+        "confidence_bp": 0,
+        "content": "Validated input",
+        "evidence_ids": [],
+        "hypothetical": false,
+        "kind": "premise",
+        "material": false,
+        "node_id": "premise:p",
+        "path_id": "",
+        "signature": "9f3e571dc2c45f5479c9ab8507b9fd283a574e4914e326f72b5e416f5c48a53a",
+        "validated": true
+      },
+      {
+        "confidence_bp": 8000,
+        "content": "Grounded result",
+        "evidence_ids": [],
+        "hypothetical": false,
+        "kind": "conclusion",
+        "material": true,
+        "node_id": "conclusion:p",
+        "path_id": "p",
+        "signature": "cee919c490f0fda02b393dc7536bcd5c2016f910107fc2c6be7f0d6248e104aa",
+        "validated": false
+      }
+    ],
+    "payload": {
+      "edges": [
+        {
+          "edge_id": "edge:c4f3106495b144e9b8819965e6f33ff31a4fdb2b7509ac628abbcb4c36f8f1ce",
+          "inference_id": "inference:81b3823da171ea1d4767450a47d3a6f15eb7af9f05cda494f446b60a36ae7825",
+          "inference_mode": "deductive",
+          "relation": "entails",
+          "signature": "d5161097bb193bbf15c2d152ac8b98b64817d172688b2631e521e90042cad890",
+          "source_id": "premise:p",
+          "target_id": "conclusion:p"
+        }
+      ],
+      "nodes": [
+        {
+          "confidence_bp": 8000,
+          "content": "Grounded result",
+          "evidence_ids": [],
+          "hypothetical": false,
+          "kind": "conclusion",
+          "material": true,
+          "node_id": "conclusion:p",
+          "path_id": "p",
+          "signature": "cee919c490f0fda02b393dc7536bcd5c2016f910107fc2c6be7f0d6248e104aa",
+          "validated": false
+        },
+        {
+          "confidence_bp": 0,
+          "content": "Validated input",
+          "evidence_ids": [],
+          "hypothetical": false,
+          "kind": "premise",
+          "material": false,
+          "node_id": "premise:p",
+          "path_id": "",
+          "signature": "9f3e571dc2c45f5479c9ab8507b9fd283a574e4914e326f72b5e416f5c48a53a",
+          "validated": true
+        }
+      ],
+      "problem_id": "problem"
+    },
+    "signature": "c815359f36cac90004f376e86804c589f68cf87a9353e2b71a561ebae1e6a880"
+  },
+  "reasoning_validation_case": {
+    "alternative_report": {
+      "alternative_explanations": [
+        "A second mechanism fits."
+      ],
+      "boundary_cases": [],
+      "contradicted_step_ids": [],
+      "counterexamples": [],
+      "evidence_reversal_conditions": [],
+      "invalid_invariants": [],
+      "path_id": "p1",
+      "report_id": "falsifier:bd1de2706bd41d521c844b88ef5d6ed9d25fdf81b9ba4874c683854ddbf3c352",
+      "residual_uncertainty_bp": 4000,
+      "reversed_causal_directions": [],
+      "searched_falsifiers": [
+        "alternative"
+      ],
+      "severity_bp": 4000,
+      "signature": "d725e4add322fc8abc3e9ac7758c1c9dd12bb3ac7c9be35a27b54eb8335e29d7",
+      "survival_bp": 6000,
+      "unresolved_defeat_conditions": [],
+      "unresolved_defeat_evidence_ids": [],
+      "verdict": "REVISE"
+    },
+    "future_defeat_report": {
+      "alternative_explanations": [],
+      "boundary_cases": [],
+      "contradicted_step_ids": [],
+      "counterexamples": [],
+      "evidence_reversal_conditions": [
+        "A future confound may be discovered."
+      ],
+      "invalid_invariants": [],
+      "path_id": "p1",
+      "report_id": "falsifier:4dba27253b91a1c6c291a68efd664c07aeeab81983477e97b1d0c11fabcf2b1d",
+      "residual_uncertainty_bp": 1000,
+      "reversed_causal_directions": [],
+      "searched_falsifiers": [
+        "possible future confound"
+      ],
+      "severity_bp": 1000,
+      "signature": "776119453d86225e2ede1fe0b33b0a8609c5d550de9d7161ef809560e7968add",
+      "survival_bp": 9000,
+      "unresolved_defeat_conditions": [],
+      "unresolved_defeat_evidence_ids": [],
+      "verdict": "SURVIVES"
+    },
+    "process_checks": [
+      "premises_available",
+      "evidence_declared",
+      "evidence_relevant",
+      "inference_supported",
+      "grounding_traceable",
+      "assumptions_explicit",
+      "counterexample_addressed",
+      "alternative_considered",
+      "conclusion_not_overstated"
+    ],
+    "verified_report": {
+      "completeness_bp": 10000,
+      "consistency_bp": 10000,
+      "contradictions": [],
+      "evidence_support_bp": 10000,
+      "failures": [],
+      "inference_quality_bp": 10000,
+      "missing_assumptions": [],
+      "path_id": "p1",
+      "premise_validity_bp": 10000,
+      "report_id": "verifier:5f8358c5e7889af80517ef77f11f5f4455ff8ea010d5e26f08c6d982ff2b2d89",
+      "score_bp": 10000,
+      "signature": "e5926b1d02ab4111bdef5c4c0344f551861697af092c8de07825f2df28057768",
+      "step_scores": [
+        [
+          "p1:step",
+          10000
+        ]
+      ],
+      "unsupported_nodes": [],
+      "verdict": "ACCEPT",
+      "weakest_step_bp": 10000
+    }
+  },
+  "saa_ir_case": {
+    "add": {
+      "canonical_payload": {
+        "control_edges": [],
+        "entry_nodes": [
+          0
+        ],
+        "inputs": [
+          {
+            "data_type": "scalar",
+            "position": 0,
+            "shape": []
+          },
+          {
+            "data_type": "scalar",
+            "position": 1,
+            "shape": []
+          }
+        ],
+        "nodes": [
+          {
+            "attributes": [],
+            "operands": [
+              [
+                "u",
+                0
+              ],
+              [
+                "u",
+                1
+              ]
+            ],
+            "primitive": "ADD",
+            "result_count": 1
+          }
+        ],
+        "outputs": [
+          {
+            "data_type": "scalar",
+            "position": 0,
+            "shape": [],
+            "source": [
+              "n",
+              0,
+              0
+            ]
+          }
+        ],
+        "parameters": [],
+        "schema_version": 1,
+        "states": [],
+        "termination_nodes": []
+      },
+      "canonicalization_strength": "EXACT_STRUCTURAL",
+      "canonicalizer_version": "saa-structural-ir-v1",
+      "exact_permutations_considered": 1,
+      "schema_version": 1,
+      "source_node_map": [
+        [
+          "combine",
+          0
+        ]
+      ],
+      "structural_hash": "f0c914d04d8ab5e34a1c96baffbc0973234831018c8d638a0feebcee9742fe57",
+      "warnings": []
+    }
+  },
+  "schema_version": 1,
+  "typed_id_cases": [
+    {
+      "object_type": "intent",
+      "payload": {
+        "actor": "user",
+        "objective": "inspect"
+      },
+      "typed_id": "intent:sha256:94500a64c75ed30f3e2203e900367a7c54482a960b80f9020ebc42d1013b2be2"
+    },
+    {
+      "object_type": " Intent_Record ",
+      "payload": {
+        "assumptions": [],
+        "raw_request": "inspect"
+      },
+      "typed_id": "intent-record:sha256:a7b2f5377689c18b4a2a9b9461c2b5f7a375982a2e40c9c27a4d88ec4a0089b1"
+    },
+    {
+      "object_type": "reasoning_certificate",
+      "payload": {
+        "problem_id": "problem",
+        "score_bp": 7500
+      },
+      "typed_id": "reasoning-certificate:sha256:d28c03629a8b43aae7dc3e015cf4e2f7fe6a8d3e86f6c9c0360c52faffe432af"
+    }
+  ],
+  "workspace_case": {
+    "snapshot": {
+      "README.md": "2cbe982cfaa27aef8172d39d93c775294843b0d08321199b0a07d24d7a05ac24",
+      "src/main.cpp": "deac66ccb79f6d31c0fa7d358de48e083c15c02ff50ec1ebd4b64314b9e6e196"
+    },
+    "snapshot_hash": "322316bfc23be6650aac7f8df828a65736cf6efbffe098469d8d3a0703a429b5"
+  }
+}

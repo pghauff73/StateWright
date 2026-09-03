@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "decision": "Use the clean recorded commit as the migration oracle. Exclude all uncommitted files and generated reports from authoritative fixtures.",
+  "oracle_repository": "/home/pamela/Projects/OIEC-STM-Agent-integration",
+  "oracle_commit": "957111e2d5d11dec719c7f993f51644e701fc256",
+  "selected_on": "2026-09-02",
+  "target": "StateWright",
+  "working_tree_policy": "ignored"
+}
+

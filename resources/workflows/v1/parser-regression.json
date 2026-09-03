@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "name": "fix-parser-regression",
+  "version": 1,
+  "description": "Evidence-governed parser regression workflow template. Approval is represented by the compiled plan boundary, not by model self-authorization.",
+  "parameters": {
+    "parser_scope": ["**"],
+    "regression_subject": "parser-regression"
+  },
+  "nodes": [
+    {"node_id": "interpret", "command_id": "hrt.interpret", "inputs": {"text": "fix parser regression"}},
+    {"node_id": "ambiguity", "command_id": "hrt.ambiguity", "inputs": {"text": "fix parser regression"}, "depends_on": ["interpret"]},
+    {"node_id": "model", "command_id": "ourd.model", "inputs": {"objects": ["parser", "regression"], "boundaries": ["authorized scope"]}, "depends_on": ["ambiguity"]},
+    {"node_id": "dimensions", "command_id": "iurm.dimensions", "inputs": {"dimensions": {"input": ["failing", "passing"], "revision": ["baseline", "candidate"]}}, "depends_on": ["model"]},
+    {"node_id": "reproduce", "command_id": "debug.reproduce", "inputs": {"expected": "parse succeeds", "observed": "parse fails", "steps": []}, "depends_on": ["dimensions"]},
+    {"node_id": "minimise", "command_id": "debug.minimise", "inputs": {"sequence": [], "required_items": []}, "depends_on": ["reproduce"]},
+    {"node_id": "discover-invariants", "command_id": "invariant.discover", "inputs": {"statements": ["valid historical parser inputs remain accepted"], "scope": ["**"], "source": "parser regression workflow"}, "depends_on": ["minimise"]},
+    {"node_id": "evidence-coverage", "command_id": "ieps.coverage", "inputs": {"subject_id": "parser-regression"}, "depends_on": ["discover-invariants"]},
+    {"node_id": "select-algorithm", "command_id": "algorithm.select", "inputs": {"command_id": "eon.execute", "context": {"task": "parser regression"}}, "depends_on": ["evidence-coverage"]},
+    {"node_id": "draft-action", "command_id": "eon.draft", "inputs": {"summary": "Apply parser regression candidate"}, "depends_on": ["select-algorithm"]},
+    {"node_id": "simulate", "command_id": "simulate.worktree", "inputs": {"subject": "parser regression candidate"}, "depends_on": ["draft-action"]},
+    {"node_id": "qualify", "command_id": "ieps.qualify", "inputs": {"subject_id": "parser-regression"}, "depends_on": ["simulate"]},
+    {"node_id": "assurance", "command_id": "assurance.generate", "inputs": {"subject_id": "parser-regression", "top_claim": "The parser regression candidate is safe to execute", "approval_facts": {"satisfied": false}, "rollback_argument": {"required": true, "covered": false}}, "depends_on": ["qualify"]},
+    {"node_id": "verify", "command_id": "verify.regression", "inputs": {"results": [], "uncovered": ["candidate not executed"]}, "depends_on": ["assurance"]},
+    {"node_id": "classify", "command_id": "cfel.classify", "inputs": {"subject_id": "parser-regression", "expected": "regression fixed", "observed": "candidate pending execution"}, "depends_on": ["verify"]}
+  ],
+  "outputs": {
+    "assurance_case": "assurance.output",
+    "classification": "classify.output"
+  }
+}

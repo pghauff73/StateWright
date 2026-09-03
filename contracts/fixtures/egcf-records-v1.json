@@ -1,0 +1,571 @@
+{
+  "case_count": 25,
+  "cases": [
+    {
+      "object_id": "algorithm-definition:sha256:bb8a92182227b004d06e225705dadf9ee1b544498feb02dbf729e4b5f25f3220",
+      "object_type": "algorithm-definition",
+      "payload": {
+        "applicability": {},
+        "capability_level": "capability_level-value",
+        "capability_requirements": [
+          "capability_requirements-item-value"
+        ],
+        "command_ids": [
+          "command_ids-item-value"
+        ],
+        "evidence_requirements": [
+          "evidence_requirements-item-value"
+        ],
+        "implementation_digest": "implementation_digest-value",
+        "implementation_kind": "implementation_kind-value",
+        "implementation_ref": "implementation_ref-value",
+        "input_schema": {},
+        "invariants": [
+          "invariants-item-value"
+        ],
+        "known_failures": [
+          "known_failures-item-value"
+        ],
+        "name": "name-value",
+        "output_schema": {},
+        "owner": "owner-value",
+        "provenance": {},
+        "qualification_policy": {},
+        "risk_floor": "risk_floor-value",
+        "rollback_class": "rollback_class-value",
+        "status": "status-value",
+        "version": 1
+      }
+    },
+    {
+      "object_id": "approval:sha256:1e7c9b659e627b9479daf1e456cb9e41b0bdfed5e9b57a6d818a8adbcbff1d18",
+      "object_type": "approval",
+      "payload": {
+        "approver": "approver-value",
+        "authority": "authority-value",
+        "constraints": {},
+        "created_at": "created_at-value",
+        "expires_at": "expires_at-value",
+        "human": true,
+        "plan_hash": "plan_hash-value",
+        "plan_id": "plan_id-value",
+        "use_count": 1,
+        "use_limit": 1
+      }
+    },
+    {
+      "object_id": "artifact:sha256:f8a8229e1580405d1300fe2e99bf755c79533750673ac3b870d5d2994457ffee",
+      "object_type": "artifact",
+      "payload": {
+        "created_at": "created_at-value",
+        "media_type": "media_type-value",
+        "path": "path-value",
+        "provenance": {},
+        "sha256": "sha256-value",
+        "size": 1,
+        "source_ids": [
+          "source_ids-item-value"
+        ]
+      }
+    },
+    {
+      "object_id": "assurance-case:sha256:32d26f701341b6df57cef294ee50f389e95d02b1e6da12d12aee1a57043de04d",
+      "object_type": "assurance-case",
+      "payload": {
+        "approval_facts": {},
+        "arguments": [
+          {}
+        ],
+        "capability_facts": {},
+        "conclusion": "conclusion-value",
+        "conflicts": [
+          "conflicts-item-value"
+        ],
+        "created_at": "created_at-value",
+        "decision_ids": [
+          "decision_ids-item-value"
+        ],
+        "gaps": [
+          "gaps-item-value"
+        ],
+        "invariant_ids": [
+          "invariant_ids-item-value"
+        ],
+        "refuting_evidence": [
+          "refuting_evidence-item-value"
+        ],
+        "rollback_argument": {},
+        "subclaims": [
+          {}
+        ],
+        "subject_id": "subject_id-value",
+        "supporting_evidence": [
+          "supporting_evidence-item-value"
+        ],
+        "top_claim": "top_claim-value",
+        "uncertainties": [
+          "uncertainties-item-value"
+        ]
+      }
+    },
+    {
+      "object_id": "capability-grant:sha256:d36115ed4b0585cc29106c4131ddc022098237e5c4a7b2d700de9954ae3f85a1",
+      "object_type": "capability-grant",
+      "payload": {
+        "approval_modes": [
+          "approval_modes-item-value"
+        ],
+        "authority_hash": "authority_hash-value",
+        "budget": {},
+        "capabilities": [
+          "capabilities-item-value"
+        ],
+        "capability_ceiling": "capability_ceiling-value",
+        "expires_at": "expires_at-value",
+        "issuer": "issuer-value",
+        "resources": {},
+        "scope": [
+          "scope-item-value"
+        ],
+        "subject": "subject-value",
+        "use_count": 1,
+        "use_limit": 1
+      }
+    },
+    {
+      "object_id": "capability-spec:sha256:2df2135f746db9feeed097413a8f1501e1e0dbcbfee3bf36ac00632197d9d869",
+      "object_type": "capability-spec",
+      "payload": {
+        "constraints": {},
+        "description": "description-value",
+        "facet": "facet-value",
+        "level": "level-value",
+        "name": "name-value",
+        "resource_schema": {}
+      }
+    },
+    {
+      "object_id": "claim:sha256:f7abe1377205eccdd0160b5a50ed87f5f9d1a44067227c225ea42304ee20bfcf",
+      "object_type": "claim",
+      "payload": {
+        "confidence_policy": {},
+        "falsifier": "falsifier-value",
+        "scope": [
+          "scope-item-value"
+        ],
+        "statement": "statement-value",
+        "status": "status-value",
+        "subject_id": "subject_id-value"
+      }
+    },
+    {
+      "object_id": "command-definition:sha256:05f129c18425406d6c26683dab8eee0424ec8394743821e47d42f2399b0abd23",
+      "object_type": "command-definition",
+      "payload": {
+        "algorithm_query": {},
+        "aliases": [
+          "aliases-item-value"
+        ],
+        "approval_policy": "approval_policy-value",
+        "budget_policy": {},
+        "capability_query": {},
+        "description": "description-value",
+        "evidence_requirements": [
+          "evidence_requirements-item-value"
+        ],
+        "input_schema": {},
+        "intent_kinds": [
+          "intent_kinds-item-value"
+        ],
+        "invariants": [
+          "invariants-item-value"
+        ],
+        "lifecycle_policy": {},
+        "name": "name-value",
+        "namespace": "namespace-value",
+        "output_schema": {},
+        "postconditions": [
+          "postconditions-item-value"
+        ],
+        "preconditions": [
+          "preconditions-item-value"
+        ],
+        "risk_policy": "risk_policy-value",
+        "rollback_policy": "rollback_policy-value",
+        "version": 1
+      }
+    },
+    {
+      "object_id": "command-invocation:sha256:d779fe6958e7f17e04a5f50ef79dc8e1f0087e54e12ba83e7f437c9da6273711",
+      "object_type": "command-invocation",
+      "payload": {
+        "actor": "actor-value",
+        "command_definition_id": "command_definition_id-value",
+        "command_id": "command_id-value",
+        "created_at": "created_at-value",
+        "inputs": {},
+        "intent_id": "intent_id-value",
+        "modifiers": {},
+        "scope": [
+          "scope-item-value"
+        ]
+      }
+    },
+    {
+      "object_id": "compiled-workflow:sha256:b02f0e1a6cf6d283b59e57b93c6764a078d85504080b94e99cf28da8191d2f91",
+      "object_type": "compiled-workflow",
+      "payload": {
+        "approval_policy": "approval_policy-value",
+        "budget": {},
+        "capability_level": "capability_level-value",
+        "capability_requirements": [
+          "capability_requirements-item-value"
+        ],
+        "command_context": {},
+        "created_at": "created_at-value",
+        "edges": [
+          {}
+        ],
+        "evidence_requirements": [
+          "evidence_requirements-item-value"
+        ],
+        "execution_order": [
+          "execution_order-item-value"
+        ],
+        "graph_hash": "graph_hash-value",
+        "nodes": [
+          {}
+        ],
+        "risk": "risk-value",
+        "rollback_graph": {},
+        "source_snapshot_hash": "source_snapshot_hash-value",
+        "unresolved": [
+          "unresolved-item-value"
+        ],
+        "workflow_id": "workflow_id-value"
+      }
+    },
+    {
+      "object_id": "confidence-assessment:sha256:30547cb861097b0e2c7f6c62d68324092757eb25805368b599b7cf2a664f7148",
+      "object_type": "confidence-assessment",
+      "payload": {
+        "blocking_gaps": [
+          "blocking_gaps-item-value"
+        ],
+        "conclusion": "conclusion-value",
+        "conflicts": [
+          "conflicts-item-value"
+        ],
+        "created_at": "created_at-value",
+        "dimensions": {},
+        "evidence_ids": [
+          "evidence_ids-item-value"
+        ],
+        "known_unknowns": [
+          "known_unknowns-item-value"
+        ],
+        "policy": "policy-value",
+        "subject_id": "subject_id-value"
+      }
+    },
+    {
+      "object_id": "decision:sha256:c017a5d84163c3027ed3b7536695eaf37415420423ec53656e1edd7f699994ad",
+      "object_type": "decision",
+      "payload": {
+        "alternatives": [
+          "alternatives-item-value"
+        ],
+        "choice": "choice-value",
+        "constraints": [
+          "constraints-item-value"
+        ],
+        "created_at": "created_at-value",
+        "evidence_ids": [
+          "evidence_ids-item-value"
+        ],
+        "owner": "owner-value",
+        "question": "question-value",
+        "rationale": "rationale-value",
+        "scope": [
+          "scope-item-value"
+        ],
+        "status": "status-value",
+        "supersedes": "supersedes-value"
+      }
+    },
+    {
+      "object_id": "egcf-evidence:sha256:1920fefd1068acf269b6aeb1b9f58c76c7421023c8dc68ec33cf821cd0114ee5",
+      "object_type": "egcf-evidence",
+      "payload": {
+        "algorithm_id": "algorithm_id-value",
+        "category": "category-value",
+        "claim_ids": [
+          "claim_ids-item-value"
+        ],
+        "command_id": "command_id-value",
+        "content": {},
+        "created_at": "created_at-value",
+        "environment": {},
+        "independence_group": "independence_group-value",
+        "limitations": [
+          "limitations-item-value"
+        ],
+        "method": "method-value",
+        "oracle": "oracle-value",
+        "path": "path-value",
+        "producer": "producer-value",
+        "requirement_ids": [
+          "requirement_ids-item-value"
+        ],
+        "sha256": "sha256-value",
+        "simulated": true,
+        "source_snapshot_hash": "source_snapshot_hash-value",
+        "subject_id": "subject_id-value",
+        "success": true,
+        "target": "target-value"
+      }
+    },
+    {
+      "object_id": "evidence-requirement:sha256:6384fee236b4e6f8b61b379ecc00486caa18f4d57113791535ae9ca4aa5d18f9",
+      "object_type": "evidence-requirement",
+      "payload": {
+        "category": "category-value",
+        "freshness_seconds": 1,
+        "independence_group": "independence_group-value",
+        "mandatory": true,
+        "name": "name-value",
+        "oracle": "oracle-value",
+        "subject_id": "subject_id-value"
+      }
+    },
+    {
+      "object_id": "execution:sha256:5ffc41589e2feb783ed950581c968258116599df9417709cb8d795e147f5c0cd",
+      "object_type": "execution",
+      "payload": {
+        "algorithm_id": "algorithm_id-value",
+        "completed_at": "completed_at-value",
+        "evidence_ids": [
+          "evidence_ids-item-value"
+        ],
+        "executor": "executor-value",
+        "inputs_hash": "inputs_hash-value",
+        "node_id": "node_id-value",
+        "output": {},
+        "plan_id": "plan_id-value",
+        "simulated": true,
+        "started_at": "started_at-value",
+        "status": "status-value",
+        "usage": {}
+      }
+    },
+    {
+      "object_id": "execution-plan:sha256:702f8dffe543e9c27269ef16087408ba3b1e492bd437a338bc6dbfb18d43118d",
+      "object_type": "execution-plan",
+      "payload": {
+        "algorithm_digests": [
+          "algorithm_digests-item-value"
+        ],
+        "approval_policy": "approval_policy-value",
+        "budget": {},
+        "capability_grant_id": "capability_grant_id-value",
+        "compiled_workflow_id": "compiled_workflow_id-value",
+        "created_at": "created_at-value",
+        "eon_action_ids": [
+          "eon_action_ids-item-value"
+        ],
+        "evidence_ids": [
+          "evidence_ids-item-value"
+        ],
+        "expires_at": "expires_at-value",
+        "graph_hash": "graph_hash-value",
+        "node_order": [
+          "node_order-item-value"
+        ],
+        "rollback_graph": {},
+        "source_snapshot_hash": "source_snapshot_hash-value"
+      }
+    },
+    {
+      "object_id": "failure:sha256:5c43886932a44aae818f91774efffa345ff1498f0afc13007889eed8a4a9d9bf",
+      "object_type": "failure",
+      "payload": {
+        "active_dimension": "active_dimension-value",
+        "created_at": "created_at-value",
+        "evidence_ids": [
+          "evidence_ids-item-value"
+        ],
+        "expected": "expected-value",
+        "frozen_dimensions": [
+          "frozen_dimensions-item-value"
+        ],
+        "observed": "observed-value",
+        "retry_count": 1,
+        "status": "status-value",
+        "subject_id": "subject_id-value"
+      }
+    },
+    {
+      "object_id": "intent:sha256:1bf71c5d24dc78746bb64e667f5a770264a48d7a03b1cf598bfcd2305785220b",
+      "object_type": "intent",
+      "payload": {
+        "actor": "actor-value",
+        "ambiguities": [
+          "ambiguities-item-value"
+        ],
+        "assumptions": [
+          "assumptions-item-value"
+        ],
+        "created_at": "created_at-value",
+        "objective": "objective-value",
+        "provenance": {},
+        "raw_request": "raw_request-value",
+        "raw_request_hash": "raw_request_hash-value"
+      }
+    },
+    {
+      "object_id": "invariant:sha256:d137a8027e663141ea9cc4216274087bc4827693a8eba9461fb02e8dff302a15",
+      "object_type": "invariant",
+      "payload": {
+        "authority": "authority-value",
+        "counterexamples": [
+          "counterexamples-item-value"
+        ],
+        "created_at": "created_at-value",
+        "evidence_ids": [
+          "evidence_ids-item-value"
+        ],
+        "falsifier": "falsifier-value",
+        "name": "name-value",
+        "scope": [
+          "scope-item-value"
+        ],
+        "statement": "statement-value",
+        "status": "status-value",
+        "supersedes": "supersedes-value",
+        "validator": {}
+      }
+    },
+    {
+      "object_id": "qualification:sha256:1490ab9b51976c4fe41fb3744d67edac4b0753fbbcfebcd06ff174376a037129",
+      "object_type": "qualification",
+      "payload": {
+        "algorithm_digest": "algorithm_digest-value",
+        "algorithm_id": "algorithm_id-value",
+        "benchmarks": [
+          {}
+        ],
+        "context": {},
+        "context_hash": "context_hash-value",
+        "created_at": "created_at-value",
+        "evidence_ids": [
+          "evidence_ids-item-value"
+        ],
+        "expires_at": "expires_at-value",
+        "known_failures": [
+          "known_failures-item-value"
+        ],
+        "qualified_by": "qualified_by-value",
+        "status": "status-value",
+        "tests": [
+          {}
+        ]
+      }
+    },
+    {
+      "object_id": "rollback:sha256:1b8d4c31dada8731d6efe7415140eb326133b2faf5e877214d3d954bf8337246",
+      "object_type": "rollback",
+      "payload": {
+        "created_at": "created_at-value",
+        "execution_ids": [
+          "execution_ids-item-value"
+        ],
+        "failures": [
+          "failures-item-value"
+        ],
+        "plan_id": "plan_id-value",
+        "post_state": {},
+        "pre_state": {},
+        "restored_state": {},
+        "rollback_class": "rollback_class-value",
+        "status": "status-value"
+      }
+    },
+    {
+      "object_id": "selection-decision:sha256:73fa14b56b82f366dc784c477d51ba226f243fcbd68fd6ebb46c02c5710c1171",
+      "object_type": "selection-decision",
+      "payload": {
+        "candidates": [
+          {}
+        ],
+        "command_id": "command_id-value",
+        "context_hash": "context_hash-value",
+        "created_at": "created_at-value",
+        "evidence_ids": [
+          "evidence_ids-item-value"
+        ],
+        "excluded": [
+          {}
+        ],
+        "ranking": [
+          "ranking-item-value"
+        ],
+        "score_components": {},
+        "selected_algorithm_digest": "selected_algorithm_digest-value",
+        "selected_algorithm_id": "selected_algorithm_id-value",
+        "tie_break": "tie_break-value"
+      }
+    },
+    {
+      "object_id": "supersedence:sha256:15edead5d58de9a5d4f7bff5b169a68b8025952f9341cf62ec0f253d88e30e3d",
+      "object_type": "supersedence",
+      "payload": {
+        "authority": "authority-value",
+        "created_at": "created_at-value",
+        "new_id": "new_id-value",
+        "old_id": "old_id-value",
+        "reason": "reason-value"
+      }
+    },
+    {
+      "object_id": "workflow-definition:sha256:b8235eede1a2910f1fa2b7835f3a15264620c920e3a24c615bc49783efc356a2",
+      "object_type": "workflow-definition",
+      "payload": {
+        "description": "description-value",
+        "name": "name-value",
+        "nodes": [
+          {
+            "checkpoint": true,
+            "command_id": "command_id-value",
+            "depends_on": [
+              "depends_on-item-value"
+            ],
+            "inputs": {},
+            "node_id": "node_id-value",
+            "retry_limit": 1,
+            "when": {}
+          }
+        ],
+        "outputs": {},
+        "parameters": {},
+        "version": 1
+      }
+    },
+    {
+      "object_id": "workflow-node:sha256:2d9b83318e0e19a1fd684176427fe0e6d93b01010c22306cfdb5013ab9bfed43",
+      "object_type": "workflow-node",
+      "payload": {
+        "checkpoint": true,
+        "command_id": "command_id-value",
+        "depends_on": [
+          "depends_on-item-value"
+        ],
+        "inputs": {},
+        "node_id": "node_id-value",
+        "retry_limit": 1,
+        "when": {}
+      }
+    }
+  ],
+  "oracle_commit": "957111e2d5d11dec719c7f993f51644e701fc256",
+  "schema_version": 1
+}

@@ -1,0 +1,20 @@
+FROM qwen3.8-27b-fast
+
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+<think>
+
+</think>
+
+{{ .Response }}<|im_end|>
+"""
+
+PARAMETER num_ctx 4096
+PARAMETER draft_num_predict 2
+PARAMETER stop <|im_start|>
+PARAMETER stop <|im_end|>
+PARAMETER stop <think>
+PARAMETER stop <|im_start|>user

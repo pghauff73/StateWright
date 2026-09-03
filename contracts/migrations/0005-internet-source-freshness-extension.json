@@ -1,0 +1,14 @@
+{
+  "migration_id": "statewright-internet-source-freshness-extension-v1",
+  "schema_version": 1,
+  "extension_contract": "schemas/statewright-v1/internet-improvement-extension.schema.json",
+  "frozen_contract_modified": false,
+  "added_object_types": [],
+  "extended_object_types": [
+    "internet-promotion-assessment"
+  ],
+  "authority_effect": "none",
+  "canonical_algorithm_effect": "qualification_only",
+  "human_approval_required": false,
+  "compatibility": "source_age_seconds is optional for pre-migration records and required in newly emitted assessments"
+}

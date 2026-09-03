@@ -1,0 +1,17 @@
+{
+  "migration_id": "statewright-internet-qualification-promotion-extension-v1",
+  "schema_version": 1,
+  "extension_contract": "schemas/statewright-v1/internet-improvement-extension.schema.json",
+  "frozen_contract_modified": false,
+  "added_object_types": [
+    "internet-experiment-qualification",
+    "internet-promotion-assessment",
+    "internet-promotion-policy"
+  ],
+  "extended_object_types": [
+    "internet-algorithm-candidate"
+  ],
+  "authority_effect": "none",
+  "canonical_algorithm_effect": "qualification_only",
+  "human_approval_required": false
+}

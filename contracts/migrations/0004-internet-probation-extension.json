@@ -1,0 +1,18 @@
+{
+  "migration_id": "statewright-internet-probation-extension-v1",
+  "schema_version": 1,
+  "extension_contract": "schemas/statewright-v1/internet-improvement-extension.schema.json",
+  "frozen_contract_modified": false,
+  "added_object_types": [
+    "internet-demotion-decision",
+    "internet-probation-admission",
+    "internet-probation-observation",
+    "internet-promotion-decision"
+  ],
+  "extended_object_types": [
+    "internet-algorithm-candidate"
+  ],
+  "authority_effect": "none",
+  "canonical_algorithm_effect": "probationary_admission_and_preference",
+  "human_approval_required": false
+}

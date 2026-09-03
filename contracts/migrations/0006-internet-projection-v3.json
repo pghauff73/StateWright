@@ -1,0 +1,14 @@
+{
+  "migration_id": "statewright-internet-projection-v3",
+  "schema_version": 1,
+  "projection_schema_version": 3,
+  "frozen_contract_modified": false,
+  "added_projection_tables": [
+    "internet_records",
+    "internet_record_fts"
+  ],
+  "authority_effect": "none",
+  "canonical_algorithm_effect": "none",
+  "human_approval_required": false,
+  "rebuild_required": true
+}

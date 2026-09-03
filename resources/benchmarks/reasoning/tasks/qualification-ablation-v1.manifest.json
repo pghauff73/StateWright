@@ -1,0 +1,68 @@
+{
+  "class_count": 10,
+  "class_counts": {
+    "adversarial": 10,
+    "arithmetic": 10,
+    "causal_reasoning": 10,
+    "debugging": 10,
+    "logic": 10,
+    "scientific_inference": 10
+  },
+  "classes": [
+    "logic",
+    "arithmetic",
+    "debugging",
+    "scientific_inference",
+    "causal_reasoning",
+    "adversarial"
+  ],
+  "corpus_id": "qualification-ablation-v1",
+  "parent_shards": [
+    {
+      "category": "logic",
+      "count": 10,
+      "shard_index": 36,
+      "start": 360
+    },
+    {
+      "category": "arithmetic",
+      "count": 10,
+      "shard_index": 47,
+      "start": 470
+    },
+    {
+      "category": "debugging",
+      "count": 10,
+      "shard_index": 22,
+      "start": 220
+    },
+    {
+      "category": "scientific_inference",
+      "count": 10,
+      "shard_index": 56,
+      "start": 560
+    },
+    {
+      "category": "causal_reasoning",
+      "count": 10,
+      "shard_index": 11,
+      "start": 110
+    },
+    {
+      "category": "adversarial",
+      "count": 10,
+      "shard_index": 3,
+      "start": 30
+    }
+  ],
+  "parent_task_count": 600,
+  "parent_task_file": "benchmarks/reasoning/tasks/qualification-v2.jsonl",
+  "parent_task_file_sha256": "d4a1e42e12772b08f256af7fdd05245cdc1d478a7793abe022e05320bbaa12a3",
+  "performance_claim_allowed": false,
+  "qualification_status": "held_out_ablation_frozen_before_live_scoring",
+  "schema_version": 1,
+  "selection_rule": "per category, choose one parent-order block of class_count tasks using SHA-256({corpus_id,category,class_count}) modulo available blocks; preserve parent order",
+  "task_count": 60,
+  "task_file": "benchmarks/reasoning/tasks/qualification-ablation-v1.jsonl",
+  "task_file_sha256": "1edc57a2b3291e1d008b550a9ba5985942b31273b9ff85219e9b9d31e061e394"
+}

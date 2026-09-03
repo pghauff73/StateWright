@@ -1,0 +1,22 @@
+{
+  "accepted_mime_types": [
+    "application/json",
+    "text/html",
+    "text/plain"
+  ],
+  "allow_loopback_for_tests": false,
+  "allowed_ports": [443],
+  "allowed_schemes": ["https"],
+  "connect_timeout_seconds": 10,
+  "maximum_decompressed_bytes": 33554432,
+  "maximum_header_bytes": 65536,
+  "maximum_redirects": 5,
+  "maximum_response_bytes": 8388608,
+  "policy_version": "statewright-internet-source-policy-v1",
+  "request_timeout_seconds": 30,
+  "require_known_license": false,
+  "require_robots_permission": true,
+  "require_tls_verification": true,
+  "schema_version": 1,
+  "user_agent": "StateWright-SAA/0.1"
+}

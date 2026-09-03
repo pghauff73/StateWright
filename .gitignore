@@ -1,0 +1,14 @@
+/build/
+/build-*/
+/.cache/
+/compile_commands.json
+/.statewright/
+/.ourd-agent/
+/CMakeFiles/
+/CMakeCache.txt
+/CTestTestfile.cmake
+/Testing/
+/cmake_install.cmake
+/CPackConfig.cmake
+/CPackSourceConfig.cmake
+/install_manifest.txt

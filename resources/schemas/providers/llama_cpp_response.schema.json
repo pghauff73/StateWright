@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oiec-stm-agent.local/schemas/providers/llama_cpp_response.schema.json",
+  "title": "OIEC llama.cpp JSONL event",
+  "type": "object",
+  "required": ["protocol_version", "type", "request_id", "status"],
+  "properties": {
+    "protocol_version": {"const": 1},
+    "type": {"enum": ["stream", "result", "error", "cancelled"]},
+    "request_id": {"type": "string", "minLength": 1},
+    "status": {
+      "enum": [
+        "ok",
+        "cancelled",
+        "deadline_exceeded",
+        "context_overflow",
+        "unsupported_contract",
+        "invalid_output",
+        "provider_error"
+      ]
+    },
+    "text": {"type": "string"},
+    "response": {"type": "object"},
+    "descriptor": {"type": "object"},
+    "diagnostic": {"type": "string"},
+    "metrics": {"type": "object"}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,1648 @@
+{
+  "file_count": 234,
+  "files": [
+    {
+      "git_blob": "db3ccc5ee09ab74119ed49de4a9a3d593f05c6ab",
+      "mode": "100644",
+      "path": "EGCFV1_IMPLEMENTATION_PLAN.md",
+      "sha256": "92afcf0fb2f862b887c5ed9baebc27f61f1b6f172ed39a2fb75d1418a7a754fc",
+      "size": 54280
+    },
+    {
+      "git_blob": "03b09bdd60b65a263d167e08c65887fd79e7f446",
+      "mode": "100644",
+      "path": "OIEC_SR_V1_IMPLEMENTATION_PLAN.md",
+      "sha256": "a8aee3a392714e35f43e6bbabe8970d6fd17c7ab487d1f44bd3f07d4c024df6f",
+      "size": 48322
+    },
+    {
+      "git_blob": "6f55b205430265127947fd6490cd503a79079b8b",
+      "mode": "100644",
+      "path": "algorithms/v1/catalog.json",
+      "sha256": "92269b9dd771b34804a4592d62366c1e09fd2d630050d7e7403383fb8885050e",
+      "size": 934
+    },
+    {
+      "git_blob": "081e8cf653af3f7a7886d9ab9aedc278408b2f83",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/README.md",
+      "sha256": "b19f86305576f6abc679fdae1e2f19b6a180ff0f31e9ea0eca90ddbdefed69e0",
+      "size": 13206
+    },
+    {
+      "git_blob": "a12200a4396964b159fb115b4fe0668c40126f2f",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/baseline-v1.json",
+      "sha256": "cb10269b5016d3bbc1a7dc31d2cd753438f9431702bfed5d38425d212e914027",
+      "size": 23042
+    },
+    {
+      "git_blob": "7293efe8ee0ce914dc77ba78607f390b1e448d91",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/baseline-v1.sha256",
+      "sha256": "5da915aa518ae20e1f96146b1ede01c55e7ab955448dea6e2e83d45f4036ff03",
+      "size": 83
+    },
+    {
+      "git_blob": "d5613b7894b5f720a5d49a3568d572589acecbbb",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/fixtures/development-v1.outputs.json",
+      "sha256": "66952d6e4235377d57fb1c43db03b3b87c60e5be42d7097bb4ce1bb7cbb91019",
+      "size": 9865
+    },
+    {
+      "git_blob": "b3cfa8b237fcc5026f6c17ed6ca6774fd997c0ad",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/models/qwen3.8-27b-benchmark-4k.Modelfile",
+      "sha256": "c91ca184dcf27a3016760f2fad4eb5b4fa359e1b5e04bedf7fc80ac37b253662",
+      "size": 403
+    },
+    {
+      "git_blob": "fe5609017d7da29b5448ccaa561ddb7dfadf0543",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/SR-0B_FAILURE_ANALYSIS.md",
+      "sha256": "2baeccfea9ed18313edbf2910acdd7add5bc708186b814e459f3e38f55529261",
+      "size": 3710
+    },
+    {
+      "git_blob": "c9364ea7bb2fd39a7ae419c138bc9b03586088e7",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/SR-1A_BENCHMARK_ANALYSIS.md",
+      "sha256": "872af8bbeb3545d2f72d57c6717a3a96c74ea9144ad15b912193053ee24460d5",
+      "size": 2678
+    },
+    {
+      "git_blob": "74ce08e087c165958d4235fe2cf9ea9f80e6b4ff",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/model-bound-2026-08-28-qwen2.5-14b-provider-default-current-source.json",
+      "sha256": "87c9560e5cdf3f01c2dc5393873120457501051728c161fca3dcb9e36b2f1085",
+      "size": 38308
+    },
+    {
+      "git_blob": "bc2da7ad8bc3c31fb0a98ae233fb98de73ecd3e9",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/model-bound-2026-08-28-qwen2.5-14b-provider-default-current-source.sha256",
+      "sha256": "988df7431a87ccd3277842af9289a185d6c76a108cb9b2c57e8c84efefaa40c2",
+      "size": 138
+    },
+    {
+      "git_blob": "e45c10a721984f62a4b15528fad71d8211d76bfd",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/model-bound-2026-08-28-qwen2.5-14b-provider-default.json",
+      "sha256": "0916bfc7979c9798672c19eff1dce0ab81462d7f4060005ddfa763831abbdac4",
+      "size": 38389
+    },
+    {
+      "git_blob": "058123ff72cc2c7747edbf16eaed6bbb0fd61908",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/model-bound-2026-08-28-qwen2.5-14b-provider-default.sha256",
+      "sha256": "d82279bce3f366a62f2314b17de871a48177421ecc581eb7194e3cd8625a8447",
+      "size": 123
+    },
+    {
+      "git_blob": "c4e2bc8437c496f074f4054816b58d453177ab5c",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/model-bound-2026-08-28-qwen2.5-14b-sr1a-current-source.json",
+      "sha256": "dc8d95bcc9913ef3c1c0a5728fd1a45d0988c8977fabf78b206e3954cd813abf",
+      "size": 38725
+    },
+    {
+      "git_blob": "63ab625e4df1f8513946c1f331deca2fc78c1247",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/model-bound-2026-08-28-qwen2.5-14b-sr1a-current-source.sha256",
+      "sha256": "fc06bcc8f350c0b811bdd0996ec4ce8ee0145d637ec8a9fa4f94b19723511b1b",
+      "size": 126
+    },
+    {
+      "git_blob": "3a4fdf612e80b54e0625e42417a2f3e682214faa",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/model-bound-2026-08-28-qwen3.8-27b-fast-low.json",
+      "sha256": "5a1fbf194327f25ca5e00bbaa339c5ac5de58574fee734b245c46e07294c057c",
+      "size": 33700
+    },
+    {
+      "git_blob": "beb79bec0c303903788732b2233801ab8278c09a",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/model-bound-2026-08-28-qwen3.8-27b-fast-low.sha256",
+      "sha256": "faaf7f90680415250b2b52b99336a4c9929a03d031b00a4859e4376e6edc65bf",
+      "size": 115
+    },
+    {
+      "git_blob": "7eb2793aef63171d0bd60a78ac0c29b5de439c96",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/model-bound-2026-08-28-qwen3.8-27b-sr2a-current-source.json",
+      "sha256": "1ab57ad4fd20ef28261b9694b2b3ea884bf1a96e637fb4dbeba7634ca1704859",
+      "size": 35026
+    },
+    {
+      "git_blob": "da7380c7e76a222f691281518a0622330e102d04",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/runs/model-bound-2026-08-28-qwen3.8-27b-sr2a-current-source.sha256",
+      "sha256": "960b33df7366b20327d42dfede0f63710045e265fb84036c61a767b174c9f69e",
+      "size": 126
+    },
+    {
+      "git_blob": "ec44b5ef9f2aab72add0e18a05d0fed31b7ec909",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/schema.json",
+      "sha256": "d5061128516aa74f14448f56cd1decb5c78ff734ddc248bbdd29867d2121aa30",
+      "size": 15535
+    },
+    {
+      "git_blob": "d925955d08ee15a5486c7b9914d60247ae69a46c",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/tasks/development-v1.jsonl",
+      "sha256": "a31729d762d5db620ebdb75b19af911aa5ff5907199b73491cd1d1a417173afe",
+      "size": 3921
+    },
+    {
+      "git_blob": "027ee1fcd5939c45a80ac2492b4e20b9b497a745",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/tasks/qualification-ablation-v1.jsonl",
+      "sha256": "1edc57a2b3291e1d008b550a9ba5985942b31273b9ff85219e9b9d31e061e394",
+      "size": 30968
+    },
+    {
+      "git_blob": "45c5ace009a17b87dcd43b6b977cbb64949ba853",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/tasks/qualification-ablation-v1.manifest.json",
+      "sha256": "3a23e918c5f9c73d73c201f8ee46d937e29fd37fa84d92bc302257d22e555e21",
+      "size": 1760
+    },
+    {
+      "git_blob": "b049649b1633ac131111dc8bfc1479847cad6eeb",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/tasks/qualification-v1.jsonl",
+      "sha256": "18f238d39a548655634dc730335cb2b68eed88033b6065ee10be398a22ddb2fd",
+      "size": 308693
+    },
+    {
+      "git_blob": "32ceb3ab007a041b4a1a0e22de27a8f92ba8b4fc",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/tasks/qualification-v1.manifest.json",
+      "sha256": "e80035ff4e9a24a07d9d44bc704e52df1ee71bfb27c38641506316deeb06f8cc",
+      "size": 468
+    },
+    {
+      "git_blob": "4e4e666aaa8d89bbf55895fd7495bc8fc0b4428b",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/tasks/qualification-v2.jsonl",
+      "sha256": "d4a1e42e12772b08f256af7fdd05245cdc1d478a7793abe022e05320bbaa12a3",
+      "size": 309693
+    },
+    {
+      "git_blob": "bf2da40511ec852b03a63b33e9681891e36524e0",
+      "mode": "100644",
+      "path": "benchmarks/reasoning/tasks/qualification-v2.manifest.json",
+      "sha256": "538a2bf024e03e6e25419183c42e2bbad4fdd95584f5d663bb94e01880902285",
+      "size": 468
+    },
+    {
+      "git_blob": "d7240a7b08c99c09b3c49732c9e3122b53deed4f",
+      "mode": "100644",
+      "path": "commands/v1/catalog.json",
+      "sha256": "0dc8778495e2d95455397abf9db20fe59f8f327bf1f67960f37a8dc033d0df9d",
+      "size": 2756
+    },
+    {
+      "git_blob": "dda5625b9d948648002600a1bf2f6660c29d9a39",
+      "mode": "100644",
+      "path": "commands/v1/contracts.json",
+      "sha256": "44387cc737dc4917432111f679f3f0a50c01a28d9e2847dbb441fdd944cac1b1",
+      "size": 160792
+    },
+    {
+      "git_blob": "2cf5715e076f2c88588b352ebd855785eee93141",
+      "mode": "100644",
+      "path": "docs/adr/0001-egcf-semantic-layer.md",
+      "sha256": "c43d89a532990970f6a862268da91c502e6fd6b600a952a8e442dc05497d613c",
+      "size": 792
+    },
+    {
+      "git_blob": "88b518b6e5c0fc63dfe6056e2e176c73e6eb034f",
+      "mode": "100644",
+      "path": "docs/adr/0002-egcf-canonical-storage.md",
+      "sha256": "684d137ae504c0af2074f8595096aec6786d9dac511980c4c5f0b287be8ea946",
+      "size": 659
+    },
+    {
+      "git_blob": "66238c885083813fa300639a27952f24d656d33a",
+      "mode": "100644",
+      "path": "docs/adr/0003-egcf-capability-authority.md",
+      "sha256": "bb9e931a03a21630509278379edb955bf108471bca939f40717016b7e25a29ee",
+      "size": 749
+    },
+    {
+      "git_blob": "d3e6293f600463819d84753f7389796c25f0dc01",
+      "mode": "100644",
+      "path": "docs/adr/0004-egcf-eon-boundary.md",
+      "sha256": "5d6b1613f8c17a0f18f195bf3eaf1d755873abba02dbd064a49b215c98245e97",
+      "size": 780
+    },
+    {
+      "git_blob": "e2c87aa09d5f5109109068452772ec4094e2c132",
+      "mode": "100644",
+      "path": "grammars/providers/oiec_compact_tool_response.gbnf",
+      "sha256": "9e8e6c082f90e19587211e95154ba8264cb95dc23fc94045a02d34a2cfa3b342",
+      "size": 600
+    },
+    {
+      "git_blob": "868abb88d4aeb8fd846af4d4cede9e236de964d2",
+      "mode": "100644",
+      "path": "grammars/providers/oiec_reasoning_response.gbnf",
+      "sha256": "a5a8d01257cae68ef65e71eca59a919fa02f217d0bff75e3828576c16113b997",
+      "size": 624
+    },
+    {
+      "git_blob": "fdd61c3d830c28439a91b405ca6c1a38c5c7b579",
+      "mode": "100644",
+      "path": "grammars/providers/oiec_tool_response.gbnf",
+      "sha256": "855727b437103926f20a05917f2e3e674c7fdbac4f8656e3aeb2d371e167ccaa",
+      "size": 840
+    },
+    {
+      "git_blob": "d595afb05f7dc2e8114b24b4e1a3ca87fdbbfcb8",
+      "mode": "100644",
+      "path": "ourd/authority.py",
+      "sha256": "6beec2f6b313e25e19b47cf7c2421d3305dbfda733ca54ca4bf16bcfedf53860",
+      "size": 8143
+    },
+    {
+      "git_blob": "5872980b395e29fbd0a5abc5cdd31cc49d124386",
+      "mode": "100644",
+      "path": "ourd/cfel.py",
+      "sha256": "fafa4fb900e0d625ee12e84ae574942d78b0c791218f632b168013d77b6b9f86",
+      "size": 4402
+    },
+    {
+      "git_blob": "c68c0bb5dd9fdb3367974fb7f78b3ae9ad194846",
+      "mode": "100644",
+      "path": "ourd/constants.py",
+      "sha256": "8abb001c3d6570eb424428aa3d89d61a6fa5e6bcd5873d5b099c3acd11f711df",
+      "size": 49
+    },
+    {
+      "git_blob": "f904cbcb32323a2fa69b854d24f91a1413200668",
+      "mode": "100644",
+      "path": "ourd/context_budget.py",
+      "sha256": "2246b95a602811de7c4a04197194c7992efabc7e3138b3e32f9fd29bd5375c14",
+      "size": 31545
+    },
+    {
+      "git_blob": "395645328eb2655e6b964a219ada52567b52e0cb",
+      "mode": "100644",
+      "path": "ourd/egcf/__init__.py",
+      "sha256": "1a4ac9e08e45f9aff410603595bf103b205862a56054dca3e9e06058b013d336",
+      "size": 7323
+    },
+    {
+      "git_blob": "e592e63ba71d38ca204cde91b1057651f232bd2e",
+      "mode": "100644",
+      "path": "ourd/egcf/adaptation.py",
+      "sha256": "b157acdf748517932d852f424e107785e1aec6d10f51122a46153eb55a41e312",
+      "size": 3376
+    },
+    {
+      "git_blob": "b1afbf5142b82b0ed7df09cd05e6e2bd2f99a4cd",
+      "mode": "100644",
+      "path": "ourd/egcf/adaptation_store.py",
+      "sha256": "30704132e930f104201c75ca239a6ef3755a6d2478f127a82605d84bb5016310",
+      "size": 30122
+    },
+    {
+      "git_blob": "0d964fc93344932a2e3c0e1e2d389490851fe174",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/__init__.py",
+      "sha256": "db77b5243b0a7852ba4c160954c69dd8c114b53232ccc74450a45a35db3742be",
+      "size": 626
+    },
+    {
+      "git_blob": "ea7862ff7471491de9550b23069646cbafd1669f",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/agent.py",
+      "sha256": "da2beac347bb54bbd86133ea13980c761caca3d9463af04944c75a7b7401cdc9",
+      "size": 1577
+    },
+    {
+      "git_blob": "470f89c987bb7983110935fc48653a7730432b16",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/base.py",
+      "sha256": "7863871c4b83b2ea69c0ef5595118b0e382bfbc405f997cf9c7219b8bbfd3a53",
+      "size": 1507
+    },
+    {
+      "git_blob": "5857db8ce0c64f98a24b94208b2e5c79861fcf54",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/codex.py",
+      "sha256": "cf8a28b4e4afdf9687bb229cdee4679bc82a9a01facbf4c2ffecec5ac4254ef8",
+      "size": 1815
+    },
+    {
+      "git_blob": "260a16666f5f76e83c969e2b0d7aa27f804be162",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/control.py",
+      "sha256": "d64c656d3cf71e13f983ba39604e3c86e265653b424fa095327341b9490a559c",
+      "size": 3244
+    },
+    {
+      "git_blob": "0321073a3a75030eebdaea9d0fc9b68916d898e7",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/eon.py",
+      "sha256": "3bb1bb57a06875026acb0a26120e8327ebfd62fdeddcace05c5242a17fbfed76",
+      "size": 11234
+    },
+    {
+      "git_blob": "46395a05a5143d70342d5980cb26aba66c454e06",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/mcp.py",
+      "sha256": "1bde4c7b54a587db0bb1c73a9cad5455a79d7b4f9397c412c07e3b18860ba3c6",
+      "size": 83
+    },
+    {
+      "git_blob": "4e49d82615240d1137c4a383db4f89f035c1b248",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/model.py",
+      "sha256": "b195eb6474761969793481d8de792df16d3f10d27db92274b315a105a8b38981",
+      "size": 1741
+    },
+    {
+      "git_blob": "16bb4e8efb43a3dc72b3e763f658c981f32a6d48",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/registry.py",
+      "sha256": "ef71b7018c56aef8ec8ff185ad860266c2555e6299bec4e9968dce661e7a74ba",
+      "size": 1575
+    },
+    {
+      "git_blob": "ebcd8fe9b3bf14120768ed195c2e010d21af98cc",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/semantic.py",
+      "sha256": "32457e573a0b82c5e317572c849bd18646027b3938a988e894dcc05c5210c16f",
+      "size": 2641
+    },
+    {
+      "git_blob": "2f6dddbd7c26c9390626fead25c25465896a7761",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/shell.py",
+      "sha256": "de735f2c5c08ee03f57ba9465a4c26abfa6c677ee9fa1ed41394e6922528fbef",
+      "size": 2158
+    },
+    {
+      "git_blob": "d30f104ee78eb01cf66d181398ac0d961be7213c",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/simulation.py",
+      "sha256": "2ad55f0109224c382357284425365f15b97e9e97c2f6a88d03ec650bbdb3929b",
+      "size": 2611
+    },
+    {
+      "git_blob": "2d88549e5da08a102fde622224ae77c866c06971",
+      "mode": "100644",
+      "path": "ourd/egcf/adapters/skill.py",
+      "sha256": "886d3eddd4b3886149ed848a19dee514bba4abeb172f8897a7657e09a048ba2d",
+      "size": 87
+    },
+    {
+      "git_blob": "c00be965463df5e7e2f42df9af03dd3483d04ed6",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/__init__.py",
+      "sha256": "c7fd01a1a256cd811c59b2c12cf46100f8afc8110ad80a9a3f02242dbe5e2a6f",
+      "size": 11021
+    },
+    {
+      "git_blob": "4a9fecaec92e7e0e094424fb110f2951ee087ed6",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/adaptation_lineage.py",
+      "sha256": "6debb16950e2b6a662beb0a2781bd96736ba55052b0edb7433aea9fdda60bd06",
+      "size": 7354
+    },
+    {
+      "git_blob": "19e55ad7f35ed81eff3d897d02a0cf698dd9e561",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/algorithm_adaptation.py",
+      "sha256": "4a59eccf90936b1413ce6afc6e372764c3ee844be58424c5c2e647775cc625dc",
+      "size": 8291
+    },
+    {
+      "git_blob": "49eefc06cfd18770d4f330290137f9b2d93c9e7e",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/algorithm_experiment.py",
+      "sha256": "7eedf3e7f71ef88b02b690d4cf70de0a1fb4dab40517c4384d31b67e42645b6f",
+      "size": 18018
+    },
+    {
+      "git_blob": "9f90b740bb623f0d05fb6620d6f0e6b6bd6104eb",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/algorithm_transfer.py",
+      "sha256": "d871e4805db38adb7392c5fdd46019c6f17d2d5b22fc3f02c093b32fe5e5ffe7",
+      "size": 8574
+    },
+    {
+      "git_blob": "b7f9188d82008950c83b1d4de89dc6d2eec1c560",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/brain_feed.py",
+      "sha256": "77df3f9062a4e4f5715390c73764a587689a73abaf700f77ac7bded218f889d3",
+      "size": 8945
+    },
+    {
+      "git_blob": "4c77b69b68dc7ff9761df78cd989f4c3ef07f58f",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/dynamics.py",
+      "sha256": "981307a16e2775bfa7fbcd1af9f94f285cd5939108ee5f63ddebcb7d6fa0e15d",
+      "size": 27673
+    },
+    {
+      "git_blob": "d62ff8420c1a14f0c2e96d223bc6c1dd98577abe",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/experiment_aggregation.py",
+      "sha256": "e478b2344a45d9d13ea9cc966960bb8eacf2a1d2cfce1cf0fed9d5a82285ee30",
+      "size": 9242
+    },
+    {
+      "git_blob": "614ecdb0075bd7525aa855029be61d3a035c1d81",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/failure_algebra.py",
+      "sha256": "a314b906e0e90faad71294fc99979614f294d7f83fde2ea65149022c445acf1e",
+      "size": 8727
+    },
+    {
+      "git_blob": "1a01c7b6082c1eccaec3c47c42b767cbdd808d52",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/graph.py",
+      "sha256": "90f30fbff315ec94228ce0e6df78dbf099b33fb0605049014ee40c97d6da1ac9",
+      "size": 17848
+    },
+    {
+      "git_blob": "8d94b38ec05bb4d763b01c56eb935af611932b03",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/improvement_scheduling.py",
+      "sha256": "144daeeeb673506dabc01c67053a66d9befe999ee1c78a45d12a8731b5a84c67",
+      "size": 10443
+    },
+    {
+      "git_blob": "fac168d239dce75a8d40e519d623cb95ae54ee3a",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/intelligence_loop.py",
+      "sha256": "30524aea6a49389d0a3897d098b2fb471bf3bc9b7b12ef93ebe976dbd549ca15",
+      "size": 15138
+    },
+    {
+      "git_blob": "44053f11c34a3ce27746d57f7e79109e3b6769f1",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/ir.py",
+      "sha256": "a02ddd0b7c5409b6d0d8a2eaa69dbaaad9fdcbd5e570e7b16704a194212f83f9",
+      "size": 6032
+    },
+    {
+      "git_blob": "11b49fe589c33759ffa33ed07f6242af802af6d5",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/jet.py",
+      "sha256": "394ac48075e6cb4d0c047cd90ebc1a67cba61fb65054d42eb851709d3f8ac85f",
+      "size": 17897
+    },
+    {
+      "git_blob": "73d83b5402e83d5804790fe2573a1a7ef57e7e80",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/knowledge_integrity.py",
+      "sha256": "8c8cba64613d9241f8fb1fb63299ac9878f8b6491adb2db720b9ca3f7a5a9abd",
+      "size": 12595
+    },
+    {
+      "git_blob": "b4063cb7af2c96274d338442875416c627ea8315",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/mimo.py",
+      "sha256": "5d6b67415d0a1d201db5a8aaeff1b717752df23833588de8fa9c3eaeacefdc58",
+      "size": 34850
+    },
+    {
+      "git_blob": "27fecdac416bd031f30d57dd951166ec973317fd",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/models.py",
+      "sha256": "3d2a7af65628d7f35fb12138fd6eeb382f840475aab5be9251763dd84e5b2895",
+      "size": 7612
+    },
+    {
+      "git_blob": "ab8af9607c4b600a5db0482ea154dec8100e9f6a",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/multistep_evolution.py",
+      "sha256": "23c331a8b8945aa6557a5a7956b4c8125737267287667fedd87145693286e008",
+      "size": 14148
+    },
+    {
+      "git_blob": "52dfca8752167e597a35a28677d6e7c7320accad",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/nonlinear_control.py",
+      "sha256": "6dc8d3a6ec0b4eb7eaf9333b7d86cb931eb24ccd7ee25c7227f599308b11b20e",
+      "size": 14849
+    },
+    {
+      "git_blob": "63104d480766307502d53ff51fcb53d90a1f6988",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/nonlinear_evidence.py",
+      "sha256": "3aa3ee232acead12cd34945bc9ec52d99620a1e30c584da74069c176213769b0",
+      "size": 20204
+    },
+    {
+      "git_blob": "3477fd04cb7cbba8f6355c07483060d41be7ea6b",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/nonlinear_geometry.py",
+      "sha256": "7ee9ededf20d3d6a7cf91aeb3202c238dcf1b94d1cdb34bd707a2c9401e5a338",
+      "size": 13742
+    },
+    {
+      "git_blob": "d0c3f7ecddc70c667dc157ee0aa23a7657c5457e",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/nonlinear_global.py",
+      "sha256": "3fde1d7b52aefb4b907850fb29e34e9dbc22f730a1cebc74027ed5f0de3d2a3b",
+      "size": 13660
+    },
+    {
+      "git_blob": "db9ffb810e0e374073d29e4e3f2929e96d6aacc9",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/nonlinear_lie.py",
+      "sha256": "686f3283828bbdd087485feffd6eb8de246901c37861f0396fc6783b1e9f5177",
+      "size": 21625
+    },
+    {
+      "git_blob": "57234d3308fcf91aebc4e615497661166d8bce44",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/nonlinear_lift.py",
+      "sha256": "b8bedc0af6aacbd46bad9973af32e4cd5c9a86f4c784807da14a4446959ea721",
+      "size": 9078
+    },
+    {
+      "git_blob": "20155f6364561f258dfb5751deb38bf83216505d",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/nonlinear_remainder.py",
+      "sha256": "00519b7f0846b5dd1db952d5f2629fbfb350a60617cc00b598002728e3daedce",
+      "size": 15950
+    },
+    {
+      "git_blob": "572b3f3253e00bb13a5973330cdb4e92cdf5cc57",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/nonlinear_search.py",
+      "sha256": "9edfdfb47ca7b785dd4cccd444d5ff8ebce2045cf7b3db2167f46c1bae365817",
+      "size": 33368
+    },
+    {
+      "git_blob": "73edd90c206639894218db6465b9b2879f583247",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/nonlinear_stability.py",
+      "sha256": "2c0b92337e6d8b83adfd822e51a16b441d27f1a9299053485e55f019a091570f",
+      "size": 12649
+    },
+    {
+      "git_blob": "c027213be02a72a1c3a7e2d91a13607bbf52ef58",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/nonlinear_transforms.py",
+      "sha256": "2dfcc269998bb95cec68b5e4d8efeeac60510a3041db603f571f5ed258c9734d",
+      "size": 29819
+    },
+    {
+      "git_blob": "33649eb2f0c6d127480ee68ad49d24ebde7dec18",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/normalize.py",
+      "sha256": "bde5b6ef53ddcfa762a89426adada18f4b1242d7b059d8814f5a251c7a43ae4c",
+      "size": 18085
+    },
+    {
+      "git_blob": "3a95e0b9addbac93d25679b09b3d12b2c2d27713",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/oiec_bench_gate.py",
+      "sha256": "28a4daa1d46915b2750eac8b30f4236e2c0baee999127568b4d24fe27cac6183",
+      "size": 8311
+    },
+    {
+      "git_blob": "dbfb6c4113479b3c8cca26d878785e02801e98c8",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/primitives.py",
+      "sha256": "5723b36bd7514474da4d1b627d51a6fbe2e33885363e827678862b35d2ca622f",
+      "size": 2651
+    },
+    {
+      "git_blob": "b5ac73514549ef3afd48be6fe860b7be950f2c9e",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/promotion_governance.py",
+      "sha256": "0efa537b1b29dfd2b3e412a22ad90ee1ee2713eb0413794cdd32410d6c878233",
+      "size": 4141
+    },
+    {
+      "git_blob": "ba0a0ee8a5951e3ecfff7d23ca5e44fec2321dfd",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/reasoning.py",
+      "sha256": "d11a1131889a139e3a5bed5dc7abffd8d32f644e083b74aabea9185c28c47842",
+      "size": 18055
+    },
+    {
+      "git_blob": "aea5a2f4aeb7ec077220e894264b1c79370d7091",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/reasoning_composition.py",
+      "sha256": "079e20c0c009fe558fc3a9f94c03a2ead775019d4de08b42daaae766b99b3fce",
+      "size": 12294
+    },
+    {
+      "git_blob": "a2f1d095548e6039d65b08e2b770a14474b54a1e",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/reasoning_equivalence.py",
+      "sha256": "d6b42a6b17392627514212441e5f4f5f7adba0998e3fdba6660fc65469b2b07b",
+      "size": 8331
+    },
+    {
+      "git_blob": "4226532117fe947b24bd1b2e1f17e6a0dd1b5cd7",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/reasoning_fit.py",
+      "sha256": "eda371a668279ba008d87245df1411d874635431b669452ff8bc2c6883ddda63",
+      "size": 11067
+    },
+    {
+      "git_blob": "c407cf9597aa2a2df40642ac463554485bd7e0f6",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/reasoning_outcome.py",
+      "sha256": "4d412300e2832e83a721ce9094b96b999bec43c5efe637930cf9b56a2d08d8c5",
+      "size": 13822
+    },
+    {
+      "git_blob": "d0f7e805f2cd7b5375642a0c92f3b6bf0102713c",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/reasoning_semantics.py",
+      "sha256": "7594a204450f5e7d16ae59b14d10412de030b78ac3db9afa68568d931111108a",
+      "size": 16940
+    },
+    {
+      "git_blob": "c5ca6b6e8add4703d39b950200a8e19dcfef5f46",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/representative.py",
+      "sha256": "da404a9c5ace72c035abc5fcab2817ea13faf7d23b1ad63d92d5f0ed8451acf6",
+      "size": 38521
+    },
+    {
+      "git_blob": "eef2e288b5d41456eaf6e7dfd5579b306f799f37",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/representative_form.py",
+      "sha256": "e10f60001608b44f6a155e32ff4c9c2180cd3d6b470a98fb668d85b8dec0c1ec",
+      "size": 27381
+    },
+    {
+      "git_blob": "52174cc33101a1933c1bcd35e8209b2c861d72a5",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/representative_zero.py",
+      "sha256": "0b4ed51ee12cd5ac84cbfbea55eb8f342a4a28df054d82681e8c22d947256646",
+      "size": 6438
+    },
+    {
+      "git_blob": "b332039feb58ea28ba646c44d87e8796e74f6d7a",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/retrieval_explanation.py",
+      "sha256": "4e2355a37238e366aaccaacbdc2e537efeb39fc41e7b4b40608788c81194c4dd",
+      "size": 9045
+    },
+    {
+      "git_blob": "7554c71b676514298ea70bdd168a01822f36d263",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/semantic.py",
+      "sha256": "60bbfcc15ecf76fefd9323bb7b6d1d5d7e3698ba481b9beea09d5dc6964b81a8",
+      "size": 27039
+    },
+    {
+      "git_blob": "032e4650d859f85174d4954aa07bb06bd371f976",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/semantic_alignment.py",
+      "sha256": "32730598161f3440d9ec4284aeccfcf5eb4d1f51321a309226cb42a502e0d014",
+      "size": 10781
+    },
+    {
+      "git_blob": "50be687279d02558b9a5ebec9bc6f9d7d763c598",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/semantic_revision.py",
+      "sha256": "4b37495459952ac885358f3519f6b549329629d55a524263ec2fbb89bbb94545",
+      "size": 17723
+    },
+    {
+      "git_blob": "9b1eb67e7106579c460ad7ee88977a6e9c758650",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/semantic_units.py",
+      "sha256": "efe9974641aa974c0966eb524bbb2e71dd3a22fe380671c34deb97ebce46da56",
+      "size": 16428
+    },
+    {
+      "git_blob": "4bb51a86be36e464b355d80e5b219a92f2dbb618",
+      "mode": "100644",
+      "path": "ourd/egcf/algebra/unified_retrieval.py",
+      "sha256": "58f68c35264057a97aa9e8d1f5064ad4ce33bda1ddd049c8fb00ebc8df01b10c",
+      "size": 14107
+    },
+    {
+      "git_blob": "6ef9de3010a9e43847e3d2b21f235c7908e52b18",
+      "mode": "100644",
+      "path": "ourd/egcf/approval.py",
+      "sha256": "536cfad5615fd5660d06433538370abf44a49bcfe1b4043c279d8820bd87340a",
+      "size": 3533
+    },
+    {
+      "git_blob": "74092cec6b7c64558bce54847bf207edd624df1c",
+      "mode": "100644",
+      "path": "ourd/egcf/assurance.py",
+      "sha256": "af221520a11bfe812824ef019264fbbbef0e9f9c11affd7d50134369d1708892",
+      "size": 3693
+    },
+    {
+      "git_blob": "ff4752c442c64edbd6d4793612b946bde8444e9d",
+      "mode": "100644",
+      "path": "ourd/egcf/brain_feed.py",
+      "sha256": "efaeaa9416eef448169f3e21a82890e8e97851588a1ff995ae2f6ea3b4a334f7",
+      "size": 20539
+    },
+    {
+      "git_blob": "17eaeb6c5aca704480301aea2bc48c9d537c80a5",
+      "mode": "100644",
+      "path": "ourd/egcf/brain_feed_store.py",
+      "sha256": "811f6b76cd8b5ff7a0c0385b51411fad3f6b3182a03c4628ab0b62c384163545",
+      "size": 17979
+    },
+    {
+      "git_blob": "2deaf2bd51e8beb475d40c03ac4073d0dabed959",
+      "mode": "100644",
+      "path": "ourd/egcf/canonical_store.py",
+      "sha256": "57ded2ae8e99270ee60a1f83c1472bf172b72170f78a950a1a1c3819edd35bbe",
+      "size": 59628
+    },
+    {
+      "git_blob": "765172bebed560257fe5f0877a955dbba6d4fa84",
+      "mode": "100644",
+      "path": "ourd/egcf/canonical_store_api.py",
+      "sha256": "8f7031fa8b6333fa2c22679a9defdbfaad38e56fd7acf9addf62b1dd7389d1b3",
+      "size": 5006
+    },
+    {
+      "git_blob": "f0bfca21127609f9b1746aadaa475fbcf7d95bca",
+      "mode": "100644",
+      "path": "ourd/egcf/capabilities.py",
+      "sha256": "399f537e7b2324cd7e5fce097808b4f1cb3498a10c304b2539d1cf1fd39c98ef",
+      "size": 8228
+    },
+    {
+      "git_blob": "ae1147c9b9005010b6a9f7dd37f16b243502166d",
+      "mode": "100644",
+      "path": "ourd/egcf/catalog.py",
+      "sha256": "bc066ded9880925d6ff716a60278eb42cbc71ec7ff9245829bb2a9e71332190e",
+      "size": 17664
+    },
+    {
+      "git_blob": "fd5e922bd1af109faed949748d7b4aaaed0d8782",
+      "mode": "100644",
+      "path": "ourd/egcf/cli.py",
+      "sha256": "2bd53851d6724c17bf0906fd1b2fb678cffb28f53beba3cbcebd94660bb7b5fe",
+      "size": 5210
+    },
+    {
+      "git_blob": "c87c12576d1e9730125cd8fac9e907afe4c9e788",
+      "mode": "100644",
+      "path": "ourd/egcf/compiler.py",
+      "sha256": "fdd5a4a5ff822d7a3514d9b7764ba986561d01d0bb81e5b641241be9af10d7da",
+      "size": 18421
+    },
+    {
+      "git_blob": "9551661b67dbb5edcde3eb12239e457ce8105a01",
+      "mode": "100644",
+      "path": "ourd/egcf/context.py",
+      "sha256": "ead3256a998c220a5823ffb1baee3a11d1bd32cefc95989237fd4027600807b1",
+      "size": 6834
+    },
+    {
+      "git_blob": "427fc252d54e3fd3525889bbbe4ee175b6d3d5fd",
+      "mode": "100644",
+      "path": "ourd/egcf/decisions.py",
+      "sha256": "4440d16ab3103d2bd5af36858b3ffca9a3d14a444e6bf2dfdf9670ebad94d007",
+      "size": 4147
+    },
+    {
+      "git_blob": "657517212d05f00e3363f6ce2893eb16ed1ff05f",
+      "mode": "100644",
+      "path": "ourd/egcf/domains.py",
+      "sha256": "d411b558ee26c75189fe48b40228a9db75ed46a9fa612bdc49e71b5eec428ef3",
+      "size": 18240
+    },
+    {
+      "git_blob": "c3f4a7e2baad3c92ddc825a64760dc66e588682b",
+      "mode": "100644",
+      "path": "ourd/egcf/engine.py",
+      "sha256": "7134153f0bb6744fcdac1db7b3c56d13bc5e64b456101a225981a9cb23360921",
+      "size": 33214
+    },
+    {
+      "git_blob": "1c2d017e8772cf892ee3d6862948be79aef8dfc0",
+      "mode": "100644",
+      "path": "ourd/egcf/errors.py",
+      "sha256": "21f95d8d317b28281f696f67489a99bbcbf5484281b42c7077e2e0f8f5bae091",
+      "size": 596
+    },
+    {
+      "git_blob": "ce12c74b5f1cf8bf90a2c17a21369a5d131a4e0f",
+      "mode": "100644",
+      "path": "ourd/egcf/evidence.py",
+      "sha256": "294b0509fc1e4e9b9c6735f326faff8612f13b12dfd3cda5b58263c20978addc",
+      "size": 11015
+    },
+    {
+      "git_blob": "5d31304d6bc36d11acbaa086ab528259c61cf782",
+      "mode": "100644",
+      "path": "ourd/egcf/experiments.py",
+      "sha256": "725dae502fbd0e9001d5950d621949aa733ac50f0ef8b717e5bceafaad3104ca",
+      "size": 3525
+    },
+    {
+      "git_blob": "a5f75aa5c18a8958afe636157d791c836c96cc27",
+      "mode": "100644",
+      "path": "ourd/egcf/external_algorithms.py",
+      "sha256": "eab749e5471189f8f5333e179baefe6eac0ee1880bb9da68bb463d957a1ebebf",
+      "size": 24172
+    },
+    {
+      "git_blob": "5d4b622684b4f0b103c3258c711c06ef8fd842ba",
+      "mode": "100644",
+      "path": "ourd/egcf/handlers.py",
+      "sha256": "38681b3031751ad1e084bd4ea1c1bd0401cdb15a6bcbb561fc5342b85db24ff7",
+      "size": 58821
+    },
+    {
+      "git_blob": "ce55d1fa01117afc3c7e0b9b0da5239f09108666",
+      "mode": "100644",
+      "path": "ourd/egcf/ids.py",
+      "sha256": "eafa7014cc1656535a1837fd45c86d7fae5258a39de08883f0402f825b67f57c",
+      "size": 1135
+    },
+    {
+      "git_blob": "3f22270698dda112a1c6da3d7a1fc2bc095ae74b",
+      "mode": "100644",
+      "path": "ourd/egcf/ieps.py",
+      "sha256": "5d7c8fe8f24640a7a211cc126a712d5b1d68aad19c9a248aa4e870322b0c0b78",
+      "size": 3596
+    },
+    {
+      "git_blob": "4d5dbb727eec8e3bd0807fe1759648633263daa0",
+      "mode": "100644",
+      "path": "ourd/egcf/improvement_store.py",
+      "sha256": "5cc368e169fc3e3c8b8d8db643b6d69c84900a707dec7a7e712404788f2deb7a",
+      "size": 27018
+    },
+    {
+      "git_blob": "7c2bb941641e4c52f5eae4d0f7d9c9b717689861",
+      "mode": "100644",
+      "path": "ourd/egcf/intelligence.py",
+      "sha256": "3c904821263ee4759892ce6d9b742c6a7a71bfa0c9adbc44626807f4dccf41f2",
+      "size": 3115
+    },
+    {
+      "git_blob": "36ef3b7d8c9a46e44a3c8d171907f535149bd86f",
+      "mode": "100644",
+      "path": "ourd/egcf/invariants.py",
+      "sha256": "84fbbd065a37ed1213f3dc623b4ec0bcad78adb47c1b80ce05eded643371d0f2",
+      "size": 5150
+    },
+    {
+      "git_blob": "eb7359c4a8c3c7b81e012a106f6ef15322cf9bb5",
+      "mode": "100644",
+      "path": "ourd/egcf/knowledge_governance_store.py",
+      "sha256": "16ee138c0b9dba42c5624c1c0de1def3b07591e788d3d5c9a5516b2f32228c1d",
+      "size": 23940
+    },
+    {
+      "git_blob": "48263563a1b72264aa1e2041ee55da85501b407f",
+      "mode": "100644",
+      "path": "ourd/egcf/knowledge_governance_store_grounded.py",
+      "sha256": "e7b24ba10f5229f8ef4a97722930b88f23d1e796110bf2185f947e652a218f34",
+      "size": 1257
+    },
+    {
+      "git_blob": "3d34161c9f63eac65c2b62de9d6784ef314b8911",
+      "mode": "100644",
+      "path": "ourd/egcf/lifecycle.py",
+      "sha256": "6b9dca544717403e61d98419cc791c8e6c59422a0c6c4440954d88da06a13b2c",
+      "size": 2933
+    },
+    {
+      "git_blob": "2d2ad35344c538e77021aa6201a70209694fa405",
+      "mode": "100644",
+      "path": "ourd/egcf/models.py",
+      "sha256": "8d1ed9aab355072438ac862861ce70e0bddaf404fa64d5d5536b0da42c1a2c0a",
+      "size": 10478
+    },
+    {
+      "git_blob": "a863e2642e3b6f054d94f494d8612051adf94f61",
+      "mode": "100644",
+      "path": "ourd/egcf/nonlinear.py",
+      "sha256": "1f1dc8d44b089b5fb782e955ac2b2669dff89d16e4392556a763ca558a307c0e",
+      "size": 5948
+    },
+    {
+      "git_blob": "36d8760b106bb38c126324f51b0d2c2c0e5a66c5",
+      "mode": "100644",
+      "path": "ourd/egcf/nonlinear_store.py",
+      "sha256": "4207e1c44700036b6b768ac368f5a62d0e3c49ee3158844c511e645eb1e15a41",
+      "size": 22761
+    },
+    {
+      "git_blob": "5329615851ab4b30e16ae42f01d4f8f8cc6b19e2",
+      "mode": "100644",
+      "path": "ourd/egcf/nonlinear_store_api.py",
+      "sha256": "4716d7618429b5bd3964852f6f8624d93eb6a36395e6240b61619444bdddf4b5",
+      "size": 1588
+    },
+    {
+      "git_blob": "cc5a6fa77887bd43b4cfce2d2635f15053a8e093",
+      "mode": "100644",
+      "path": "ourd/egcf/reasoning.py",
+      "sha256": "4189166790ca40bb576090641cc0a7ac37e0556e82fc2e8d3159b0310624ca3d",
+      "size": 3782
+    },
+    {
+      "git_blob": "4bf028e94e4c82143e4cffb84c8b1ed298a4f0e5",
+      "mode": "100644",
+      "path": "ourd/egcf/reasoning_store.py",
+      "sha256": "d8c6d4be3718e14ab5eb4020c3e3332afbb6978dba14e9b06622805f75dc6e22",
+      "size": 26122
+    },
+    {
+      "git_blob": "9c0f145cf18cdd5e9d1f74ad7e9bb6ac7c61f785",
+      "mode": "100644",
+      "path": "ourd/egcf/registry.py",
+      "sha256": "dfbe7bc0d81d0a4838dafd3fcbc38ff7e99f143dfcad246664944d1ce73565fa",
+      "size": 26726
+    },
+    {
+      "git_blob": "60794c99c7bc9bec51a1bbcd65171fa934c9c617",
+      "mode": "100644",
+      "path": "ourd/egcf/repository_brain_feed.py",
+      "sha256": "5a0805818c4fcc5797c9165a98ea5b755c1e65c7f9e7ebb638681eb0e876b529",
+      "size": 39187
+    },
+    {
+      "git_blob": "d14b80c9dc376d74912712ba37fd7c8263f34e53",
+      "mode": "100644",
+      "path": "ourd/egcf/retrieval.py",
+      "sha256": "b7f50879e59239a590d9ca88d43964efcf2ee06d4e768eda7c9b903518f7b58a",
+      "size": 1266
+    },
+    {
+      "git_blob": "33987006919c45082f80082223268558db4ebe68",
+      "mode": "100644",
+      "path": "ourd/egcf/schemas.py",
+      "sha256": "0247af77e8e87524d0b484c72891b9b0e6afc14901eb01ed5baf688aa9c5f784",
+      "size": 4323
+    },
+    {
+      "git_blob": "b8de6c4d101d23ca0de2c19494a2ba4495315004",
+      "mode": "100644",
+      "path": "ourd/egcf/semantic_ontology.py",
+      "sha256": "de0c6a906acd6db927b295c30230668c0ac40d702b854c8ace41dfecaa348c8d",
+      "size": 23565
+    },
+    {
+      "git_blob": "63cb20f6aa8d2aa6422ababc5b3a16df9cabda34",
+      "mode": "100644",
+      "path": "ourd/egcf/semantic_ontology_grounded.py",
+      "sha256": "3c616cd761ccb2e8eabfe6671019b62261d84186da680059ad6e87285c8d966a",
+      "size": 1731
+    },
+    {
+      "git_blob": "d095040b5f375328f6c9929694713597774338c5",
+      "mode": "100644",
+      "path": "ourd/egcf/semantics.py",
+      "sha256": "27f8421e1edcf01eaa2397c59d2b7b9291733a770f0167b15b20f3db8f77e69e",
+      "size": 2606
+    },
+    {
+      "git_blob": "ac9b8c8912316a73378e8c0224162b6b16c3776c",
+      "mode": "100644",
+      "path": "ourd/egcf/simulation.py",
+      "sha256": "1669b61ed153d1831e5dfa443f0d2cb1b36b7dd97509513bd45214b8d464ea8f",
+      "size": 6421
+    },
+    {
+      "git_blob": "fdb263f9f124ce9793f3034a449278c1c76a0085",
+      "mode": "100644",
+      "path": "ourd/egcf/store.py",
+      "sha256": "102ddade91ba8acda7452bda66aec044c79b9386bd5fa71a54c68bdc423dbf46",
+      "size": 14541
+    },
+    {
+      "git_blob": "41a36c48dbea60e30541963543cb5361561759eb",
+      "mode": "100644",
+      "path": "ourd/errors.py",
+      "sha256": "6f0d3b61411d5a730bd78efa841205035c25bdbb1f969fc3a0e584ed17d29be4",
+      "size": 703
+    },
+    {
+      "git_blob": "d8e3850e631d966e7ae429c93856c281e6fa70ae",
+      "mode": "100644",
+      "path": "ourd/hypotheses.py",
+      "sha256": "fbcd976d04793a3896f9e703e13132b8f58ce819c07c3a8331f456e6300013b1",
+      "size": 10606
+    },
+    {
+      "git_blob": "148758a5551f407c4931f74edb7efe304c286974",
+      "mode": "100644",
+      "path": "ourd/loop_control.py",
+      "sha256": "f143ee61a9e89769bb808b17b95697d67e1abb03d179fc6c82b934144f7de808",
+      "size": 22841
+    },
+    {
+      "git_blob": "72f6092016b6b2923a17aba1e592bf180fa2dbbd",
+      "mode": "100644",
+      "path": "ourd/models.py",
+      "sha256": "ba30ea61683805df1013a6a015390f72e37e288d8eac724c804b9555017e3a33",
+      "size": 28283
+    },
+    {
+      "git_blob": "b5f4f76161dcb69ef8f91f2d0f83687dc361daf0",
+      "mode": "100644",
+      "path": "ourd/oiec.py",
+      "sha256": "bffc17ea07ac8c376bbcf873a290eba9fd4ed88947ced1870ca2fb41766a85ae",
+      "size": 31266
+    },
+    {
+      "git_blob": "f5db2aabb74b5f52ca975f8fbcdbeade0b6847c5",
+      "mode": "100644",
+      "path": "ourd/persistence.py",
+      "sha256": "56e7a95456b036bf43b1f8646e730164733f275d77f28b405054eccd7b7056e7",
+      "size": 19854
+    },
+    {
+      "git_blob": "6c42f5f6bbc505d5f4514067cf62fe83808997a3",
+      "mode": "100644",
+      "path": "ourd/policy.py",
+      "sha256": "9e01bced2eb9f0a3c9ef87bf479a8e6279e5b9e083af404ac1e5c8192c5692b8",
+      "size": 12409
+    },
+    {
+      "git_blob": "c1ca6ec6082ea70f7ca43cd0eccfcdc196da9608",
+      "mode": "100644",
+      "path": "ourd/providers/__init__.py",
+      "sha256": "70b75b366c52b11e4099b67ec0cd3aacdb39572e762db36ff877146a62dfe4d3",
+      "size": 1085
+    },
+    {
+      "git_blob": "13d302ab8a5fdc86bb3cdc1707cc0aff7575aa3c",
+      "mode": "100644",
+      "path": "ourd/providers/base.py",
+      "sha256": "2c1ebc9014be519ac741e5e4d5949d56a4723a3b1f8df34e3789a6e98bb9c4e3",
+      "size": 1562
+    },
+    {
+      "git_blob": "64d0b7338b1efa57fe7a5b671a90bd9801bd408b",
+      "mode": "100644",
+      "path": "ourd/providers/llama_cpp_process.py",
+      "sha256": "5ee9d1949579055617f20ae5384bb2471f47bf3e8b4209382b61cf8114d8bf1f",
+      "size": 34906
+    },
+    {
+      "git_blob": "fa3c37413b174b32d3a7e9b8ee8797a5993c1200",
+      "mode": "100644",
+      "path": "ourd/providers/local_model.py",
+      "sha256": "09b4d3a31c902cf8922eea81fda1cfd7c15c6b4c68a1ba36109f2916067a4042",
+      "size": 8616
+    },
+    {
+      "git_blob": "fc26074eea9292ec4187a3eaede1d58289d8a4f6",
+      "mode": "100644",
+      "path": "ourd/providers/qwen38.py",
+      "sha256": "9777dd23e44498bc852f298d1795f1e240e62dc7ff6ed595913f592e30aa310b",
+      "size": 1808
+    },
+    {
+      "git_blob": "a933b8c129dab6254c37f3d5e0e8c394f284e069",
+      "mode": "100644",
+      "path": "ourd/reasoning/__init__.py",
+      "sha256": "be410911cb54d266ef3f5fb73480f1f7a41f1775325bfc1c6e515e4f470b3e8d",
+      "size": 3635
+    },
+    {
+      "git_blob": "f51ecefdac5253c3083566fc29f0c2f74a689219",
+      "mode": "100644",
+      "path": "ourd/reasoning/ablation.py",
+      "sha256": "390ffac43ef98729e10b38abb07db18c407628ca1662bb4754d3f5426da6c366",
+      "size": 3492
+    },
+    {
+      "git_blob": "c444c4d03ba2286315a3fb120b75ccd682e92606",
+      "mode": "100644",
+      "path": "ourd/reasoning/adapters.py",
+      "sha256": "826ff86d78439dac6d38dd9f3b084f3e85b0097502e4462c34e89a3836e9501d",
+      "size": 11553
+    },
+    {
+      "git_blob": "a09939385a857f319d35b214e2b5e404fe4b7adf",
+      "mode": "100644",
+      "path": "ourd/reasoning/benchmark.py",
+      "sha256": "e153753966c71cb99a34cf55d0da66add5855dfc4e3779d4f8a3f25ad7a26240",
+      "size": 45283
+    },
+    {
+      "git_blob": "ebcc5e4e2b21cfc349030ee499b6fcdb7bf130d8",
+      "mode": "100644",
+      "path": "ourd/reasoning/budget.py",
+      "sha256": "4626d2db7e282a4100145e731abe50186e04c83be2577aafb8f84437563b0693",
+      "size": 4577
+    },
+    {
+      "git_blob": "efa96763d15d965bf8349d156ceeb45c20e63ab2",
+      "mode": "100644",
+      "path": "ourd/reasoning/causal.py",
+      "sha256": "b435c79b81513b959f8aece24aa543cefafb9f0a6570f3eebfbed91e686506b8",
+      "size": 6748
+    },
+    {
+      "git_blob": "ea7b33ccbf3d8dc7775c953c365da1d4053d08ec",
+      "mode": "100644",
+      "path": "ourd/reasoning/context.py",
+      "sha256": "bb9ca42bb4618cc1ead66060df96d65e3738a406e8f012a24c3adfa8833231d2",
+      "size": 4876
+    },
+    {
+      "git_blob": "f2e4ce2287fbb095be5bb9c731c3f30ac938da3e",
+      "mode": "100644",
+      "path": "ourd/reasoning/contradictions.py",
+      "sha256": "95ebdff0600a1735bd3070bb77e9e24b8c72913899965531405f387b0dc139c8",
+      "size": 4023
+    },
+    {
+      "git_blob": "e807d6eedc2815654173ab03dde6dfa349593aa3",
+      "mode": "100644",
+      "path": "ourd/reasoning/diversity.py",
+      "sha256": "3e0756f84e7a25fcaca05a2e7731a7e8cdac574da775fa74400039d3f652fd74",
+      "size": 5124
+    },
+    {
+      "git_blob": "0ec7704752be245acdea866c87d73080c958e928",
+      "mode": "100644",
+      "path": "ourd/reasoning/falsifier.py",
+      "sha256": "287ad8910a8b0cc3750f728d3790c4d0f6cdcbe20874c92bb8c7dcb8bbc6d6dd",
+      "size": 12673
+    },
+    {
+      "git_blob": "2bc296735ddb72e2137cf06bf687576ce00ad176",
+      "mode": "100644",
+      "path": "ourd/reasoning/generator.py",
+      "sha256": "2f1920db7e3968608cf42951d395ac8c75a5aa128eb1f62735ecec603e6847a9",
+      "size": 33835
+    },
+    {
+      "git_blob": "6ea1bae47ebfd6895f00846ffe5b8e89ae21e887",
+      "mode": "100644",
+      "path": "ourd/reasoning/hypotheses.py",
+      "sha256": "e111be89ece665961fafbada21499f1eb10ac426ce933e4156e157e3a30cf408",
+      "size": 15633
+    },
+    {
+      "git_blob": "095207eb57126621f51a7c938416bb7702b294b3",
+      "mode": "100644",
+      "path": "ourd/reasoning/kernel.py",
+      "sha256": "e95139dc4f48387faf17cb9c1a1b10d4edfa05d2a00971f06e2a79cabd549c0b",
+      "size": 29233
+    },
+    {
+      "git_blob": "e8c45be297b17d591d3bdb6e18f0724506c3c738",
+      "mode": "100644",
+      "path": "ourd/reasoning/model_benchmark.py",
+      "sha256": "4efb27774fdf6cd6dca51472ffdeaefa4b660d6560c0cdb8167930a78127eb0c",
+      "size": 49930
+    },
+    {
+      "git_blob": "2346b9930d1e8fba559356a5e6ee72f006cc7cb1",
+      "mode": "100644",
+      "path": "ourd/reasoning/models.py",
+      "sha256": "1555e6aedb256ad2fa3e0659ff2852f933d90b564f6bbd8634693b98f50303cd",
+      "size": 46547
+    },
+    {
+      "git_blob": "612ae5515ffe5fe9580d5236b17e5e72cdfc3bae",
+      "mode": "100644",
+      "path": "ourd/reasoning/qualification.py",
+      "sha256": "6d95d0c25ae3e605a064545710146a1a570ef3c685295778b996ead387ab0a1e",
+      "size": 17260
+    },
+    {
+      "git_blob": "335fca58211778c161cab0b8d2d09eae48dc23c9",
+      "mode": "100644",
+      "path": "ourd/reasoning/scoring.py",
+      "sha256": "084b73b0e3fe49d88ef2fbb99b754db376a737efff7ab8accd62bab95d047c55",
+      "size": 5719
+    },
+    {
+      "git_blob": "0a1f63b8b55460a614221e353dfb3cbeb5db2f9d",
+      "mode": "100644",
+      "path": "ourd/reasoning/search.py",
+      "sha256": "beb2f3752cb3648c5118b39e7cff0b145a906dfedc26dbeba819a734ea7cddc7",
+      "size": 8942
+    },
+    {
+      "git_blob": "6cb8223442f4f544e0bb28d90f3331897d30391a",
+      "mode": "100644",
+      "path": "ourd/reasoning/synthesis.py",
+      "sha256": "30ac337583a494e5535abf9267a837047ec88124ec26cafc909e65443ca9d4ac",
+      "size": 13323
+    },
+    {
+      "git_blob": "1f445025c7a1e4c9738fc2cbc000333e7cc57f83",
+      "mode": "100644",
+      "path": "ourd/reasoning/topology.py",
+      "sha256": "15f2a16ce8c813f8b221c21a1c64a39ae80d19f60d31057b3e9e20e32a769dd6",
+      "size": 23641
+    },
+    {
+      "git_blob": "0a2262d105789572dc57db1aa636d955247ea4cc",
+      "mode": "100644",
+      "path": "ourd/reasoning/verifier.py",
+      "sha256": "59c33e5725f7625c045e859e46dcf5223eb22ce70b9db5c74e45d8450570ac44",
+      "size": 24240
+    },
+    {
+      "git_blob": "7e8f0e8da80ff1fe31e4899bc823be4603dfdeb9",
+      "mode": "100644",
+      "path": "ourd/transactions.py",
+      "sha256": "ab782d419271f35785415b54074c3415a09db668f7ea05cc1f05d65626bc5a2a",
+      "size": 13829
+    },
+    {
+      "git_blob": "692fa96d26affadd83d7a5562f7987ea6ca48d6d",
+      "mode": "100644",
+      "path": "ourd/workspace.py",
+      "sha256": "6dcd92a021ff59242a13051195b4cde6c822d4b6eb64f3780dbce20d60689729",
+      "size": 5828
+    },
+    {
+      "git_blob": "e8fbe8311cba9f00e784fe77a72727fbfe96b548",
+      "mode": "100644",
+      "path": "schemas/egcf-v1/command-catalog.schema.json",
+      "sha256": "bbbdf393b819e7cdeb44a493110a0815364801ff9afab8a57eca43e16f526675",
+      "size": 719
+    },
+    {
+      "git_blob": "11480932488f9badaf4bc388abfb2c0fcd5ed4e2",
+      "mode": "100644",
+      "path": "schemas/egcf-v1/objects.schema.json",
+      "sha256": "629ad344d24e15d956db272e88a4ed4d8b25cdd732072886de4f57327a5e1278",
+      "size": 47635
+    },
+    {
+      "git_blob": "3fb68687bb2e4eced4a61586ea23da94e1426986",
+      "mode": "100644",
+      "path": "schemas/egcf-v1/workflow.schema.json",
+      "sha256": "d02ceaf9046647dc5be03b62eb9f02ff213e9309b1f14dfd2b16dd87c2bbe1ca",
+      "size": 1237
+    },
+    {
+      "git_blob": "2cdbd6a1b590a46169b22aea1dfb490ed4a746b2",
+      "mode": "100644",
+      "path": "schemas/providers/llama_cpp_request.schema.json",
+      "sha256": "6684500a1dd1d5168af83c02d8f67ee9a3356d9b3312be842a246f641e3c9198",
+      "size": 1273
+    },
+    {
+      "git_blob": "450397af98fccd091022a432f20558ac0eac277e",
+      "mode": "100644",
+      "path": "schemas/providers/llama_cpp_response.schema.json",
+      "sha256": "d07c5e492e84341bc1cfbd6260e394ad3f73c0d99356f2d944a0e260661bcbcd",
+      "size": 897
+    },
+    {
+      "git_blob": "ebf82d00b4f0297f074191089b315c83cabed67e",
+      "mode": "100644",
+      "path": "tests/helpers.py",
+      "sha256": "c91a148ac543c1deb9b553c9de353d8957511bf3688e0e2bee9c4fd074536fcd",
+      "size": 3248
+    },
+    {
+      "git_blob": "b81b55dfd0bc243cf6c52c43360aee2b33ab1981",
+      "mode": "100644",
+      "path": "tests/providers/__init__.py",
+      "sha256": "bfc96751c9f59e9117377dea961baae7336cc0ee016256333fbeb1953527426e",
+      "size": 31
+    },
+    {
+      "git_blob": "27113ae5e0267526f4e45c899e381a41eeb75fd7",
+      "mode": "100644",
+      "path": "tests/providers/test_llama_cpp_process.py",
+      "sha256": "db661cc56b12a09eda7b82cca036643ba1b26f86cd7b9ec6bfe6a4ccabb56719",
+      "size": 20197
+    },
+    {
+      "git_blob": "76f115b6702f05a5dd34b2f0982d8849c6fbea81",
+      "mode": "100644",
+      "path": "tests/reasoning/__init__.py",
+      "sha256": "37539e12fab9e2421148019059b1c7592ffa58b916d530c3edbd8d242f1d9439",
+      "size": 36
+    },
+    {
+      "git_blob": "ac08543786dff1de2ce9f58b76c578e9fac52eef",
+      "mode": "100644",
+      "path": "tests/reasoning/test_benchmark.py",
+      "sha256": "6a98538d445f04ddc2c1ab671db9bf098602d05f087fc9a3ff6782c1369a4b4b",
+      "size": 16531
+    },
+    {
+      "git_blob": "c53bc860852f051e5ebc27cebee6ac33fc88ef87",
+      "mode": "100644",
+      "path": "tests/reasoning/test_hypotheses.py",
+      "sha256": "c82bbfaec69bd72267539ba5cce06964ef3f83cc1dff576a9bb6cab48d6b8b89",
+      "size": 7143
+    },
+    {
+      "git_blob": "958b348f38aa7433caa752d6f892bc9a14c6ae7f",
+      "mode": "100644",
+      "path": "tests/reasoning/test_model_benchmark.py",
+      "sha256": "5a61f0fd1b31eb346a7cb4f22ea89e040a1086393aff2bd54c690c8bf0661006",
+      "size": 32435
+    },
+    {
+      "git_blob": "c0dd027cad584257136aec71dd0285c1e31fe75a",
+      "mode": "100644",
+      "path": "tests/reasoning/test_qualification.py",
+      "sha256": "d65115421d7cb63ad663720a38d5d300dc74f9753f2c3ea7d8b3fa4c68592e48",
+      "size": 10770
+    },
+    {
+      "git_blob": "fcabe728caccc50c8f9ecae6a449d349cf2cc1c5",
+      "mode": "100644",
+      "path": "tests/reasoning/test_qualification_shards.py",
+      "sha256": "f7ae75d3cf1c69b105e77e735e145fe8eaf6e7a66d1e1853486b1b089c4a3819",
+      "size": 5103
+    },
+    {
+      "git_blob": "ce5868c0bdfdb3e9b87cc1165617db30408bdad8",
+      "mode": "100644",
+      "path": "tests/reasoning/test_sr_v1_completion.py",
+      "sha256": "94529de45d3e6bad166ab0471f1ddf60fd1240feb6f4a994c512b6caa1f79d6e",
+      "size": 50886
+    },
+    {
+      "git_blob": "13a22909a4bc45641835d52e74c853303b0cf738",
+      "mode": "100644",
+      "path": "tests/reasoning/test_topology.py",
+      "sha256": "d8bee74e4f1ebdd251e5d0f050725fea6a0539e0cf4ce5d3fc8042dedb5c8034",
+      "size": 9338
+    },
+    {
+      "git_blob": "586b9975d6fe22999fd8f78ca7c7cfb1b18e88f3",
+      "mode": "100644",
+      "path": "tests/test_egcf_cli.py",
+      "sha256": "f2bc42b85d02b377fe893a1931e50dd8988e8deb16aaff7dee6d0504e738bdfd",
+      "size": 3599
+    },
+    {
+      "git_blob": "b39a2b37f1ad7833b2276b90c857693fac08e1dc",
+      "mode": "100644",
+      "path": "tests/test_egcf_compiler.py",
+      "sha256": "084a10f0866d6ab328758acd1014400b2f89d9c041f18dc6e0d53e9c61ee7a87",
+      "size": 6455
+    },
+    {
+      "git_blob": "c9669a16dba492abdc311eab78520d6f59e2e58f",
+      "mode": "100644",
+      "path": "tests/test_egcf_completion.py",
+      "sha256": "4ff568c52883026dbc341cefc551d7954b733b44088b9305383bf33ce8afa890",
+      "size": 10713
+    },
+    {
+      "git_blob": "11cae33728bf176cc04137eba32c69ca6a658e5a",
+      "mode": "100644",
+      "path": "tests/test_egcf_core.py",
+      "sha256": "3ca8f78d9b8ecc7e458a7a8b4b1c707ad90d26ee189e035c25c1c417c1955471",
+      "size": 5440
+    },
+    {
+      "git_blob": "c89dd17df41db84831fde8557919b0efb9a801e6",
+      "mode": "100644",
+      "path": "tests/test_egcf_evidence.py",
+      "sha256": "7622801ceeb1bcc1b9974ca38adf96106de932d75175d150d0a6ba5a7c0420c4",
+      "size": 7432
+    },
+    {
+      "git_blob": "f2120dcaf94d54708e10a1e614500426caed0df9",
+      "mode": "100644",
+      "path": "tests/test_egcf_properties.py",
+      "sha256": "b8e5d9b758f335ba5fae4ea6e880246aa468243dadb2607863f3c8a4a08a3f87",
+      "size": 5708
+    },
+    {
+      "git_blob": "d407ed9288f981729b7e959aebff560650709453",
+      "mode": "100644",
+      "path": "tests/test_egcf_qwen.py",
+      "sha256": "a138832b7ea1b0239b157acd0eb40ab4a94c1fa7dee499439a5f389ebc97b91e",
+      "size": 1723
+    },
+    {
+      "git_blob": "5d9f1ecf9e409bf1ae9c058ffbce2da4db372970",
+      "mode": "100644",
+      "path": "tests/test_egcf_security.py",
+      "sha256": "513280730ea72c1ad3c6140416f8a0e83fe24f9fb44eac4b52485f22311565ac",
+      "size": 9043
+    },
+    {
+      "git_blob": "40d90bc7c93f4b298ca689225a548a339d2a4617",
+      "mode": "100644",
+      "path": "tests/test_egcf_vertical.py",
+      "sha256": "2daa6867310edbb32caa29c6a781fb563fdbf7f59fe21340220687c7257db7e6",
+      "size": 10116
+    },
+    {
+      "git_blob": "2eecdeaf02a992ca9c1bca5a85ddadf519e132a7",
+      "mode": "100644",
+      "path": "tests/test_hypotheses.py",
+      "sha256": "cca5d3fce73db7ee5c95603d997f648630f86c7cddb8a5a40b7da9bcd94f6897",
+      "size": 5724
+    },
+    {
+      "git_blob": "72a38884dbe4796ee4f56faa78404667894cfc89",
+      "mode": "100644",
+      "path": "tests/test_provider.py",
+      "sha256": "2209a67aa1f034971e1f734e5f038aae6f990e438780821f5530c045ebc63a59",
+      "size": 13425
+    },
+    {
+      "git_blob": "883a31b03de0c6cc380349ec512a06950ea6d097",
+      "mode": "100644",
+      "path": "tests/test_reasoning.py",
+      "sha256": "19183971b309d33f198dff8365e918c0923b625dbd6fe6dce12064ca5ab42425",
+      "size": 62142
+    },
+    {
+      "git_blob": "9e74f2e4ad352551d21ae5639b5b7dcd42c31157",
+      "mode": "100644",
+      "path": "tests/test_saa_adaptation_lineage_experiments.py",
+      "sha256": "71ab768db7f9c1a7dcf7e5daa46273d374460d964a978709d9e9a3f76ae18bde",
+      "size": 12989
+    },
+    {
+      "git_blob": "05b420e4d24e3ba1299339f06ae846d5963bb828",
+      "mode": "100644",
+      "path": "tests/test_saa_brain_feed_cli.py",
+      "sha256": "123b9352f183cf47d5077aad85661fea5ccfba5fdfb75218d54cbe39313a81d0",
+      "size": 9198
+    },
+    {
+      "git_blob": "e484a7516e6895849ef95a0609514ad14b2b280f",
+      "mode": "100644",
+      "path": "tests/test_saa_brain_feed_persistence.py",
+      "sha256": "4b7fadea6d0e4904f76f737d027091499c10d09c493bc7ba24d88017205a16ac",
+      "size": 2921
+    },
+    {
+      "git_blob": "5d5031418933e6319198355f2806a5111bb9f202",
+      "mode": "100644",
+      "path": "tests/test_saa_canonical_representative.py",
+      "sha256": "6afb173653b429e1e7f270f859aa8deabab97668bdf7536ecb7847b08ecd5d0b",
+      "size": 13777
+    },
+    {
+      "git_blob": "d1e75352406ee87058c5c621d265ada087ed4dd1",
+      "mode": "100644",
+      "path": "tests/test_saa_canonical_store.py",
+      "sha256": "a612758a7c62862131206291defce3d89b7f6c545d5d2501dbe4554a6a0e165e",
+      "size": 16250
+    },
+    {
+      "git_blob": "e4ae76c3a509783a4e44b083a248c1c74003c403",
+      "mode": "100644",
+      "path": "tests/test_saa_closed_improvement_loop.py",
+      "sha256": "6a48f4a5fdb4bf156ae03f4bdbd11e23dced155eae5050395ed56ea3addd8fd2",
+      "size": 19314
+    },
+    {
+      "git_blob": "6e515a57e4c6330fce9b2e601ae037c3ff9a83b1",
+      "mode": "100644",
+      "path": "tests/test_saa_dynamics.py",
+      "sha256": "24e79c7fc0294ca25dfc852c82f00e64750e9b3b6aff22cceeda5af011f7569e",
+      "size": 14941
+    },
+    {
+      "git_blob": "1092fcfcf6c5822584a332d9109f6b0b8e379e0d",
+      "mode": "100644",
+      "path": "tests/test_saa_improvement_cli.py",
+      "sha256": "ba738fa681c7e9fee18c65ef25d982064e278383254df306a54eccf239e2ea40",
+      "size": 7192
+    },
+    {
+      "git_blob": "ae0e739ea2af0a6e6d3d8916326fa666ba4d24d3",
+      "mode": "100644",
+      "path": "tests/test_saa_ir.py",
+      "sha256": "598cf83933cb23ad2d9691ab0a2a0db3814f5b27486789a209496f5823721df7",
+      "size": 9250
+    },
+    {
+      "git_blob": "1ba23d47ddebb46d97cf1f7e1ae5441e67b13d3d",
+      "mode": "100644",
+      "path": "tests/test_saa_knowledge_governance.py",
+      "sha256": "fe7cd54d16b30fa46d052ca5f48233aaa9a7c410ceca93abe0b7229e05b032fa",
+      "size": 15823
+    },
+    {
+      "git_blob": "d30efb75d24207ceeafb0bc733e2ea3f44bbbe07",
+      "mode": "100644",
+      "path": "tests/test_saa_mimo.py",
+      "sha256": "f2cbfbf86cb598212eb238cac06af207702429d3d4c5dca3083ce2997417cb69",
+      "size": 12644
+    },
+    {
+      "git_blob": "0ef3ec25d752a7f83f31663c22b892c22e9f6209",
+      "mode": "100644",
+      "path": "tests/test_saa_nonlinear.py",
+      "sha256": "c49f89b57fc47c2ab9fb1f6ed4cf6ef6a32ba5eab26503a9126d553d38b9609d",
+      "size": 8868
+    },
+    {
+      "git_blob": "a4ea00826a4ba05a337a111a26ce2616feb7e7a9",
+      "mode": "100644",
+      "path": "tests/test_saa_nonlinear_advanced.py",
+      "sha256": "28e1bc00c3ea389237ecd6b446080c76cea0158df076f2d4370d99eb17db9e5a",
+      "size": 18798
+    },
+    {
+      "git_blob": "d0fc6e4a5656be793bcd57b7159916d1e512d627",
+      "mode": "100644",
+      "path": "tests/test_saa_nonlinear_frontier.py",
+      "sha256": "76472d1df8ee20b8c7f16c0ae9423d47b3844eb55c64df385e890be6fafc3fbc",
+      "size": 8321
+    },
+    {
+      "git_blob": "0109ca6f4cddee75614d75bb1921133416885df7",
+      "mode": "100644",
+      "path": "tests/test_saa_normalization.py",
+      "sha256": "031b86d5cb8ab0c18c7314c29374a26786c1f972a9de378b30f37d2bab9a4490",
+      "size": 10987
+    },
+    {
+      "git_blob": "cba6e7256a201798cbcf58e0d759853cbd270ff3",
+      "mode": "100644",
+      "path": "tests/test_saa_reasoning.py",
+      "sha256": "b39217bcee48b468fede41a6564c64ed790ef9bc0af7b1e458ce5eec3c619dfb",
+      "size": 10722
+    },
+    {
+      "git_blob": "6265c3bc167de54f5229a22caed46577fa1452c9",
+      "mode": "100644",
+      "path": "tests/test_saa_reasoning_operational.py",
+      "sha256": "f0c43da98f7960ac3b302f31b11f76449b78e1e6acdfd43de4f6d210171542cb",
+      "size": 16927
+    },
+    {
+      "git_blob": "6a7d8329694a0037a9e9def29f4de8d68bdfcc23",
+      "mode": "100644",
+      "path": "tests/test_saa_repository_brain_feed.py",
+      "sha256": "f48444929b057206b0fbd06b9dfb0addbe994353d0cf4d428bcebd82c26ddc33",
+      "size": 9217
+    },
+    {
+      "git_blob": "b51b8d7b70266ce5ed0716370f82c6e804e112ff",
+      "mode": "100644",
+      "path": "tests/test_saa_representative.py",
+      "sha256": "876b13c27dd9737a0be74c7e326261b8bf94c97a5795f1aaf9c4da4d86d62dcc",
+      "size": 12418
+    },
+    {
+      "git_blob": "3741b460ce14efa14e511cff64855a3b1b302de0",
+      "mode": "100644",
+      "path": "tests/test_saa_semantic.py",
+      "sha256": "0369489ebe5523ac63a49b3d660fb9d790917c44841d057e9a13bfcda0aba4cd",
+      "size": 11447
+    },
+    {
+      "git_blob": "268cd75fc168539387249d264f849d162ea32993",
+      "mode": "100644",
+      "path": "tests/test_saa_semantic_ontology.py",
+      "sha256": "386ec1fc9d339d827b99a03996d393272abd3ba0a0b64ba541b9a65db3fed3c3",
+      "size": 10618
+    },
+    {
+      "git_blob": "c447b6137aaab633fa5fb55c95910a7f01e20c85",
+      "mode": "100644",
+      "path": "tests/test_saa_transfer_adaptation.py",
+      "sha256": "b7cc78cf7388afdc004f89cb0bbcba69bdb0bf23ad4cb77d73db393130e724eb",
+      "size": 10967
+    },
+    {
+      "git_blob": "058c6e28fdeda1b5b013e5ac1b7acf9a46853e16",
+      "mode": "100644",
+      "path": "tests/test_saa_unified_retrieval.py",
+      "sha256": "82e46173abe9f71201a660077e90ba680c60edb0506dd345f51d3eac150edb1b",
+      "size": 12181
+    },
+    {
+      "git_blob": "4cf120de0c6cef97f2a9161b02e48a8e1782418f",
+      "mode": "100644",
+      "path": "tools/run_reasoning_model_benchmark.py",
+      "sha256": "7ab7a54aec94801f85c3ec2535ae9c653aa8ebd02167dfdfe713fa56371ffa32",
+      "size": 11022
+    },
+    {
+      "git_blob": "6424db768667377bbaeb652b85f6bc18ac536248",
+      "mode": "100644",
+      "path": "workflows/v1/parser-regression.json",
+      "sha256": "2f1fc27d09339ac8be5d40ff8a4b3bc8658065f3369f74029ee56b14e6e4f4d3",
+      "size": 3066
+    }
+  ],
+  "oracle_commit": "957111e2d5d11dec719c7f993f51644e701fc256",
+  "oracle_repository": "/home/pamela/Projects/OIEC-STM-Agent-integration",
+  "schema_version": 1,
+  "selected_on": "2026-09-02",
+  "working_tree_included": false
+}

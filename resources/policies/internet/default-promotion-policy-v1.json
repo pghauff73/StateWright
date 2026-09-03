@@ -1,0 +1,48 @@
+{
+  "allowed_candidate_classes": [
+    "ADAPTATION_CANDIDATE",
+    "NOVEL_CANDIDATE",
+    "TRANSFER_CANDIDATE"
+  ],
+  "automatic_demotion_predicates": [
+    "BENCHMARK_REGRESSION",
+    "CORRECTED_ERROR_RECURRENCE",
+    "EQUIVALENT_FAILURE_RETRY_REGRESSION",
+    "EVIDENCE_STALE",
+    "FALSIFIER_SUCCEEDED",
+    "INSUFFICIENT_INDEPENDENCE",
+    "INTEGRITY_FAILURE",
+    "INVARIANT_FAILURE",
+    "PROJECTION_INTEGRITY_FAILURE",
+    "REPRODUCTION_FAILURE",
+    "RETRIEVAL_PRECISION_REGRESSION",
+    "SEMANTIC_CONTRADICTION",
+    "SOURCE_RETRACTION"
+  ],
+  "domain_scopes": [
+    "*"
+  ],
+  "maximum_canary_share_bp": 2500,
+  "maximum_source_age_seconds": 86400,
+  "maximum_successful_falsifiers": 0,
+  "maximum_unresolved_hard_contradictions": 0,
+  "minimum_independent_experiment_groups": 2,
+  "minimum_independent_source_groups": 1,
+  "minimum_probation_observations": 4,
+  "minimum_probation_uses": 4,
+  "policy_signature": "587e8d8328a51987ff052871c084ca0931a6504bfe6b2e99ccd4f34cad5cfcc7",
+  "policy_version": "saa-autonomous-promotion-policy-v1",
+  "probation_window_count": 2,
+  "prohibited_capability_classes": [
+    "COMMAND_EXECUTION",
+    "FILESYSTEM_MUTATION",
+    "NETWORK_IO",
+    "PROCESS_EXECUTION"
+  ],
+  "prohibited_primitives": [
+    "INVOKE"
+  ],
+  "required_mathematical_strength": "EXACT_STRUCTURAL",
+  "required_semantic_strength": "DETERMINISTIC_SOURCE_BOUND",
+  "schema_version": 1
+}

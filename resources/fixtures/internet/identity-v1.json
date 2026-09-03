@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "fixture_id": "statewright-internet-identity-v1",
+  "served_path": "/identity",
+  "media_type": "text/plain",
+  "body_sha256": "e92321c47a839edc2c9afca8451820d2737f6174713a15c8779246a20b45852b",
+  "body_text": "Identity algorithm; inputs: x; outputs: y; procedure: return the input\n",
+  "live_internet_required": false,
+  "python_runtime_required": false,
+  "expected_candidate_primitive": "IDENTITY",
+  "expected_terminal_states": ["CANONICAL", "DEMOTED"]
+}

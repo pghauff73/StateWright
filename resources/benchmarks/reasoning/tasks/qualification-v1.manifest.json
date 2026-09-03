@@ -1,0 +1,17 @@
+{
+  "class_count": 100,
+  "classes": [
+    "logic",
+    "arithmetic",
+    "debugging",
+    "scientific_inference",
+    "causal_reasoning",
+    "adversarial"
+  ],
+  "performance_claim_allowed": false,
+  "qualification_status": "held_out_frozen_before_live_scoring",
+  "schema_version": 1,
+  "task_count": 600,
+  "task_file": "benchmarks/reasoning/tasks/qualification-v1.jsonl",
+  "task_file_sha256": "18f238d39a548655634dc730335cb2b68eed88033b6065ee10be398a22ddb2fd"
+}
