@@ -2,6 +2,7 @@
 
 #include "statewright/sources/policy.hpp"
 #include "statewright/sources/scheduler.hpp"
+#include "statewright/sources/watchlist.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -45,6 +46,17 @@ public:
     response.body = bytes(
         "Identity algorithm; inputs: x; outputs: y; return the input\n");
     response.tls_verified = true;
+    response.robots_policy_evaluated = true;
+    response.robots_allowed = true;
+    response.robots_evidence.push_back(
+        {{"allowed", true},
+         {"body_sha256", std::string(64U, 'a')},
+         {"final_url", "https://example.com/robots.txt"},
+         {"http_status", 200},
+         {"path", "/source-coordinator"},
+         {"redirect_chain", statewright::contracts::Json::array()},
+         {"requested_url", "https://example.com/robots.txt"},
+         {"user_agent", request.policy.user_agent}});
     response.compressed_bytes = response.body.size();
     response.decompressed_bytes = response.body.size();
     response.total_time_milliseconds = 1;
@@ -86,6 +98,16 @@ TEST_CASE("internet source coordinator owns fetch assess and extract assembly") 
       provider);
   REQUIRE(fetched.status == "FETCH_SUCCEEDED");
   REQUIRE_FALSE(fetched.snapshot_id.empty());
+  REQUIRE_FALSE(fetched.source_assessment_input_id.empty());
+  const auto automatic_input =
+      store.get(fetched.source_assessment_input_id);
+  REQUIRE(automatic_input.object_type ==
+          "internet-source-assessment-input");
+  REQUIRE(automatic_input.payload.at("robots_allowed") == true);
+  REQUIRE(automatic_input.payload.at("license_classification") == "UNKNOWN");
+  const auto receipt = store.get(fetched.fetch_receipt_id);
+  REQUIRE(receipt.payload.at("robots_policy_evaluated") == true);
+  REQUIRE(receipt.payload.at("robots_allowed") == true);
 
   const auto assessed = coordinator.assess(
       fetched.snapshot_id, fetched.fetch_receipt_id, policy_id, true,
@@ -95,5 +117,84 @@ TEST_CASE("internet source coordinator owns fetch assess and extract assembly") 
   REQUIRE_FALSE(extracted.extraction.receipt.fragment_ids.empty());
   REQUIRE(store.get(extracted.extraction_receipt_id).object_type ==
           "internet-extraction-receipt");
+  std::filesystem::remove_all(root);
+}
+
+TEST_CASE("internet source coordinator uses verified watchlist license evidence") {
+  using namespace statewright;
+  const auto root = temporary_root();
+  egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+  egcf::InternetImprovementStore internet(store);
+
+  const contracts::Json manifest = {
+      {"schema_version", 1},
+      {"watchlist_version", "fixture-v1"},
+      {"description", "fixture"},
+      {"source_policy_ref", "fixture"},
+      {"registration_defaults",
+       {{"enabled", false}, {"deterministic_jitter_seconds", 0}}},
+      {"watches", contracts::Json::array()}};
+  const contracts::Json entry = {
+      {"accepted_mime_types", {"text/plain"}},
+      {"canonical_url", "https://example.com/source-coordinator-license"},
+      {"controlling_publisher", "Fixture Publisher"},
+      {"deterministic_jitter_seconds", 0},
+      {"enabled", false},
+      {"extraction_strategy", "plain-text"},
+      {"license",
+       {{"classification", "FIXTURE_VERIFIED_LICENSE"},
+        {"evidence_urls", {"https://example.com/license"}},
+        {"status", "verified"}}},
+      {"name", "fixture-verified-license"},
+      {"polling_interval_seconds", 3600},
+      {"purpose", "authoritative-evidence"},
+      {"robots", {{"declared_status", "pending"}, {"required", true}}},
+      {"source_group", "fixture"},
+      {"stability", "stable-section"},
+      {"subject", "fixture"},
+      {"tier", 1}};
+
+  auto policy = sources::InternetSourcePolicy{};
+  policy.accepted_mime_types = {"text/plain"};
+  policy = sources::watchlist_source_policy(entry, std::move(policy));
+  const auto policy_id = internet.register_source_policy(policy);
+  const auto watch =
+      sources::watchlist_watch(entry, policy_id, true, false);
+  const auto watch_id = internet.register_watch(watch);
+  const auto registration = sources::make_watchlist_registration(
+      manifest, entry, watch_id, policy_id, std::string(64U, 'b'),
+      "REGISTERED_DISABLED");
+  const auto registration_id = store.register_record(
+      {.object_type = "internet-watch-registration",
+       .payload = registration},
+      "internet_watch_registration_registered");
+
+  const auto job = sources::make_fetch_job(
+      watch, "2026-09-04T02:00:00Z", "2026-09-04T02:00:00Z",
+      "2026-09-04T02:05:00Z");
+  static_cast<void>(internet.register_fetch_job(job));
+  const auto lease = sources::acquire_fetch_lease(
+      job.object_id(), "fixture-worker", "2026-09-04T02:00:01Z",
+      "2026-09-04T02:01:01Z");
+  static_cast<void>(internet.register_fetch_lease(lease));
+
+  FixtureProvider provider;
+  egcf::InternetSourceCoordinator coordinator(store);
+  const auto fetched = coordinator.execute_fetch(
+      job.object_id(), lease.object_id(), "2026-09-04T02:00:02Z",
+      provider);
+  REQUIRE_FALSE(fetched.source_assessment_input_id.empty());
+  const auto input = store.get(fetched.source_assessment_input_id);
+  REQUIRE(input.payload.at("license_classification") ==
+          "FIXTURE_VERIFIED_LICENSE");
+  REQUIRE(std::find(input.payload.at("evidence_ids").begin(),
+                    input.payload.at("evidence_ids").end(),
+                    registration_id) !=
+          input.payload.at("evidence_ids").end());
+  REQUIRE(input.payload.at("provenance")
+              .at("license")
+              .at("registration_ids") ==
+          contracts::Json::array({registration_id}));
+
   std::filesystem::remove_all(root);
 }

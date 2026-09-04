@@ -17,7 +17,7 @@ statewright::contracts::Json load_fixtures() {
 
 TEST_CASE("EGCF command resources are fully manifest verified") {
   const statewright::egcf::CommandRegistry registry(STATEWRIGHT_RESOURCE_ROOT);
-  REQUIRE(registry.resource_receipt().verified_files == 42U);
+  REQUIRE(registry.resource_receipt().verified_files == 45U);
   REQUIRE(registry.definitions().size() == 188U);
 }
 

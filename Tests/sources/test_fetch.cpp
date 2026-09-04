@@ -124,6 +124,16 @@ private:
 
   static void handle(int descriptor, std::string request) {
     const std::string path = request_path(request);
+    if (path == "/robots.txt") {
+      const auto content = body(
+          "User-agent: *\nDisallow: /blocked\n"
+          "Allow: /blocked/public\n");
+      respond(descriptor, "200 OK",
+              {"Content-Type: text/plain; charset=utf-8",
+               "Content-Length: " + std::to_string(content.size())},
+              content);
+      return;
+    }
     if (path == "/redirect") {
       respond(descriptor, "302 Found",
               {"Location: /ok", "Content-Length: 0"}, {});
@@ -219,6 +229,7 @@ statewright::sources::InternetSourcePolicy fixture_policy(int port) {
   policy.request_timeout_seconds = 2;
   policy.require_tls_verification = false;
   policy.allow_loopback_for_tests = true;
+  policy.require_robots_permission = false;
   return statewright::sources::canonical_source_policy(std::move(policy));
 }
 
@@ -270,6 +281,29 @@ TEST_CASE("internet address validation blocks local and reserved networks") {
   REQUIRE(sources::is_public_address("2606:4700:4700::1111"));
 }
 
+TEST_CASE("robots parser applies specific agents and longest rules") {
+  using namespace statewright;
+  const std::string robots =
+      "User-agent: *\n"
+      "Disallow: /wildcard-only\n"
+      "User-agent: StateWright-SAA\n"
+      "Disallow: /private\n"
+      "Allow: /private/public\n"
+      "Disallow: /*.tmp$\n";
+  REQUIRE_FALSE(sources::robots_txt_allows(
+      robots, "StateWright-SAA/0.1", "/private/item"));
+  REQUIRE(sources::robots_txt_allows(
+      robots, "StateWright-SAA/0.1", "/private/public/item"));
+  REQUIRE_FALSE(sources::robots_txt_allows(
+      robots, "StateWright-SAA/0.1", "/artifact.tmp"));
+  REQUIRE(sources::robots_txt_allows(
+      robots, "StateWright-SAA/0.1", "/artifact.tmp?download=1"));
+  REQUIRE(sources::robots_txt_allows(
+      robots, "StateWright-SAA/0.1", "/wildcard-only/item"));
+  REQUIRE_FALSE(
+      sources::robots_txt_allows(robots, "OtherBot", "/wildcard-only/item"));
+}
+
 TEST_CASE("internet redirects are resolved and policy validated") {
   using namespace statewright;
   auto policy = sources::InternetSourcePolicy{};
@@ -302,6 +336,27 @@ TEST_CASE("curl provider pins addresses and follows bounded redirects") {
   REQUIRE(response.body.size() == 17U);
   REQUIRE(response.decompressed_bytes == 17U);
   REQUIRE(response.provider_identity.starts_with("libcurl/"));
+}
+
+TEST_CASE("curl provider enforces robots permission with evidence") {
+  using namespace statewright;
+  const HttpFixtureServer server;
+  sources::CurlHttpFetchProvider provider;
+  sources::FetchRequest request;
+  request.url = fixture_url(server, "/ok");
+  request.policy = fixture_policy(server.port());
+  request.policy.require_robots_permission = true;
+  const auto allowed = provider.fetch(request);
+  REQUIRE(allowed.robots_policy_evaluated);
+  REQUIRE(allowed.robots_allowed);
+  REQUIRE(allowed.robots_evidence.size() == 1U);
+  REQUIRE(allowed.robots_evidence.front().at("allowed") == true);
+  REQUIRE(allowed.robots_evidence.front().at("http_status") == 200);
+  REQUIRE_FALSE(
+      allowed.robots_evidence.front().at("body_sha256").get<std::string>().empty());
+
+  request.url = fixture_url(server, "/blocked");
+  REQUIRE_THROWS_AS(provider.fetch(request), common::Error);
 }
 
 TEST_CASE("curl provider rejects loops credentials headers and cancellation") {

@@ -6,6 +6,7 @@
 #include "statewright/sources/snapshot.hpp"
 
 #include <algorithm>
+#include <optional>
 #include <utility>
 
 namespace statewright::egcf {
@@ -13,6 +14,54 @@ namespace {
 
 [[noreturn]] void source_coordinator_error(std::string message) {
   throw common::Error(common::ErrorCode::invalid_argument, std::move(message));
+}
+
+struct WatchRegistrationEvidence final {
+  std::string license_classification;
+  std::vector<std::string> license_evidence_urls;
+  std::vector<std::string> registration_ids;
+};
+
+[[nodiscard]] std::optional<WatchRegistrationEvidence>
+watch_registration(EgcfStore &store, std::string_view watch_id) {
+  std::optional<WatchRegistrationEvidence> result;
+  for (const auto &object : store.list("internet-watch-registration")) {
+    if (object.payload.value("watch_id", std::string{}) != watch_id ||
+        object.payload.value("license_status", std::string{}) != "verified") {
+      continue;
+    }
+    const std::string classification =
+        object.payload.at("license_classification").get<std::string>();
+    const auto evidence_urls = object.payload.at("license_evidence_urls")
+                                   .get<std::vector<std::string>>();
+    if (result && result->license_classification != classification) {
+      source_coordinator_error(
+          "internet watch has conflicting verified license provenance");
+    }
+    if (!result) {
+      result = WatchRegistrationEvidence{
+          .license_classification = classification,
+          .license_evidence_urls = {},
+          .registration_ids = {}};
+    }
+    result->registration_ids.push_back(object.object_id);
+    result->license_evidence_urls.insert(result->license_evidence_urls.end(),
+                                         evidence_urls.begin(),
+                                         evidence_urls.end());
+  }
+  if (result) {
+    std::ranges::sort(result->registration_ids);
+    result->registration_ids.erase(
+        std::unique(result->registration_ids.begin(),
+                    result->registration_ids.end()),
+        result->registration_ids.end());
+    std::ranges::sort(result->license_evidence_urls);
+    result->license_evidence_urls.erase(
+        std::unique(result->license_evidence_urls.begin(),
+                    result->license_evidence_urls.end()),
+        result->license_evidence_urls.end());
+  }
+  return result;
 }
 
 } // namespace
@@ -85,6 +134,44 @@ InternetFetchExecutionResult InternetSourceCoordinator::execute_fetch(
       result.artifact_bytes_id = capture.artifact_bytes_id;
       result.status = "FETCH_SUCCEEDED";
     }
+    const bool robots_authorized =
+        !policy.require_robots_permission ||
+        (response.robots_policy_evaluated && response.robots_allowed);
+    const auto registration = watch_registration(store_, job.watch_id);
+    std::string license_classification;
+    std::vector<std::string> assessment_evidence = {
+        result.fetch_receipt_id, watch.source_policy_id};
+    contracts::Json license_provenance = contracts::Json::object();
+    if (registration) {
+      license_classification = registration->license_classification;
+      assessment_evidence.insert(assessment_evidence.end(),
+                                 registration->registration_ids.begin(),
+                                 registration->registration_ids.end());
+      license_provenance =
+          {{"registration_ids", registration->registration_ids},
+           {"license_evidence_urls", registration->license_evidence_urls}};
+    } else if (!policy.require_known_license) {
+      license_classification = "UNKNOWN";
+    }
+    if (!license_classification.empty() && robots_authorized) {
+      InternetSourceAssessmentInput input;
+      input.snapshot_id = result.snapshot_id;
+      input.fetch_receipt_id = result.fetch_receipt_id;
+      input.source_policy_id = watch.source_policy_id;
+      input.robots_allowed = robots_authorized;
+      input.license_classification = std::move(license_classification);
+      input.evidence_ids = std::move(assessment_evidence);
+      input.producer_identity =
+          std::string(internet_source_coordinator_version);
+      input.provenance =
+          {{"automatic", true},
+           {"license", std::move(license_provenance)},
+           {"provider_identity", response.provider_identity},
+           {"robots_evidence", response.robots_evidence},
+           {"robots_policy_evaluated", response.robots_policy_evaluated}};
+      result.source_assessment_input_id =
+          internet_.register_source_assessment_input(input);
+    }
     const auto closed = sources::close_fetch_lease(lease, "COMPLETED");
     result.closed_lease_id = internet_.register_fetch_lease(closed);
     return result;
@@ -143,6 +230,7 @@ contracts::Json to_json(const InternetFetchExecutionResult &value) {
           {"closed_lease_id", value.closed_lease_id},
           {"fetch_receipt_id", value.fetch_receipt_id},
           {"snapshot_id", value.snapshot_id},
+          {"source_assessment_input_id", value.source_assessment_input_id},
           {"status", value.status}};
 }
 

@@ -13,6 +13,7 @@ add_executable(statewright_contract_tests
   sources/test_extraction.cpp
   sources/test_records.cpp
   sources/test_scheduler.cpp
+  sources/test_watchlist.cpp
   providers/test_reasoning_provider.cpp
   providers/test_subprocess_provider.cpp
   reasoning/test_adapters.cpp
@@ -86,6 +87,7 @@ add_executable(statewright_contract_tests
   egcf/test_internet_experiment.cpp
   egcf/test_internet_improvement_director.cpp
   egcf/test_internet_improvement_orchestrator.cpp
+  egcf/test_internet_improvement_supervisor.cpp
   egcf/test_internet_feed.cpp
   egcf/test_internet_improvement_store.cpp
   egcf/test_internet_orchestration_records.cpp
@@ -130,7 +132,26 @@ target_compile_definitions(statewright_contract_tests PRIVATE
   STATEWRIGHT_FAKE_PROVIDER_RUNNER="$<TARGET_FILE:statewright_fake_provider_runner>"
 )
 add_dependencies(statewright_contract_tests statewright_fake_provider_runner)
-add_test(NAME statewright_contract_tests COMMAND statewright_contract_tests)
+
+set(STATEWRIGHT_SANITIZER_TEST_SHARDS 32 CACHE STRING
+  "Number of deterministic Catch2 shards used by the sanitizer preset")
+if(STATEWRIGHT_ENABLE_SANITIZERS AND
+   STATEWRIGHT_SANITIZER_TEST_SHARDS GREATER 1)
+  math(EXPR statewright_sanitizer_last_shard
+    "${STATEWRIGHT_SANITIZER_TEST_SHARDS} - 1")
+  foreach(shard_index RANGE 0 ${statewright_sanitizer_last_shard})
+    add_test(NAME statewright_contract_tests_shard_${shard_index}
+      COMMAND statewright_contract_tests
+        --order rand
+        --rng-seed 20260904
+        --shard-count ${STATEWRIGHT_SANITIZER_TEST_SHARDS}
+        --shard-index ${shard_index})
+    set_tests_properties(statewright_contract_tests_shard_${shard_index}
+      PROPERTIES LABELS "contracts;sanitizer-shard")
+  endforeach()
+else()
+  add_test(NAME statewright_contract_tests COMMAND statewright_contract_tests)
+endif()
 
 add_test(NAME statewright_cli_version
   COMMAND statewright version --json)
@@ -163,7 +184,12 @@ add_test(NAME statewright_cli_internet_smoke
     "$<TARGET_FILE:statewright>"
     "$<TARGET_FILE:statewright_internet_fixture_server>"
     "${PROJECT_SOURCE_DIR}/resources/fixtures/internet/identity-v1.json")
-set_tests_properties(statewright_cli_internet_smoke PROPERTIES RUN_SERIAL TRUE)
+
+add_test(NAME statewright_internet_watchlist_cli_smoke
+  COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/internet_watchlist_cli_smoke.sh"
+    "$<TARGET_FILE:statewright>")
+set_tests_properties(statewright_internet_watchlist_cli_smoke PROPERTIES
+  TIMEOUT 30)
 
 add_test(NAME statewright_saa_internet_howto_smoke
   COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/saa_internet_howto_smoke.sh"
@@ -171,20 +197,21 @@ add_test(NAME statewright_saa_internet_howto_smoke
     "$<TARGET_FILE:statewright>"
     "$<TARGET_FILE:statewright_internet_fixture_server>"
     "${PROJECT_SOURCE_DIR}/resources/fixtures/internet/identity-v1.json")
-set_tests_properties(statewright_saa_internet_howto_smoke PROPERTIES
-  RUN_SERIAL TRUE)
 
 add_test(NAME statewright_internet_orchestrator_cli_smoke
   COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/internet_orchestrator_cli_smoke.sh"
     "$<TARGET_FILE:statewright>")
-set_tests_properties(statewright_internet_orchestrator_cli_smoke PROPERTIES
-  RUN_SERIAL TRUE)
 
 add_test(NAME statewright_internet_orchestrator_fault_smoke
   COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/internet_orchestrator_fault_smoke.sh"
-    "$<TARGET_FILE:statewright>")
-set_tests_properties(statewright_internet_orchestrator_fault_smoke PROPERTIES
-  RUN_SERIAL TRUE)
+          "$<TARGET_FILE:statewright>")
+
+add_test(NAME statewright_internet_supervisor_smoke
+  COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/internet_supervisor_smoke.sh"
+          "$<TARGET_FILE:statewright-internet-supervisor>"
+          "$<TARGET_FILE:statewright>")
+set_tests_properties(statewright_internet_supervisor_smoke PROPERTIES
+  TIMEOUT 30)
 
 add_test(NAME statewright_package_smoke
   COMMAND "${CMAKE_COMMAND}"
@@ -192,7 +219,35 @@ add_test(NAME statewright_package_smoke
     -DSTATEWRIGHT_FIXTURE_SERVER=$<TARGET_FILE:statewright_internet_fixture_server>
     -DSTATEWRIGHT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
     -P "${CMAKE_CURRENT_SOURCE_DIR}/package_smoke.cmake")
-set_tests_properties(statewright_package_smoke PROPERTIES RUN_SERIAL TRUE)
 
 add_test(NAME statewright_release_inputs
   COMMAND "${PROJECT_SOURCE_DIR}/Tools/verify_release_inputs.sh")
+
+set_tests_properties(statewright_package_smoke PROPERTIES COST 100)
+set_tests_properties(statewright_saa_internet_howto_smoke PROPERTIES COST 90)
+set_tests_properties(statewright_cli_internet_smoke PROPERTIES COST 80)
+set_tests_properties(statewright_cli_json_smoke PROPERTIES COST 70)
+set_tests_properties(
+  statewright_internet_orchestrator_cli_smoke
+  statewright_internet_orchestrator_fault_smoke
+  statewright_internet_supervisor_smoke
+  PROPERTIES COST 30)
+
+if(STATEWRIGHT_ENABLE_SANITIZERS)
+  set(statewright_sanitizer_boundary_tests
+    statewright_cli_version
+    statewright_shadow_typed_id
+    statewright_cli_saa_canonicalize
+    statewright_cli_egcf_describe
+    statewright_cli_json_smoke
+    statewright_cli_internet_smoke
+    statewright_internet_watchlist_cli_smoke
+    statewright_saa_internet_howto_smoke
+    statewright_internet_orchestrator_cli_smoke
+    statewright_internet_orchestrator_fault_smoke
+    statewright_internet_supervisor_smoke
+    statewright_package_smoke
+    statewright_release_inputs)
+  set_tests_properties(${statewright_sanitizer_boundary_tests} PROPERTIES
+    ENVIRONMENT "ASAN_OPTIONS=detect_leaks=0:halt_on_error=1")
+endif()

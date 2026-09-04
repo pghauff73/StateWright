@@ -58,6 +58,14 @@ public:
   statewright::core::Workspace workspace;
 };
 
+statewright::core::AuthorityManifest
+priority_handler_authority(const EngineFixture &fixture) {
+  return fixture.authority(
+      "C2", {"analysis.experiment", "analysis.reason", "evidence.analyse",
+              "filesystem.read", "governance.read", "registry.read",
+              "simulation.run", "workflow.plan"},
+      true);
+}
 } // namespace
 
 TEST_CASE("EGCF engine executes and restart-rolls back one exact C3 plan") {
@@ -300,15 +308,10 @@ TEST_CASE("EGCF engine binds simulation and read-only execution to plans") {
   REQUIRE(fixture.workspace.snapshot_hash() == authority.source_snapshot_hash);
 }
 
-TEST_CASE("EGCF engine executes priority handlers and stable replay") {
+TEST_CASE("EGCF engine executes IEPS and assurance priority handlers") {
   EngineFixture fixture;
-  const auto authority = fixture.authority(
-      "C2", {"analysis.experiment", "analysis.reason", "evidence.analyse",
-              "filesystem.read", "governance.read", "registry.read",
-              "simulation.run", "workflow.plan"},
-      true);
   statewright::egcf::EgcfEngine engine(fixture.root, STATEWRIGHT_RESOURCE_ROOT,
-                                       authority);
+                                       priority_handler_authority(fixture));
 
   const auto generated = engine.invoke(
       "ieps.generate",
@@ -339,6 +342,24 @@ TEST_CASE("EGCF engine executes priority handlers and stable replay") {
   const auto qualified =
       engine.invoke("ieps.qualify", {{"subject_id", "priority"}});
   REQUIRE(qualified.at("outputs").at(0).at("result").at("qualified") == true);
+  REQUIRE(engine.invoke("evidence.confidence",
+                        {{"subject_id", "priority"}})
+              .at("ok") == true);
+  const auto assurance = engine.invoke(
+      "assurance.generate",
+      {{"subject_id", "priority"},
+       {"capability_facts", {{"authorized", true}}},
+       {"approval_facts", {{"satisfied", false}}},
+       {"rollback_argument", {{"required", false}, {"covered", true}}}});
+  REQUIRE(assurance.at("outputs").at(0).at("result").at("approval_facts").at(
+              "satisfied") == false);
+}
+
+TEST_CASE("EGCF engine executes algorithm registry priority handlers") {
+  EngineFixture fixture;
+  statewright::egcf::EgcfEngine engine(fixture.root, STATEWRIGHT_RESOURCE_ROOT,
+                                       priority_handler_authority(fixture));
+
   REQUIRE(engine.algorithms().algorithms().size() == 181U);
   const auto searched =
       engine.invoke("algorithm.search", {{"command_id", "repo.metrics"}});
@@ -366,6 +387,13 @@ TEST_CASE("EGCF engine executes priority handlers and stable replay") {
               .at("algorithms")
               .at(0)
               .at("qualification_count") == 1U);
+}
+
+TEST_CASE("EGCF engine executes governance and experiment priority handlers") {
+  EngineFixture fixture;
+  statewright::egcf::EgcfEngine engine(fixture.root, STATEWRIGHT_RESOURCE_ROOT,
+                                       priority_handler_authority(fixture));
+
   const auto generic = engine.invoke("repo.history");
   REQUIRE(generic.at("outputs").at(0).at("result").at("status") ==
           "READ_ONLY_RESULT");
@@ -380,6 +408,12 @@ TEST_CASE("EGCF engine executes priority handlers and stable replay") {
       {{"parameters",
         {{"mode", {"strict", "lenient"}}, {"parser", {"a", "b"}}}}});
   REQUIRE(design.at("outputs").at(0).at("result").at("runs") == 4);
+}
+
+TEST_CASE("EGCF engine executes simulation and classification handlers") {
+  EngineFixture fixture;
+  statewright::egcf::EgcfEngine engine(fixture.root, STATEWRIGHT_RESOURCE_ROOT,
+                                       priority_handler_authority(fixture));
 
   statewright::egcf::CommandContext simulation_context;
   simulation_context.simulate = true;
@@ -400,9 +434,13 @@ TEST_CASE("EGCF engine executes priority handlers and stable replay") {
               .at("result")
               .at("categories")
               .at(0) == "execution");
-  REQUIRE(engine.invoke("evidence.confidence",
-                        {{"subject_id", "priority"}})
-              .at("ok") == true);
+}
+
+TEST_CASE("EGCF engine executes workflow and reasoning priority handlers") {
+  EngineFixture fixture;
+  statewright::egcf::EgcfEngine engine(fixture.root, STATEWRIGHT_RESOURCE_ROOT,
+                                       priority_handler_authority(fixture));
+
   REQUIRE(engine
               .invoke("workflow.compile",
                       {{"name", "nested"},
@@ -412,15 +450,6 @@ TEST_CASE("EGCF engine executes priority handlers and stable replay") {
                           {"inputs", statewright::contracts::Json::object()}}}},
                        {"outputs", statewright::contracts::Json::object()}})
               .at("ok") == true);
-  const auto assurance = engine.invoke(
-      "assurance.generate",
-      {{"subject_id", "priority"},
-       {"capability_facts", {{"authorized", true}}},
-       {"approval_facts", {{"satisfied", false}}},
-       {"rollback_argument", {{"required", false}, {"covered", true}}}});
-  REQUIRE(assurance.at("outputs").at(0).at("result").at("approval_facts").at(
-              "satisfied") == false);
-
   const auto hypotheses = engine.invoke(
       "hrt.claims@1",
       {{"assumptions", {"fixture evidence remains bounded"}},
@@ -438,6 +467,12 @@ TEST_CASE("EGCF engine executes priority handlers and stable replay") {
               .at("result")
               .at("evidence_requirement_ids")
               .size() == 2U);
+}
+
+TEST_CASE("EGCF engine produces stable replay identities") {
+  EngineFixture fixture;
+  statewright::egcf::EgcfEngine engine(fixture.root, STATEWRIGHT_RESOURCE_ROOT,
+                                       priority_handler_authority(fixture));
 
   const auto metrics = engine.invoke("repo.metrics");
   const auto replay = engine.replay(

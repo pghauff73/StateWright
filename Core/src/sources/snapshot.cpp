@@ -65,6 +65,9 @@ InternetFetchReceipt make_fetch_receipt(std::string job_id,
   receipt.http_status = response.http_status;
   receipt.selected_headers = std::move(headers);
   receipt.tls_verified = response.tls_verified;
+  receipt.robots_policy_evaluated = response.robots_policy_evaluated;
+  receipt.robots_allowed = response.robots_allowed;
+  receipt.robots_evidence = response.robots_evidence;
   receipt.compressed_bytes = response.compressed_bytes;
   receipt.decompressed_bytes = response.decompressed_bytes;
   receipt.total_time_milliseconds = response.total_time_milliseconds;
@@ -91,6 +94,9 @@ InternetFetchReceipt make_not_modified_fetch_receipt(
   receipt.http_status = response.http_status;
   receipt.selected_headers = std::move(headers);
   receipt.tls_verified = response.tls_verified;
+  receipt.robots_policy_evaluated = response.robots_policy_evaluated;
+  receipt.robots_allowed = response.robots_allowed;
+  receipt.robots_evidence = response.robots_evidence;
   receipt.compressed_bytes = response.compressed_bytes;
   receipt.decompressed_bytes = response.decompressed_bytes;
   receipt.total_time_milliseconds = response.total_time_milliseconds;

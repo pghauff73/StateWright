@@ -86,6 +86,38 @@ TEST_CASE("internet scheduler resumes without duplicate logical jobs") {
               .empty());
 }
 
+TEST_CASE("internet scheduler uses stable polling windows with deterministic jitter") {
+  using namespace statewright;
+  auto source_watch = watch();
+  source_watch.polling_interval_seconds = 3600;
+  source_watch.deterministic_jitter_seconds = 300;
+  source_watch.watch_signature.clear();
+  source_watch = sources::canonical_watch(std::move(source_watch));
+
+  const auto before = sources::polling_window(
+      source_watch, "2026-09-04T01:04:59Z");
+  REQUIRE(before.scheduled_interval == "2026-09-04T00:05:00Z");
+  REQUIRE(before.earliest_start == "2026-09-04T00:05:00Z");
+  REQUIRE(before.deadline == "2026-09-04T01:05:00Z");
+
+  const auto current = sources::polling_window(
+      source_watch, "2026-09-04T01:05:00Z");
+  const auto repeated = sources::polling_window(
+      source_watch, "2026-09-04T01:59:59Z");
+  REQUIRE(current.scheduled_interval == "2026-09-04T01:05:00Z");
+  REQUIRE(repeated.scheduled_interval == current.scheduled_interval);
+  REQUIRE(repeated.deadline == "2026-09-04T02:05:00Z");
+
+  const auto jobs = sources::schedule_fetch_interval(
+      {source_watch}, {}, current.scheduled_interval,
+      current.earliest_start, current.deadline);
+  REQUIRE(jobs.size() == 1U);
+  REQUIRE(sources::schedule_fetch_interval(
+              {source_watch}, jobs, repeated.scheduled_interval,
+              repeated.earliest_start, repeated.deadline)
+              .empty());
+}
+
 TEST_CASE("internet scheduler enforces deterministic concurrency budgets") {
   using namespace statewright;
   const auto first = watch_for("https://one.example/a", "one.example");

@@ -60,5 +60,18 @@ jq -e '.schema_version == 1 and (.dependencies | length > 0)' \
 jq -e '.schema_version == 1 and .status == "IMPLEMENTED_NON_BREAKING_EXTENSION"' \
   "$root/contracts/migrations/0001-brain-feed-record-extension.json" >/dev/null
 
+jq -e '
+  . as $presets |
+  ($presets.configurePresets[] | select(.name == "sanitizer") |
+    .cacheVariables) as $cache |
+  ($presets.testPresets[] | select(.name == "sanitizer")) as $test |
+  $cache.CMAKE_BUILD_TYPE == "RelWithDebInfo" and
+  $cache.STATEWRIGHT_ENABLE_SANITIZERS == "ON" and
+  $cache.STATEWRIGHT_SANITIZER_TEST_SHARDS == "32" and
+  ($cache.CMAKE_CXX_FLAGS_RELWITHDEBINFO | contains("-O2")) and
+  ($cache.CMAKE_CXX_FLAGS_RELWITHDEBINFO | contains("-DNDEBUG") | not) and
+  $test.execution.jobs == 12
+' "$root/CMakePresets.json" >/dev/null
+
 printf 'release inputs verified for oracle %s\n' "$oracle_commit"
 

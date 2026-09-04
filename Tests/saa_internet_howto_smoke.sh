@@ -84,6 +84,9 @@ require_text 'Tests/saa_internet_howto_smoke.sh'
 require_text 'Tools/generate_internet_release_evidence.sh'
 require_text 'Tests/internet_orchestrator_cli_smoke.sh'
 require_text 'Tests/internet_orchestrator_fault_smoke.sh'
+require_text 'statewright-internet-supervisor'
+require_text 'docs/SAA_INTERNET_SUPERVISOR_MODE.md'
+require_text 'RECOVERY_DEFERRED'
 require_text 'does not claim a continuously running multi-process daemon'
 require_text 'version --json` is the build-identity exception'
 
@@ -95,6 +98,8 @@ for referenced_path in \
   Tests/internet_cli_smoke.sh \
   Tests/internet_orchestrator_cli_smoke.sh \
   Tests/internet_orchestrator_fault_smoke.sh \
+  Tests/internet_supervisor_smoke.sh \
+  docs/SAA_INTERNET_SUPERVISOR_MODE.md \
   Tests/sources/internet_fixture_server.cpp \
   resources/fixtures/internet/identity-v1.json \
   resources/policies/internet/default-source-policy-v1.json \

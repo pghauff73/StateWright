@@ -52,6 +52,16 @@ struct InternetScheduleSelection final {
   std::size_t allocated_cpu_units = 0U;
 };
 
+struct InternetPollingWindow final {
+  std::string scheduled_interval;
+  std::string earliest_start;
+  std::string deadline;
+};
+
+[[nodiscard]] InternetPollingWindow
+polling_window(const InternetWatch &watch,
+               std::string_view current_timestamp);
+
 [[nodiscard]] std::vector<InternetFetchJob> schedule_fetch_interval(
     const std::vector<InternetWatch> &watches,
     const std::vector<InternetFetchJob> &existing_jobs,

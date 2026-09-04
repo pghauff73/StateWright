@@ -13,7 +13,9 @@
 #include <cctype>
 #include <memory>
 #include <set>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace statewright::sources {
 namespace {
@@ -27,6 +29,66 @@ struct CurlUrlDeleter final {
 };
 
 using CurlUrl = std::unique_ptr<CURLU, CurlUrlDeleter>;
+
+struct RobotsRule final {
+  bool allow = false;
+  std::string pattern;
+};
+
+struct RobotsGroup final {
+  std::vector<std::string> agents;
+  std::vector<RobotsRule> rules;
+};
+
+std::string lower_ascii(std::string value) {
+  std::ranges::transform(value, value.begin(), [](unsigned char character) {
+    return static_cast<char>(std::tolower(character));
+  });
+  return value;
+}
+
+std::string trim_ascii(std::string value) {
+  while (!value.empty() &&
+         std::isspace(static_cast<unsigned char>(value.front())) != 0) {
+    value.erase(value.begin());
+  }
+  while (!value.empty() &&
+         std::isspace(static_cast<unsigned char>(value.back())) != 0) {
+    value.pop_back();
+  }
+  return value;
+}
+
+bool wildcard_match(std::string pattern, std::string_view value,
+                    bool anchored) {
+  if (!anchored) {
+    pattern.push_back('*');
+  }
+  std::size_t pattern_index = 0U;
+  std::size_t value_index = 0U;
+  std::size_t star_index = std::string::npos;
+  std::size_t star_value_index = 0U;
+  while (value_index < value.size()) {
+    if (pattern_index < pattern.size() &&
+        pattern[pattern_index] == value[value_index]) {
+      ++pattern_index;
+      ++value_index;
+    } else if (pattern_index < pattern.size() &&
+               pattern[pattern_index] == '*') {
+      star_index = pattern_index++;
+      star_value_index = value_index;
+    } else if (star_index != std::string::npos) {
+      pattern_index = star_index + 1U;
+      value_index = ++star_value_index;
+    } else {
+      return false;
+    }
+  }
+  while (pattern_index < pattern.size() && pattern[pattern_index] == '*') {
+    ++pattern_index;
+  }
+  return pattern_index == pattern.size();
+}
 
 [[nodiscard]] std::string component(CURLU *url, CURLUPart part,
                                     unsigned int flags = 0U) {
@@ -107,6 +169,107 @@ using CurlUrl = std::unique_ptr<CURLU, CurlUrlDeleter>;
 }
 
 } // namespace
+
+bool robots_txt_allows(std::string_view robots_text,
+                       std::string_view user_agent,
+                       std::string_view path_and_query) {
+  std::vector<RobotsGroup> groups;
+  RobotsGroup current;
+  bool current_has_rules = false;
+  std::size_t offset = 0U;
+  while (offset <= robots_text.size()) {
+    const auto newline = robots_text.find('\n', offset);
+    const auto end = newline == std::string_view::npos ? robots_text.size()
+                                                       : newline;
+    std::string line(robots_text.substr(offset, end - offset));
+    if (!line.empty() && line.back() == '\r') {
+      line.pop_back();
+    }
+    const auto comment = line.find('#');
+    if (comment != std::string::npos) {
+      line.erase(comment);
+    }
+    line = trim_ascii(std::move(line));
+    const auto separator = line.find(':');
+    if (separator != std::string::npos) {
+      const std::string key =
+          lower_ascii(trim_ascii(line.substr(0U, separator)));
+      const std::string value = trim_ascii(line.substr(separator + 1U));
+      if (key == "user-agent") {
+        if (current_has_rules) {
+          groups.push_back(std::move(current));
+          current = {};
+          current_has_rules = false;
+        }
+        if (!value.empty()) {
+          current.agents.push_back(lower_ascii(value));
+        }
+      } else if ((key == "allow" || key == "disallow") &&
+                 !current.agents.empty()) {
+        current_has_rules = true;
+        if (!value.empty()) {
+          current.rules.push_back({.allow = key == "allow", .pattern = value});
+        }
+      }
+    }
+    if (newline == std::string_view::npos) {
+      break;
+    }
+    offset = newline + 1U;
+  }
+  if (!current.agents.empty()) {
+    groups.push_back(std::move(current));
+  }
+
+  const std::string normalized_agent = lower_ascii(std::string(user_agent));
+  int best_agent_score = -1;
+  std::vector<const RobotsGroup *> selected;
+  for (const auto &group : groups) {
+    int group_score = -1;
+    for (const auto &agent : group.agents) {
+      if (agent == "*") {
+        group_score = std::max(group_score, 0);
+      } else if (normalized_agent.find(agent) != std::string::npos) {
+        group_score = std::max(group_score, static_cast<int>(agent.size()));
+      }
+    }
+    if (group_score > best_agent_score) {
+      best_agent_score = group_score;
+      selected.clear();
+    }
+    if (group_score >= 0 && group_score == best_agent_score) {
+      selected.push_back(&group);
+    }
+  }
+  if (selected.empty()) {
+    return true;
+  }
+
+  const std::string path = path_and_query.empty() ? "/"
+                                                   : std::string(path_and_query);
+  int best_rule_score = -1;
+  bool allowed = true;
+  for (const auto *group : selected) {
+    for (const auto &rule : group->rules) {
+      bool anchored = !rule.pattern.empty() && rule.pattern.back() == '$';
+      std::string pattern = rule.pattern;
+      if (anchored) {
+        pattern.pop_back();
+      }
+      if (!wildcard_match(pattern, path, anchored)) {
+        continue;
+      }
+      const int score = static_cast<int>(std::ranges::count_if(
+          pattern, [](char character) { return character != '*'; }));
+      if (score > best_rule_score ||
+          (score == best_rule_score && rule.allow)) {
+        best_rule_score = score;
+        allowed = rule.allow;
+      }
+    }
+  }
+  return allowed;
+}
 
 ParsedUrl parse_and_validate_url(std::string_view url_text,
                                  const InternetSourcePolicy &policy) {

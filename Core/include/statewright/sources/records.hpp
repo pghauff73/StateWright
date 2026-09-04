@@ -76,6 +76,9 @@ struct InternetFetchReceipt final {
   int http_status = 0;
   contracts::Json selected_headers = contracts::Json::object();
   bool tls_verified = false;
+  bool robots_policy_evaluated = false;
+  bool robots_allowed = false;
+  contracts::Json robots_evidence = contracts::Json::array();
   std::size_t compressed_bytes = 0;
   std::size_t decompressed_bytes = 0;
   long long total_time_milliseconds = 0;

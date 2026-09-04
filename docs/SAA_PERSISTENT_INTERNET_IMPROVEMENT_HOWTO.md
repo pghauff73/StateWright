@@ -322,12 +322,19 @@ test "$artifact_bytes_id" = "artifact-bytes:sha256:$expected_sha256"
 
 The fetch creates a receipt even when acquisition fails after a job and lease
 exist. Successful response bytes are captured as a content-addressed artifact
-before extraction or reasoning.
+before extraction or reasoning. The native provider also fetches `robots.txt`
+for every origin in the redirect chain, fails closed unless permission is
+established, and records the decision, document hash, status, and redirect
+evidence in the fetch receipt.
 
 ### 5.5 Assess Source Admissibility
 
 Robots permission and license classification are explicit assessment inputs;
-StateWright does not infer permission from model prose.
+StateWright does not infer permission from model prose. For a policy that does
+not require a known license, a successful robots-backed fetch automatically
+register host-generated assessment input with license classification `UNKNOWN`,
+allowing supervisor runs to continue through assessment and extraction. Policies
+that require a known license retain the manual provenance-bound path below.
 
 ```bash
 assessment_result=$(saa_run internet-source "$(jq -cn \
@@ -889,6 +896,33 @@ invokes it again. The EGCF workspace lock is held for one invocation, so this
 release does not claim a continuously running multi-process daemon or
 exactly-once HTTP transport.
 
+#### Supervisor Mode
+
+The installed C++20 executable `statewright-internet-supervisor` implements the
+bounded timer/job-runner layer without opening the EGCF store itself. Each cycle
+queries worker-filtered nonterminal status, resumes one expired or unleased run
+when necessary, or launches one `run-once` child. It enforces child timeouts,
+wall time, cycle and failure ceilings, exponential backoff, output limits,
+stable worker identity, process-group termination, and canonical JSONL events.
+
+```bash
+statewright-internet-supervisor \
+  --workspace "$SAA_WORKSPACE" \
+  --worker-id saa-internet-host01 \
+  --maximum-cycles 8 \
+  --maximum-wall-seconds 300 \
+  --child-timeout-seconds 120 \
+  --action-lease-seconds 180 \
+  --fetch-lease-seconds 180 \
+  --action-deadline-seconds 120 \
+  --event-log "$SAA_WORKSPACE/supervisor/internet-events.jsonl"
+```
+
+Use one stable worker ID and one supervisor per workspace. An unexpired active
+lease produces `RECOVERY_DEFERRED`; a later timer wake resumes after expiry.
+The full request-template, event, exit-status, recovery, and systemd contracts
+are in `docs/SAA_INTERNET_SUPERVISOR_MODE.md`.
+
 ### 6.6 Promotion Policies and Probation History
 
 ```bash
@@ -970,8 +1004,8 @@ Before scheduling, verify all of the following outside model output:
 2. the resolved destination is public and the port is permitted;
 3. authentication, cookies, browser profiles, ambient credentials, and proxy
    authentication are not required;
-4. robots permission has been evaluated;
-5. license classification is known or explicitly accepted by policy;
+4. the fetch receipt contains successful per-origin robots evidence;
+5. license classification is known or the policy explicitly permits `UNKNOWN`;
 6. MIME, size, decompression, redirect, TLS, and timeout limits are suitable;
 7. the workspace is disposable for the first trial;
 8. no linked-domain crawl or JavaScript execution is expected.

@@ -52,7 +52,8 @@ public:
   resume(std::string prior_run_id,
          const InternetImprovementRunRequest &request);
   [[nodiscard]] contracts::Json
-  run_status(std::string_view run_id = {}) const;
+  run_status(std::string_view run_id = {}, std::string_view worker_id = {},
+             bool nonterminal_only = false) const;
   [[nodiscard]] contracts::Json
   explain_action(std::string_view action_key) const;
 

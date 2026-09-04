@@ -15,6 +15,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <memory>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <string>
@@ -310,14 +311,16 @@ void insert_internet_record(sqlite3_stmt *record_statement,
   step_done(sqlite3_db_handle(fts_statement), fts_statement);
 }
 
-[[nodiscard]] ProjectionCheckpoint authoritative_checkpoint(
-    const ObjectStore &objects, const core::EventStore &events) {
-  auto envelopes = objects.envelopes();
+void sort_envelopes_by_id(std::vector<EgcfEnvelope> &envelopes) {
   std::sort(envelopes.begin(), envelopes.end(),
             [](const EgcfEnvelope &left, const EgcfEnvelope &right) {
               return left.object_id < right.object_id;
             });
-  const auto event_values = events.events();
+}
+
+[[nodiscard]] ProjectionCheckpoint authoritative_checkpoint(
+    const std::vector<EgcfEnvelope> &envelopes,
+    const std::vector<Json> &event_values, std::string_view event_head) {
   Json object_material = Json::array();
   for (const auto &envelope : envelopes) {
     object_material.push_back(to_json(envelope));
@@ -328,15 +331,14 @@ void insert_internet_record(sqlite3_stmt *record_statement,
         {{"event_hash", event.at("event_hash")},
          {"event_id", event.at("event_id")}});
   }
-  const std::string head = events.validate_chain();
   const std::string digest = contracts::sha256_json(
-      {{"event_head", head},
+      {{"event_head", event_head},
        {"events", event_material},
        {"objects", object_material},
        {"projection_schema_version", egcf_projection_schema_version}});
   return {.schema_version = egcf_projection_schema_version,
           .authoritative_digest = digest,
-          .event_head = head,
+          .event_head = std::string(event_head),
           .object_count = envelopes.size(),
           .event_count = event_values.size()};
 }
@@ -472,11 +474,18 @@ std::vector<EgcfEnvelope> ObjectStore::envelopes() const {
   for (const auto &path : paths) {
     try {
       const Json value = contracts::parse_json(core::read_text(path));
-      const auto envelope = envelope_from_json(value);
+      auto envelope = envelope_from_json(value);
       if (path != path_for(envelope.object_id)) {
         store_error("EGCF object stored at noncanonical path: " + path.string());
       }
-      result.push_back(get_envelope(envelope.object_id));
+      schemas_.validate_record_payload(envelope.object_type, envelope.payload);
+      const auto parts = strict_id_parts(envelope.object_id);
+      if (parts.object_type != envelope.object_type ||
+          contracts::typed_id(envelope.object_type, envelope.payload) !=
+              envelope.object_id) {
+        store_error("EGCF object hash mismatch: " + envelope.object_id);
+      }
+      result.push_back(std::move(envelope));
     } catch (const common::Error &error) {
       store_error("invalid EGCF object-store entry " + path.string() + ": " +
                   error.what());
@@ -557,20 +566,79 @@ public:
     return core::EventStore(path).head();
   }
 
+  struct ProjectionFileStamp final {
+    std::filesystem::file_time_type modified_at;
+    std::uintmax_t size = 0;
+
+    bool operator==(const ProjectionFileStamp &) const = default;
+  };
+
+  [[nodiscard]] std::optional<ProjectionFileStamp>
+  projection_file_stamp() const {
+    std::error_code error;
+    const auto modified_at =
+        std::filesystem::last_write_time(projection_path, error);
+    if (error) {
+      return std::nullopt;
+    }
+    const auto size = std::filesystem::file_size(projection_path, error);
+    if (error) {
+      return std::nullopt;
+    }
+    return ProjectionFileStamp{.modified_at = modified_at, .size = size};
+  }
+
+  void remember_projection_stamp() {
+    validated_projection_stamp = projection_file_stamp();
+  }
+
+  void validate_and_remember_projection() {
+    validate_projection();
+    remember_projection_stamp();
+  }
+
   void ensure_projection() {
-    if (!std::filesystem::exists(projection_path)) {
+    const auto current_stamp = projection_file_stamp();
+    if (current_stamp && validated_projection_stamp &&
+        *current_stamp == *validated_projection_stamp) {
+      return;
+    }
+    if (!current_stamp) {
       replace_projection();
       return;
     }
     try {
-      validate_projection();
+      validate_and_remember_projection();
     } catch (const common::Error &) {
       replace_projection();
     }
   }
 
+  void reload_authoritative_cache() {
+    authoritative_envelopes = object_store.envelopes();
+    sort_envelopes_by_id(authoritative_envelopes);
+    authoritative_events = event_store.events();
+    authoritative_event_head = event_store.validate_chain();
+  }
+
+  void cache_appended_authority(
+      const std::vector<EgcfEnvelope> &envelopes,
+      const std::vector<Json> &event_values) {
+    authoritative_envelopes.insert(authoritative_envelopes.end(),
+                                   envelopes.begin(), envelopes.end());
+    sort_envelopes_by_id(authoritative_envelopes);
+    authoritative_events.insert(authoritative_events.end(),
+                                event_values.begin(), event_values.end());
+    if (!event_values.empty()) {
+      authoritative_event_head =
+          event_values.back().at("event_hash").get<std::string>();
+    }
+  }
+
   [[nodiscard]] ProjectionCheckpoint checkpoint() const {
-    return authoritative_checkpoint(object_store, event_store);
+    return authoritative_checkpoint(authoritative_envelopes,
+                                    authoritative_events,
+                                    authoritative_event_head);
   }
 
   void populate_projection(sqlite3 *database,
@@ -829,18 +897,20 @@ public:
       sqlite3_exec(database.get(), "ROLLBACK", nullptr, nullptr, nullptr);
       throw;
     }
+    database.reset();
+    remember_projection_stamp();
   }
 
   void replace_projection() {
-    const auto envelopes = object_store.envelopes();
-    const auto event_values = event_store.events();
+    reload_authoritative_cache();
     const ProjectionCheckpoint expected = checkpoint();
     const auto temporary = projection_path.string() + ".rebuild." +
                            std::to_string(static_cast<long long>(::getpid()));
     remove_projection_files(temporary);
     try {
       auto database = open_database(temporary);
-      populate_projection(database.get(), envelopes, event_values, expected);
+      populate_projection(database.get(), authoritative_envelopes,
+                          authoritative_events, expected);
       database.reset();
       remove_projection_files(projection_path);
       std::filesystem::rename(temporary, projection_path);
@@ -848,20 +918,21 @@ public:
       remove_projection_files(temporary);
       throw;
     }
-    validate_projection();
+    validate_and_remember_projection();
   }
 
   void rebuild_projection() {
-    const auto envelopes = object_store.envelopes();
-    const auto event_values = event_store.events();
+    reload_authoritative_cache();
     const ProjectionCheckpoint expected = checkpoint();
     auto database = open_database(projection_path);
-    populate_projection(database.get(), envelopes, event_values, expected);
+    populate_projection(database.get(), authoritative_envelopes,
+                        authoritative_events, expected);
     database.reset();
-    validate_projection();
+    validate_and_remember_projection();
   }
 
-  void validate_projection() const {
+  void validate_projection() {
+    reload_authoritative_cache();
     const ProjectionCheckpoint expected = checkpoint();
     auto database = open_database(projection_path);
     initialize(database.get());
@@ -903,7 +974,7 @@ public:
     require_count("object_fts", expected.object_count);
     require_count("events", expected.event_count);
     const auto internet_count = static_cast<std::size_t>(std::ranges::count_if(
-        object_store.envelopes(), [](const auto &envelope) {
+        authoritative_envelopes, [](const auto &envelope) {
           return envelope.object_type.starts_with("internet-");
         }));
     require_count("internet_records", internet_count);
@@ -918,7 +989,7 @@ public:
         database.get(),
         "SELECT object_type, status, snapshot_id, candidate_ref, source_group, "
         "payload_json FROM internet_records WHERE object_id=?");
-    for (const auto &envelope : object_store.envelopes()) {
+    for (const auto &envelope : authoritative_envelopes) {
       sqlite3_reset(object_lookup.get());
       sqlite3_clear_bindings(object_lookup.get());
       bind_text(object_lookup.get(), 1, envelope.object_id);
@@ -966,7 +1037,7 @@ public:
         database.get(),
         "SELECT event_hash, payload_hash, payload_json FROM events "
         "WHERE event_id=?");
-    for (const auto &event : event_store.events()) {
+    for (const auto &event : authoritative_events) {
       sqlite3_reset(event_lookup.get());
       sqlite3_clear_bindings(event_lookup.get());
       bind_text(event_lookup.get(), 1,
@@ -991,6 +1062,10 @@ public:
   std::string parent_event_head;
   core::EventStore event_store;
   std::filesystem::path projection_path;
+  std::vector<EgcfEnvelope> authoritative_envelopes;
+  std::vector<Json> authoritative_events;
+  std::string authoritative_event_head;
+  std::optional<ProjectionFileStamp> validated_projection_stamp;
 };
 
 EgcfStore::EgcfStore(std::filesystem::path workspace_root,
@@ -1054,6 +1129,7 @@ EgcfStore::register_records(const std::vector<EgcfRecord> &records,
     }
   }
   if (!new_envelopes.empty()) {
+    impl_->cache_appended_authority(new_envelopes, new_events);
     try {
       impl_->append_projection(new_envelopes, new_events);
     } catch (const common::Error &) {
@@ -1245,7 +1321,9 @@ ProjectionCheckpoint EgcfStore::projection_checkpoint() const {
   return impl_->checkpoint();
 }
 
-void EgcfStore::validate_projection() const { impl_->validate_projection(); }
+void EgcfStore::validate_projection() const {
+  impl_->validate_and_remember_projection();
+}
 
 void EgcfStore::rebuild_projection() { impl_->rebuild_projection(); }
 

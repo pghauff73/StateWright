@@ -17,6 +17,7 @@ struct InternetFetchExecutionResult final {
   std::string snapshot_id;
   std::string artifact_record_id;
   std::string artifact_bytes_id;
+  std::string source_assessment_input_id;
   std::string closed_lease_id;
   std::string status;
 };

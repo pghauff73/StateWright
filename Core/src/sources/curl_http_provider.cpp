@@ -1,6 +1,8 @@
 #include "statewright/sources/http_provider.hpp"
 
 #include "statewright/common/error.hpp"
+#include "statewright/common/utf8.hpp"
+#include "statewright/contracts/hash.hpp"
 
 #include <curl/curl.h>
 
@@ -9,6 +11,7 @@
 #include <chrono>
 #include <cctype>
 #include <limits>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -216,6 +219,15 @@ void validate_request_headers(
          status == 308;
 }
 
+[[nodiscard]] std::string origin_url(const ParsedUrl &url) {
+  const bool default_port =
+      (url.scheme == "http" && url.port == 80) ||
+      (url.scheme == "https" && url.port == 443);
+  return url.scheme + "://" + bracketed(url.host) +
+         (default_port ? std::string{}
+                       : ":" + std::to_string(url.port));
+}
+
 [[nodiscard]] FetchResponse perform_single_request(
     const FetchRequest &request, const ParsedUrl &parsed,
     const InternetSourcePolicy &policy,
@@ -334,6 +346,75 @@ void validate_request_headers(
   return capture.response;
 }
 
+[[nodiscard]] FetchResponse fetch_robots_document(
+    const FetchRequest &request, const ParsedUrl &target,
+    const InternetSourcePolicy &policy, long long timeout_milliseconds,
+    std::set<std::string> &all_addresses) {
+  auto robots_policy = policy;
+  constexpr std::size_t maximum_robots_bytes = 512U * 1024U;
+  robots_policy.maximum_response_bytes =
+      std::min(robots_policy.maximum_response_bytes, maximum_robots_bytes);
+  robots_policy.maximum_decompressed_bytes = std::min(
+      robots_policy.maximum_decompressed_bytes, maximum_robots_bytes);
+  robots_policy.policy_signature.clear();
+  robots_policy = canonical_source_policy(std::move(robots_policy));
+
+  FetchRequest robots_request;
+  robots_request.url = origin_url(target) + "/robots.txt";
+  robots_request.method = "GET";
+  robots_request.policy = robots_policy;
+  robots_request.cancellation_requested = request.cancellation_requested;
+
+  ParsedUrl current = parse_and_validate_url(robots_request.url, robots_policy);
+  const std::string requested_url = current.canonical_url;
+  std::set<std::string> visited{current.canonical_url};
+  std::vector<std::string> redirect_chain;
+  long long total_time_milliseconds = 0;
+  const auto started = std::chrono::steady_clock::now();
+
+  while (true) {
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - started);
+    const long long remaining = timeout_milliseconds - elapsed.count();
+    if (remaining <= 0) {
+      curl_error("robots.txt fetch timed out");
+    }
+    const auto addresses =
+        resolve_validated_addresses(current, robots_policy);
+    all_addresses.insert(addresses.begin(), addresses.end());
+    FetchResponse response = perform_single_request(
+        robots_request, current, robots_policy, addresses,
+        static_cast<long>(std::min<long long>(
+            remaining, std::numeric_limits<long>::max())));
+    total_time_milliseconds += response.total_time_milliseconds;
+    if (!redirect_status(response.http_status)) {
+      if (response.http_status >= 300 && response.http_status < 400) {
+        curl_error("robots.txt used an unsupported redirect status");
+      }
+      response.requested_url = requested_url;
+      response.final_url = current.canonical_url;
+      response.redirect_chain = std::move(redirect_chain);
+      response.total_time_milliseconds = total_time_milliseconds;
+      return response;
+    }
+    if (redirect_chain.size() >=
+        static_cast<std::size_t>(robots_policy.maximum_redirects)) {
+      curl_error("robots.txt redirect limit exceeded");
+    }
+    const std::string location = header_value(response, "location");
+    ParsedUrl next = resolve_and_validate_redirect(current.canonical_url,
+                                                   location, robots_policy);
+    if (current.scheme == "https" && next.scheme != "https") {
+      curl_error("robots.txt HTTPS redirect downgrade is prohibited");
+    }
+    if (!visited.insert(next.canonical_url).second) {
+      curl_error("robots.txt redirect loop detected");
+    }
+    redirect_chain.push_back(next.canonical_url);
+    current = std::move(next);
+  }
+}
+
 } // namespace
 
 CurlHttpFetchProvider::CurlHttpFetchProvider() { initialize_curl(); }
@@ -349,6 +430,8 @@ FetchResponse CurlHttpFetchProvider::fetch(const FetchRequest &request) {
   std::set<std::string> visited{current.canonical_url};
   std::set<std::string> all_addresses;
   std::vector<std::string> redirect_chain;
+  std::map<std::string, FetchResponse> robots_documents;
+  contracts::Json robots_evidence = contracts::Json::array();
   long long total_time_milliseconds = 0;
   const auto started = std::chrono::steady_clock::now();
 
@@ -364,12 +447,63 @@ FetchResponse CurlHttpFetchProvider::fetch(const FetchRequest &request) {
     if (remaining <= 0) {
       curl_error("HTTP fetch timed out");
     }
+    if (policy.require_robots_permission) {
+      const std::string origin = origin_url(current);
+      auto robots = robots_documents.find(origin);
+      if (robots == robots_documents.end()) {
+        auto response = fetch_robots_document(request, current, policy,
+                                              remaining, all_addresses);
+        total_time_milliseconds += response.total_time_milliseconds;
+        robots = robots_documents.emplace(origin, std::move(response)).first;
+      }
+      const auto &robots_response = robots->second;
+      bool allowed = false;
+      if (robots_response.http_status == 200) {
+        std::string robots_text;
+        if (!robots_response.body.empty()) {
+          robots_text.assign(
+              reinterpret_cast<const char *>(robots_response.body.data()),
+              robots_response.body.size());
+        }
+        if (!common::is_valid_utf8(robots_text)) {
+          curl_error("robots.txt is not valid UTF-8");
+        }
+        allowed = robots_txt_allows(robots_text, policy.user_agent,
+                                    current.path_and_query);
+      } else if (robots_response.http_status == 404 ||
+                 robots_response.http_status == 410) {
+        allowed = true;
+      } else {
+        curl_error("robots.txt could not establish permission");
+      }
+      robots_evidence.push_back(
+          {{"allowed", allowed},
+           {"body_sha256", contracts::sha256_bytes(robots_response.body)},
+           {"final_url", robots_response.final_url},
+           {"http_status", robots_response.http_status},
+           {"path", current.path_and_query},
+           {"redirect_chain", robots_response.redirect_chain},
+           {"requested_url", robots_response.requested_url},
+           {"user_agent", policy.user_agent}});
+      if (!allowed) {
+        curl_error("robots.txt disallows the requested URL");
+      }
+    }
+    const auto request_elapsed =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - started);
+    const long long request_remaining =
+        static_cast<long long>(policy.request_timeout_seconds) * 1000LL -
+        request_elapsed.count();
+    if (request_remaining <= 0) {
+      curl_error("HTTP fetch timed out after robots.txt evaluation");
+    }
     const auto addresses = resolve_validated_addresses(current, policy);
     all_addresses.insert(addresses.begin(), addresses.end());
     FetchResponse response = perform_single_request(
         request, current, policy, addresses,
-        static_cast<long>(std::min<long long>(remaining,
-                                               std::numeric_limits<long>::max())));
+        static_cast<long>(std::min<long long>(
+            request_remaining, std::numeric_limits<long>::max())));
     total_time_milliseconds += response.total_time_milliseconds;
     if (!redirect_status(response.http_status)) {
       if (response.http_status >= 300 && response.http_status < 400 &&
@@ -385,6 +519,11 @@ FetchResponse CurlHttpFetchProvider::fetch(const FetchRequest &request) {
       response.resolved_addresses.assign(all_addresses.begin(),
                                          all_addresses.end());
       response.total_time_milliseconds = total_time_milliseconds;
+      if (policy.require_robots_permission) {
+        response.robots_policy_evaluated = true;
+        response.robots_allowed = true;
+        response.robots_evidence = std::move(robots_evidence);
+      }
       return response;
     }
     if (redirect_chain.size() >=

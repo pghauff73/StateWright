@@ -402,16 +402,18 @@ InternetImprovementPlan InternetImprovementDirector::plan(
       static_cast<void>(id);
       existing_jobs.push_back(job);
     }
-    const auto scheduled = sources::schedule_fetch_interval(
-        active_watches, existing_jobs, state.cycle_key, state.planned_at,
-        policy.action_deadline.empty() ? state.planned_at
-                                       : policy.action_deadline);
-    for (const auto &job : scheduled) {
-      add_action(make_action(
-          state, policy, InternetDirectedActionKind::schedule_fetch,
-          job.watch_id, "internet-watch", {}, job.expected_watch_generation,
-          {job.watch_id}, {}, {}, {{"job", sources::to_json(job)}}, 3500, 500,
-          500, 0U, 1U, job.retry_ceiling));
+    for (const auto &watch : active_watches) {
+      const auto window = sources::polling_window(watch, state.planned_at);
+      const auto scheduled = sources::schedule_fetch_interval(
+          {watch}, existing_jobs, window.scheduled_interval,
+          window.earliest_start, window.deadline);
+      for (const auto &job : scheduled) {
+        add_action(make_action(
+            state, policy, InternetDirectedActionKind::schedule_fetch,
+            job.watch_id, "internet-watch", {}, job.expected_watch_generation,
+            {job.watch_id}, {}, {}, {{"job", sources::to_json(job)}}, 3500,
+            500, 500, 0U, 1U, job.retry_ceiling));
+      }
     }
 
     const auto latest_leases = [&]() {
@@ -586,15 +588,19 @@ InternetImprovementPlan InternetImprovementDirector::plan(
       const auto &candidate = candidate_iterator->second;
       const int opportunity_boost =
           opportunity_priority[candidate.candidate_signature];
+      const bool reasoning_candidate =
+          candidate.status == "VALIDATION_READY" ||
+          candidate.status == "QUARANTINED";
+      if (reasoning_candidate && policy.require_reasoning &&
+          candidate.reasoning_analysis_ids.empty()) {
+        add_action(make_action(
+            state, policy, InternetDirectedActionKind::reason_candidate,
+            candidate_id, "internet-algorithm-candidate", candidate.status, 0,
+            {candidate.source_fragment_id}, {}, {}, Json::object(),
+            7000 + opportunity_boost, 1500, 1000, 0U, 1U, 0));
+        continue;
+      }
       if (candidate.status == "VALIDATION_READY") {
-        if (policy.require_reasoning && candidate.reasoning_analysis_ids.empty()) {
-          add_action(make_action(
-              state, policy, InternetDirectedActionKind::reason_candidate,
-              candidate_id, "internet-algorithm-candidate", candidate.status, 0,
-              {candidate.source_fragment_id}, {}, {}, Json::object(),
-              7000 + opportunity_boost, 1500, 1000, 0U, 1U, 0));
-          continue;
-        }
         std::optional<std::string> protocol_id;
         for (const auto &active_protocol_id : state.active_protocol_ids) {
           const auto iterator = protocols.find(active_protocol_id);

@@ -17,6 +17,8 @@ ctest --preset developer --output-on-failure
 ```
 
 Additional presets are available for `sanitizer`, `coverage`, and `release`.
+Use `Tools/run_sanitizer_qualification.sh` to run the complete sanitizer preset
+with the strict default wall-clock budget of less than 60 seconds.
 
 ## CLI
 
@@ -80,6 +82,9 @@ the unchanged EGCF execution-authority boundary.
   records the implemented deterministic Director, bounded restart-safe
   Orchestrator, immutable run records, compatibility, fault recovery, and
   release gates.
+- `docs/SAA_INTERNET_SUPERVISOR_MODE.md` documents the installed C++20
+  supervisor executable, bounded recovery loop, JSONL events, circuit breaker,
+  and systemd timer deployment.
 
 ## Goal Prompts
 

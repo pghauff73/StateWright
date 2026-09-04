@@ -27,8 +27,10 @@
       "name": "sanitizer",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "STATEWRIGHT_ENABLE_SANITIZERS": "ON"
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -Wno-maybe-uninitialized",
+        "STATEWRIGHT_ENABLE_SANITIZERS": "ON",
+        "STATEWRIGHT_SANITIZER_TEST_SHARDS": "32"
       }
     },
     {
@@ -62,7 +64,8 @@
     {
       "name": "sanitizer",
       "configurePreset": "sanitizer",
-      "output": { "outputOnFailure": true }
+      "output": { "outputOnFailure": true },
+      "execution": { "jobs": 12 }
     },
     {
       "name": "release",
@@ -71,4 +74,3 @@
     }
   ]
 }
-

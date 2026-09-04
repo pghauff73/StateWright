@@ -1,5 +1,6 @@
 #include "statewright/egcf/internet_improvement_director.hpp"
 
+#include "statewright/egcf/internet_records.hpp"
 #include "statewright/sources/policy.hpp"
 
 #include <catch2/catch_test_macros.hpp>
@@ -166,4 +167,111 @@ TEST_CASE("internet improvement director matches assessment policy lineage") {
           egcf::InternetDirectedActionKind::assess_source);
   REQUIRE(plan.actions.front().policy_ids ==
           std::vector<std::string>{source_policy.object_id()});
+}
+
+TEST_CASE("internet improvement director schedules unscheduled watches fairly") {
+  using namespace statewright;
+
+  const auto source_policy = sources::canonical_source_policy({});
+  const auto make_watch = [&](std::string url, std::string group) {
+    sources::InternetWatch value;
+    value.canonical_url = std::move(url);
+    value.source_policy_id = source_policy.object_id();
+    value.source_group = std::move(group);
+    value.accepted_mime_types = source_policy.accepted_mime_types;
+    return sources::canonical_watch(std::move(value));
+  };
+  const auto first =
+      make_watch("https://a.example/director", "a.example");
+  const auto second =
+      make_watch("https://b.example/director", "b.example");
+  const auto first_window =
+      sources::polling_window(first, "2026-09-04T00:00:00Z");
+  const auto first_job = sources::make_fetch_job(
+      first, first_window.scheduled_interval, first_window.earliest_start,
+      first_window.deadline);
+  sources::InternetFetchReceipt first_receipt;
+  first_receipt.job_id = first_job.object_id();
+  first_receipt.lease_id = "fixture-lease";
+  first_receipt.requested_url = first.canonical_url;
+  first_receipt.final_url = first.canonical_url;
+  first_receipt.http_status = 200;
+  first_receipt.provider_identity = "fixture-provider";
+  first_receipt.snapshot_id = "fixture-snapshot";
+  first_receipt.status = "FETCH_SUCCEEDED";
+  first_receipt =
+      sources::canonical_fetch_receipt(std::move(first_receipt));
+
+  egcf::InternetImprovementState state;
+  state.event_head = "GENESIS";
+  state.projection_digest = std::string(64U, 'a');
+  state.planned_at = "2026-09-04T00:00:00Z";
+  state.cycle_key = "cycle-two";
+  state.active_watch_ids = {first.object_id(), second.object_id()};
+  state.internet_records = {
+      {.object_id = first.object_id(),
+       .object_type = "internet-watch",
+       .digest = {},
+       .payload = sources::to_json(first),
+       .relative_path = {}},
+      {.object_id = second.object_id(),
+       .object_type = "internet-watch",
+       .digest = {},
+       .payload = sources::to_json(second),
+       .relative_path = {}},
+      {.object_id = first_job.object_id(),
+       .object_type = "internet-fetch-job",
+       .digest = {},
+       .payload = sources::to_json(first_job),
+       .relative_path = {}},
+      {.object_id = first_receipt.object_id(),
+       .object_type = "internet-fetch-receipt",
+       .digest = {},
+       .payload = sources::to_json(first_receipt),
+       .relative_path = {}}};
+
+  egcf::InternetDirectorPolicy policy;
+  policy.action_deadline = "2026-09-04T00:05:00Z";
+  const auto plan = egcf::InternetImprovementDirector{}.plan(state, policy);
+
+  REQUIRE(plan.actions.size() == 1U);
+  REQUIRE(plan.actions.front().kind ==
+          egcf::InternetDirectedActionKind::schedule_fetch);
+  REQUIRE(plan.actions.front().subject_id == second.object_id());
+}
+
+TEST_CASE("internet improvement director reasons about quarantined candidates") {
+  using namespace statewright;
+
+  egcf::InternetAlgorithmCandidate candidate;
+  candidate.source_fragment_id = "fixture-fragment";
+  candidate.snapshot_id = "fixture-snapshot";
+  candidate.source_policy_assessment_id = "fixture-assessment";
+  candidate.retrieval_receipt_id = "fixture-retrieval";
+  candidate.status = "QUARANTINED";
+  candidate.unresolved_assumptions = {"source semantics remain incomplete"};
+  candidate = egcf::canonical_internet_algorithm_candidate(
+      std::move(candidate));
+
+  egcf::InternetImprovementState state;
+  state.event_head = "GENESIS";
+  state.projection_digest = std::string(64U, 'b');
+  state.planned_at = "2026-09-04T00:00:00Z";
+  state.cycle_key = "quarantined-reasoning";
+  state.active_candidate_ids = {candidate.object_id()};
+  state.internet_records = {
+      {.object_id = candidate.object_id(),
+       .object_type = "internet-algorithm-candidate",
+       .digest = {},
+       .payload = egcf::to_json(candidate),
+       .relative_path = {}}};
+
+  egcf::InternetDirectorPolicy policy;
+  policy.enable_acquisition = false;
+  policy.action_deadline = "2026-09-04T00:05:00Z";
+  const auto plan = egcf::InternetImprovementDirector{}.plan(state, policy);
+  REQUIRE(plan.actions.size() == 1U);
+  REQUIRE(plan.actions.front().kind ==
+          egcf::InternetDirectedActionKind::reason_candidate);
+  REQUIRE(plan.actions.front().subject_id == candidate.object_id());
 }

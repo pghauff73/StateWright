@@ -33,6 +33,7 @@
 #include "statewright/sources/http_provider.hpp"
 #include "statewright/sources/scheduler.hpp"
 #include "statewright/sources/snapshot.hpp"
+#include "statewright/sources/watchlist.hpp"
 
 #include <algorithm>
 #include <array>
@@ -82,6 +83,25 @@ using Json = contracts::Json;
   return buffer.data();
 }
 
+[[nodiscard]] std::time_t timestamp_value(std::string_view timestamp) {
+  if (timestamp.size() != 20U) {
+    throw common::Error(common::ErrorCode::invalid_argument,
+                        "timestamp must use canonical UTC form");
+  }
+  std::tm parts{};
+  const std::string value(timestamp);
+  if (strptime(value.c_str(), "%Y-%m-%dT%H:%M:%SZ", &parts) == nullptr) {
+    throw common::Error(common::ErrorCode::invalid_argument,
+                        "timestamp must use canonical UTC form");
+  }
+  const std::time_t result = timegm(&parts);
+  if (result == static_cast<std::time_t>(-1)) {
+    throw common::Error(common::ErrorCode::invalid_argument,
+                        "timestamp is out of range");
+  }
+  return result;
+}
+
 void usage(std::ostream &output) {
   output
       << "Usage:\n"
@@ -91,7 +111,7 @@ void usage(std::ostream &output) {
       << "  inspect reason hypothesis algorithm retrieve explain command compile\n"
       << "  simulate approve execute verify rollback replay ledger-verify\n"
       << "  projection-rebuild benchmark qualification brain-feed repository-feed\n"
-      << "  internet-watch internet-poll internet-fetch internet-source\n"
+      << "  internet-watch internet-watchlist internet-poll internet-fetch internet-source\n"
       << "  internet-extract internet-candidate internet-improvement\n"
       << "  internet-promotion-policy internet-probation internet-integrity\n"
       << "\nLegacy operations:\n"
@@ -797,6 +817,278 @@ internet_probation_observation_input(const Json &request) {
   return {{"watch", sources::to_json(watch)}, {"watch_id", watch_id}};
 }
 
+[[nodiscard]] Json json_file(const std::filesystem::path &path) {
+  return contracts::parse_json(core::read_text(path));
+}
+
+[[nodiscard]] Json watchlist_manifest(const Json &request) {
+  if (request.contains("manifest")) {
+    if (!request.at("manifest").is_object()) {
+      throw common::Error(common::ErrorCode::invalid_argument,
+                          "watchlist manifest must be an object");
+    }
+    return request.at("manifest");
+  }
+  if (!request.contains("manifest_path")) {
+    throw common::Error(common::ErrorCode::invalid_argument,
+                        "watchlist action requires manifest or manifest_path");
+  }
+  return json_file(request.at("manifest_path").get<std::string>());
+}
+
+[[nodiscard]] Json watchlist_source_registry(
+    const Json &request, const std::filesystem::path &resources) {
+  if (request.contains("source_registry")) {
+    return request.at("source_registry");
+  }
+  const auto path = request.contains("source_registry_path")
+                        ? std::filesystem::path(
+                              request.at("source_registry_path")
+                                  .get<std::string>())
+                        : resources /
+                              "watchlists/internet/source-groups-v1.json";
+  return json_file(path);
+}
+
+void validate_watchlist_schema(const Json &manifest,
+                               const std::filesystem::path &resources) {
+  egcf::RecordSchemaRegistry schemas(resources);
+  auto schema = json_file(
+      resources / "schemas/watchlists/saa-internet-watchlist-v1.schema.json");
+  schema["properties"]["watches"]["items"] = schema["$defs"]["watch"];
+  schema.erase("$defs");
+  schemas.validate_json_value(schema, manifest, "$watchlist");
+}
+
+[[nodiscard]] std::filesystem::path watchlist_resource_path(
+    const std::filesystem::path &resources, std::string reference) {
+  std::filesystem::path relative(std::move(reference));
+  if (!relative.empty() && *relative.begin() == "resources") {
+    relative = relative.lexically_relative("resources");
+  }
+  const auto result = std::filesystem::weakly_canonical(resources / relative);
+  if (!contains_path(resources, result)) {
+    throw common::Error(common::ErrorCode::policy_denied,
+                        "watchlist resource reference escapes resource root");
+  }
+  return result;
+}
+
+void write_watchlist_output(const Json &request, const Json &value) {
+  if (request.contains("output_path")) {
+    core::atomic_write_text(
+        request.at("output_path").get<std::string>(),
+        contracts::canonical_json(value) + "\n");
+  }
+}
+
+void validate_preflight_report(const Json &report, const Json &manifest,
+                               const Json &request) {
+  if (!report.is_object() || report.value("schema_version", 0) != 1 ||
+      report.value("manifest_sha256", std::string{}) !=
+          contracts::sha256_json(manifest) ||
+      !report.contains("results") || !report.at("results").is_array()) {
+    throw common::Error(common::ErrorCode::invalid_argument,
+                        "preflight report does not match the watchlist");
+  }
+  Json signed_material = report;
+  const std::string signature =
+      signed_material.value("report_signature", std::string{});
+  signed_material.erase("report_signature");
+  signed_material.erase("report_id");
+  if (signature.empty() || contracts::sha256_json(signed_material) != signature) {
+    throw common::Error(common::ErrorCode::invalid_argument,
+                        "preflight report signature is invalid");
+  }
+  const std::time_t checked =
+      timestamp_value(report.at("checked_at").get<std::string>());
+  const std::time_t current = timestamp_value(
+      request.at("current_timestamp").get<std::string>());
+  const auto age = static_cast<long long>(current - checked);
+  if (age < 0 || age > request.value("maximum_preflight_age_seconds", 86'400)) {
+    throw common::Error(common::ErrorCode::policy_denied,
+                        "preflight report is stale or from the future");
+  }
+}
+
+[[nodiscard]] const Json *preflight_result(const Json &report,
+                                           const Json &entry) {
+  if (!report.is_object()) {
+    return nullptr;
+  }
+  const std::string name = entry.at("name").get<std::string>();
+  const std::string hash = contracts::sha256_json(entry);
+  const Json *result = nullptr;
+  for (const auto &candidate : report.at("results")) {
+    if (candidate.value("entry_name", std::string{}) != name) {
+      continue;
+    }
+    if (result != nullptr) {
+      throw common::Error(common::ErrorCode::invalid_argument,
+                          "preflight report contains duplicate entry results");
+    }
+    if (candidate.value("entry_sha256", std::string{}) != hash) {
+      throw common::Error(common::ErrorCode::invalid_argument,
+                          "preflight entry hash does not match manifest");
+    }
+    if (candidate.value("eligible", false)) {
+      const bool robots_required =
+          entry.at("robots").at("required").get<bool>();
+      const std::string content_type =
+          candidate.value("content_type", std::string{});
+      const auto accepted_mime_types =
+          entry.at("accepted_mime_types").get<std::vector<std::string>>();
+      const int http_status = candidate.value("http_status", 0);
+      if (candidate.value("status", std::string{}) !=
+              "PREFLIGHT_ELIGIBLE" ||
+          !candidate.contains("blocking_reasons") ||
+          !candidate.at("blocking_reasons").is_array() ||
+          !candidate.at("blocking_reasons").empty() ||
+          candidate.value("canonical_url", std::string{}) !=
+              entry.at("canonical_url").get<std::string>() ||
+          candidate.value("final_url", std::string{}) !=
+              entry.at("canonical_url").get<std::string>() ||
+          http_status < 200 || http_status >= 300 || http_status == 204 ||
+          !candidate.value("tls_verified", false) ||
+          candidate.value("provider_identity", std::string{}).empty() ||
+          !candidate.contains("resolved_addresses") ||
+          !candidate.at("resolved_addresses").is_array() ||
+          candidate.at("resolved_addresses").empty() ||
+          std::find(accepted_mime_types.begin(), accepted_mime_types.end(),
+                    content_type) == accepted_mime_types.end() ||
+          (robots_required &&
+           (!candidate.value("robots_policy_evaluated", false) ||
+            !candidate.value("robots_allowed", false)))) {
+        throw common::Error(common::ErrorCode::policy_denied,
+                            "eligible preflight result lacks required evidence");
+      }
+    }
+    result = &candidate;
+  }
+  return result;
+}
+
+[[nodiscard]] Json execute_internet_watchlist(const Json &request) {
+  const auto resources = resource_root(request);
+  const auto registry = watchlist_source_registry(request, resources);
+  const std::string action = request.value("action", std::string("validate"));
+  if (action == "create") {
+    const auto manifest = sources::create_watchlist_manifest(request, registry);
+    validate_watchlist_schema(manifest, resources);
+    write_watchlist_output(request, manifest);
+    return {{"manifest", manifest},
+            {"manifest_sha256", contracts::sha256_json(manifest)},
+            {"watch_count", manifest.at("watches").size()}};
+  }
+
+  const auto manifest = watchlist_manifest(request);
+  validate_watchlist_schema(manifest, resources);
+  sources::validate_watchlist_manifest(manifest, registry);
+  if (action == "validate") {
+    return {{"manifest_sha256", contracts::sha256_json(manifest)},
+            {"valid", true},
+            {"watch_count", manifest.at("watches").size()},
+            {"watchlist_version", manifest.at("watchlist_version")}};
+  }
+
+  const auto policy_path = watchlist_resource_path(
+      resources, manifest.at("source_policy_ref").get<std::string>());
+  const auto base_policy = sources::source_policy_from_json(json_file(policy_path));
+  if (action == "preflight") {
+    sources::CurlHttpFetchProvider provider;
+    const auto report = sources::preflight_watchlist_manifest(
+        manifest, registry, base_policy, provider,
+        request.at("checked_at").get<std::string>());
+    write_watchlist_output(request, report);
+    return report;
+  }
+  if (action != "register" && action != "resume") {
+    throw common::Error(common::ErrorCode::invalid_argument,
+                        "unsupported internet-watchlist action");
+  }
+
+  Json report;
+  if (request.contains("preflight_report")) {
+    report = request.at("preflight_report");
+  } else if (request.contains("preflight_report_path")) {
+    report = json_file(
+        request.at("preflight_report_path").get<std::string>());
+  }
+  if (!report.is_null()) {
+    validate_preflight_report(report, manifest, request);
+  }
+
+  const bool dry_run = request.value("dry_run", false);
+  std::unique_ptr<egcf::EgcfStore> store;
+  std::unique_ptr<egcf::InternetImprovementStore> internet;
+  if (!dry_run) {
+    store = std::make_unique<egcf::EgcfStore>(request_root(request), resources);
+    internet = std::make_unique<egcf::InternetImprovementStore>(*store);
+  }
+  const bool eligible_only = request.value("eligible_only", true);
+  const bool enable_eligible = request.value("enable_eligible", false);
+  const auto selected_groups = strings(request, "source_groups");
+  const std::string report_hash =
+      report.is_null() ? std::string{} : contracts::sha256_json(report);
+  Json registrations = Json::array();
+  Json skipped = Json::array();
+  for (const auto &entry : manifest.at("watches")) {
+    const std::string entry_group =
+        entry.at("source_group").get<std::string>();
+    if (!selected_groups.empty() &&
+        std::find(selected_groups.begin(), selected_groups.end(), entry_group) ==
+            selected_groups.end()) {
+      skipped.push_back({{"entry_name", entry.at("name")},
+                         {"reason", "source-group-filtered"}});
+      continue;
+    }
+    const Json *result = preflight_result(report, entry);
+    const bool eligible = result != nullptr && result->value("eligible", false);
+    if (!eligible && eligible_only) {
+      skipped.push_back(
+          {{"entry_name", entry.at("name")},
+           {"reason", result == nullptr ? "missing-preflight-result"
+                                        : result->value(
+                                              "status",
+                                              std::string("QUARANTINED"))}});
+      continue;
+    }
+
+    const auto policy = sources::watchlist_source_policy(entry, base_policy);
+    const std::string policy_id =
+        dry_run ? policy.object_id() : internet->register_source_policy(policy);
+    const auto watch = sources::watchlist_watch(
+        entry, policy_id, eligible, enable_eligible);
+    const std::string watch_id =
+        dry_run ? watch.object_id() : internet->register_watch(watch);
+    const std::string status =
+        !eligible ? "QUARANTINED"
+                  : watch.enabled ? "REGISTERED_ENABLED"
+                                  : "REGISTERED_DISABLED";
+    const auto registration = sources::make_watchlist_registration(
+        manifest, entry, watch_id, policy_id, report_hash, status);
+    const egcf::EgcfRecord registration_record = {
+        .object_type = "internet-watch-registration",
+        .payload = registration};
+    const std::string registration_id =
+        dry_run
+            ? registration_record.object_id()
+            : store->register_record(
+                  registration_record,
+                  "internet_watch_registration_registered");
+    registrations.push_back(
+        {{"eligibility_status", status},
+         {"entry_name", entry.at("name")},
+         {"registration_id", registration_id},
+         {"source_policy_id", policy_id},
+         {"watch_id", watch_id}});
+  }
+  return {{"dry_run", dry_run},
+          {"manifest_sha256", contracts::sha256_json(manifest)},
+          {"registrations", std::move(registrations)},
+          {"skipped", std::move(skipped)}};
+}
+
 [[nodiscard]] Json execute_internet_poll(const Json &request) {
   egcf::EgcfStore store(request_root(request), resource_root(request));
   egcf::InternetImprovementStore internet(store);
@@ -1187,7 +1479,10 @@ internet_probation_observation_input(const Json &request) {
   }
   if (action == "run-status") {
     egcf::InternetImprovementOrchestrator orchestrator(store);
-    return orchestrator.run_status(request.value("run_id", std::string{}));
+    return orchestrator.run_status(
+        request.value("run_id", std::string{}),
+        request.value("worker_id", std::string{}),
+        request.value("nonterminal_only", false));
   }
   if (action == "explain-action") {
     egcf::InternetImprovementOrchestrator orchestrator(store);
@@ -1228,6 +1523,9 @@ internet_probation_observation_input(const Json &request) {
   }
   if (operation == "internet-watch") {
     return execute_internet_watch(request);
+  }
+  if (operation == "internet-watchlist") {
+    return execute_internet_watchlist(request);
   }
   if (operation == "internet-poll") {
     return execute_internet_poll(request);

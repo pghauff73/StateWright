@@ -37,6 +37,9 @@ struct FetchResponse final {
   std::map<std::string, std::string> headers;
   std::vector<std::byte> body;
   bool tls_verified = false;
+  bool robots_policy_evaluated = false;
+  bool robots_allowed = false;
+  contracts::Json robots_evidence = contracts::Json::array();
   std::size_t compressed_bytes = 0;
   std::size_t decompressed_bytes = 0;
   long long total_time_milliseconds = 0;
@@ -55,5 +58,8 @@ resolve_validated_addresses(const ParsedUrl &url,
     const InternetSourcePolicy &policy);
 [[nodiscard]] std::string header_value(const FetchResponse &response,
                                        std::string_view name);
+[[nodiscard]] bool robots_txt_allows(std::string_view robots_text,
+                                     std::string_view user_agent,
+                                     std::string_view path_and_query);
 
 } // namespace statewright::sources

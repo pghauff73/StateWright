@@ -88,3 +88,21 @@ TEST_CASE("internet records fail closed on invalid limits") {
   REQUIRE_THROWS_AS(sources::canonical_source_policy(std::move(policy)),
                     common::Error);
 }
+
+TEST_CASE("internet fetch receipts reject placeholder robots evidence") {
+  using namespace statewright;
+  sources::InternetFetchReceipt receipt;
+  receipt.job_id = "fixture-job";
+  receipt.lease_id = "fixture-lease";
+  receipt.requested_url = "https://example.com/algorithm";
+  receipt.final_url = receipt.requested_url;
+  receipt.http_status = 200;
+  receipt.robots_policy_evaluated = true;
+  receipt.robots_allowed = true;
+  receipt.robots_evidence.push_back(contracts::Json::object());
+  receipt.provider_identity = "fixture-provider";
+  receipt.snapshot_id = "fixture-snapshot";
+  receipt.status = "FETCH_SUCCEEDED";
+  REQUIRE_THROWS_AS(sources::canonical_fetch_receipt(std::move(receipt)),
+                    common::Error);
+}

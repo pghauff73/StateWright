@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/statewright/watchlists/saa-internet-watchlist-v1.schema.json",
+  "title": "SAA internet-improvement watchlist",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "watchlist_version": {"type": "string", "minLength": 1},
+    "description": {"type": "string", "minLength": 1},
+    "source_policy_ref": {"type": "string", "minLength": 1},
+    "registration_defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"const": false},
+        "deterministic_jitter_seconds": {"type": "integer", "minimum": 0}
+      },
+      "required": ["enabled", "deterministic_jitter_seconds"]
+    },
+    "watches": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/watch"}
+    }
+  },
+  "required": [
+    "schema_version",
+    "watchlist_version",
+    "description",
+    "source_policy_ref",
+    "registration_defaults",
+    "watches"
+  ],
+  "$defs": {
+    "watch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "purpose": {
+          "enum": ["discovery", "authoritative-evidence", "reference-implementation", "verification"]
+        },
+        "subject": {"type": "string", "minLength": 1},
+        "tier": {"type": "integer", "minimum": 1, "maximum": 6},
+        "canonical_url": {"type": "string", "pattern": "^https://[^[:space:]]+$"},
+        "source_group": {"type": "string", "minLength": 1},
+        "controlling_publisher": {"type": "string", "minLength": 1},
+        "accepted_mime_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["application/json", "text/html", "text/plain"]}
+        },
+        "polling_interval_seconds": {"type": "integer", "minimum": 1},
+        "deterministic_jitter_seconds": {"type": "integer", "minimum": 0},
+        "license": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "classification": {"type": "string", "minLength": 1},
+            "status": {"enum": ["verified", "review-required", "prohibited"]},
+            "evidence_urls": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {"type": "string", "pattern": "^https://[^[:space:]]+$"}
+            }
+          },
+          "required": ["classification", "status", "evidence_urls"]
+        },
+        "robots": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required": {"type": "boolean"},
+            "declared_status": {"enum": ["pending", "allowed", "denied"]}
+          },
+          "required": ["required", "declared_status"]
+        },
+        "stability": {"enum": ["living", "stable-section", "dated", "immutable", "api-query"]},
+        "extraction_strategy": {"type": "string", "minLength": 1},
+        "enabled": {"type": "boolean"}
+      },
+      "required": [
+        "name",
+        "purpose",
+        "subject",
+        "tier",
+        "canonical_url",
+        "source_group",
+        "controlling_publisher",
+        "accepted_mime_types",
+        "polling_interval_seconds",
+        "deterministic_jitter_seconds",
+        "license",
+        "robots",
+        "stability",
+        "extraction_strategy",
+        "enabled"
+      ]
+    }
+  }
+}

@@ -28,6 +28,10 @@ set(executable "${prefix}/bin/statewright")
 if(NOT EXISTS "${executable}")
   message(FATAL_ERROR "installed statewright executable is missing")
 endif()
+set(supervisor "${prefix}/bin/statewright-internet-supervisor")
+if(NOT EXISTS "${supervisor}")
+  message(FATAL_ERROR "installed internet supervisor executable is missing")
+endif()
 if(NOT EXISTS "${prefix}/share/statewright/manifest.sha256")
   message(FATAL_ERROR "installed StateWright resource manifest is missing")
 endif()
@@ -58,6 +62,19 @@ execute_process(
 if(NOT describe_result EQUAL 0 OR
    NOT describe_output MATCHES "algorithm.search@1")
   message(FATAL_ERROR "installed resource discovery failed: ${describe_error}\n${describe_output}")
+endif()
+
+execute_process(
+  COMMAND "${supervisor}" --version
+  RESULT_VARIABLE supervisor_version_result
+  OUTPUT_VARIABLE supervisor_version_output
+  ERROR_VARIABLE supervisor_version_error
+)
+if(NOT supervisor_version_result EQUAL 0 OR
+   NOT supervisor_version_output MATCHES
+       "statewright-internet-improvement-supervisor-v1")
+  message(FATAL_ERROR
+          "installed supervisor version failed: ${supervisor_version_error}\n${supervisor_version_output}")
 endif()
 
 execute_process(

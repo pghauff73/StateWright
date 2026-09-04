@@ -23,6 +23,14 @@ void require_nonempty(std::string_view value, std::string_view label) {
   }
 }
 
+bool valid_sha256(std::string_view value) {
+  return value.size() == 64U &&
+         std::ranges::all_of(value, [](unsigned char character) {
+           return std::isdigit(character) != 0 ||
+                  (character >= 'a' && character <= 'f');
+         });
+}
+
 void canonical_strings(std::vector<std::string> &values,
                        std::string_view label) {
   for (const auto &value : values) {
@@ -150,6 +158,55 @@ InternetFetchReceipt canonical_fetch_receipt(InternetFetchReceipt receipt) {
     record_error("fetch receipt status is invalid");
   }
   canonical_strings(receipt.resolved_addresses, "resolved address");
+  if (!receipt.robots_evidence.is_array() ||
+      (!receipt.robots_policy_evaluated &&
+       (!receipt.robots_evidence.empty() || receipt.robots_allowed))) {
+    record_error("fetch receipt robots evidence is invalid");
+  }
+  if (receipt.robots_policy_evaluated && receipt.robots_evidence.empty()) {
+    record_error("fetch receipt robots evidence is incomplete");
+  }
+  bool evidence_allows = receipt.robots_policy_evaluated;
+  for (const auto &evidence : receipt.robots_evidence) {
+    if (!evidence.is_object() || !evidence.contains("allowed") ||
+        !evidence.at("allowed").is_boolean() ||
+        !evidence.contains("body_sha256") ||
+        !evidence.at("body_sha256").is_string() ||
+        !valid_sha256(evidence.at("body_sha256").get_ref<const std::string &>()) ||
+        !evidence.contains("final_url") ||
+        !evidence.at("final_url").is_string() ||
+        evidence.at("final_url").get_ref<const std::string &>().empty() ||
+        !evidence.contains("http_status") ||
+        !evidence.at("http_status").is_number_integer() ||
+        !evidence.contains("path") || !evidence.at("path").is_string() ||
+        evidence.at("path").get_ref<const std::string &>().empty() ||
+        !evidence.contains("redirect_chain") ||
+        !evidence.at("redirect_chain").is_array() ||
+        !std::ranges::all_of(evidence.at("redirect_chain"),
+                            [](const Json &entry) {
+                              return entry.is_string() &&
+                                     !entry.get_ref<const std::string &>().empty();
+                            }) ||
+        !evidence.contains("requested_url") ||
+        !evidence.at("requested_url").is_string() ||
+        evidence.at("requested_url").get_ref<const std::string &>().empty() ||
+        !evidence.contains("user_agent") ||
+        !evidence.at("user_agent").is_string() ||
+        evidence.at("user_agent").get_ref<const std::string &>().empty()) {
+      record_error("fetch receipt robots evidence is malformed");
+    }
+    const bool allowed = evidence.at("allowed").get<bool>();
+    const int status = evidence.at("http_status").get<int>();
+    if (status < 100 || status > 599 ||
+        (allowed && status != 200 && status != 404 && status != 410)) {
+      record_error("fetch receipt robots permission status is invalid");
+    }
+    evidence_allows = evidence_allows && allowed;
+  }
+  if (receipt.robots_policy_evaluated &&
+      receipt.robots_allowed != evidence_allows) {
+    record_error("fetch receipt robots decision conflicts with evidence");
+  }
   if (receipt.status == "FETCH_SUCCEEDED") {
     require_nonempty(receipt.final_url, "fetch receipt final URL");
     require_nonempty(receipt.snapshot_id, "fetch receipt snapshot ID");
@@ -322,6 +379,11 @@ InternetFetchReceipt internet_fetch_receipt_from_json(const Json &value) {
           .http_status = value.at("http_status").get<int>(),
           .selected_headers = value.at("selected_headers"),
           .tls_verified = value.at("tls_verified").get<bool>(),
+          .robots_policy_evaluated =
+              value.value("robots_policy_evaluated", false),
+          .robots_allowed = value.value("robots_allowed", false),
+          .robots_evidence =
+              value.value("robots_evidence", Json::array()),
           .compressed_bytes = value.at("compressed_bytes").get<std::size_t>(),
           .decompressed_bytes =
               value.at("decompressed_bytes").get<std::size_t>(),
@@ -466,24 +528,30 @@ Json to_json(const InternetFetchLease &value) {
 }
 
 Json to_json(const InternetFetchReceipt &value) {
-  return {{"compressed_bytes", value.compressed_bytes},
-          {"decompressed_bytes", value.decompressed_bytes},
-          {"failure_reason", value.failure_reason},
-          {"final_url", value.final_url},
-          {"http_status", value.http_status},
-          {"job_id", value.job_id},
-          {"lease_id", value.lease_id},
-          {"provider_identity", value.provider_identity},
-          {"receipt_signature", value.receipt_signature},
-          {"redirect_chain", value.redirect_chain},
-          {"requested_url", value.requested_url},
-          {"resolved_addresses", value.resolved_addresses},
-          {"schema_version", value.schema_version},
-          {"selected_headers", value.selected_headers},
-          {"snapshot_id", value.snapshot_id},
-          {"status", value.status},
-          {"tls_verified", value.tls_verified},
-          {"total_time_milliseconds", value.total_time_milliseconds}};
+  Json result = {{"compressed_bytes", value.compressed_bytes},
+                 {"decompressed_bytes", value.decompressed_bytes},
+                 {"failure_reason", value.failure_reason},
+                 {"final_url", value.final_url},
+                 {"http_status", value.http_status},
+                 {"job_id", value.job_id},
+                 {"lease_id", value.lease_id},
+                 {"provider_identity", value.provider_identity},
+                 {"receipt_signature", value.receipt_signature},
+                 {"redirect_chain", value.redirect_chain},
+                 {"requested_url", value.requested_url},
+                 {"resolved_addresses", value.resolved_addresses},
+                 {"schema_version", value.schema_version},
+                 {"selected_headers", value.selected_headers},
+                 {"snapshot_id", value.snapshot_id},
+                 {"status", value.status},
+                 {"tls_verified", value.tls_verified},
+                 {"total_time_milliseconds", value.total_time_milliseconds}};
+  if (value.robots_policy_evaluated) {
+    result["robots_allowed"] = value.robots_allowed;
+    result["robots_evidence"] = value.robots_evidence;
+    result["robots_policy_evaluated"] = true;
+  }
+  return result;
 }
 
 Json to_json(const InternetSourceSnapshot &value) {

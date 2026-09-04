@@ -612,6 +612,60 @@
         "provider_identity": {
           "type": "string"
         },
+        "robots_allowed": {
+          "type": "boolean"
+        },
+        "robots_evidence": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "allowed": {
+                "type": "boolean"
+              },
+              "body_sha256": {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              "final_url": {
+                "type": "string"
+              },
+              "http_status": {
+                "minimum": 100,
+                "type": "integer"
+              },
+              "path": {
+                "type": "string"
+              },
+              "redirect_chain": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "requested_url": {
+                "type": "string"
+              },
+              "user_agent": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "allowed",
+              "body_sha256",
+              "final_url",
+              "http_status",
+              "path",
+              "redirect_chain",
+              "requested_url",
+              "user_agent"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "robots_policy_evaluated": {
+          "type": "boolean"
+        },
         "receipt_signature": {
           "type": "string"
         },
@@ -1806,6 +1860,53 @@
         "assessment_input_signature", "evidence_ids", "fetch_receipt_id",
         "license_classification", "producer_identity", "provenance",
         "robots_allowed", "schema_version", "snapshot_id", "source_policy_id"
+      ],
+      "type": "object"
+    },
+    "internet-watch-registration": {
+      "additionalProperties": false,
+      "properties": {
+        "controlling_publisher": {"minLength": 1, "type": "string"},
+        "eligibility_status": {
+          "enum": ["QUARANTINED", "REGISTERED_DISABLED", "REGISTERED_ENABLED"]
+        },
+        "entry_name": {"minLength": 1, "type": "string"},
+        "entry_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "license_classification": {"minLength": 1, "type": "string"},
+        "license_evidence_urls": {
+          "items": {"type": "string"},
+          "type": "array"
+        },
+        "license_status": {
+          "enum": ["prohibited", "review-required", "verified"]
+        },
+        "preflight_report_sha256": {
+          "pattern": "^$|^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "purpose": {
+          "enum": ["authoritative-evidence", "discovery", "reference-implementation", "verification"]
+        },
+        "registration_signature": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "schema_version": {"const": 1},
+        "source_group": {"minLength": 1, "type": "string"},
+        "source_policy_id": {"minLength": 1, "type": "string"},
+        "subject": {"minLength": 1, "type": "string"},
+        "tier": {"maximum": 6, "minimum": 1, "type": "integer"},
+        "watch_id": {"minLength": 1, "type": "string"},
+        "watchlist_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "watchlist_version": {"minLength": 1, "type": "string"}
+      },
+      "required": [
+        "controlling_publisher", "eligibility_status", "entry_name",
+        "entry_sha256", "license_classification", "license_evidence_urls",
+        "license_status", "preflight_report_sha256", "purpose",
+        "registration_signature", "schema_version", "source_group",
+        "source_policy_id", "subject", "tier", "watch_id",
+        "watchlist_sha256", "watchlist_version"
       ],
       "type": "object"
     },

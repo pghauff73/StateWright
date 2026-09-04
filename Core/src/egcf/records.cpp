@@ -199,8 +199,8 @@ RecordSchemaRegistry::RecordSchemaRegistry(std::filesystem::path resource_root)
     }
   }
   const auto types = object_types();
-  if (types.size() != 55U) {
-    schema_error("EGCF object schema must define exactly 55 durable types");
+  if (types.size() != 56U) {
+    schema_error("EGCF object schema must define exactly 56 durable types");
   }
 }
 

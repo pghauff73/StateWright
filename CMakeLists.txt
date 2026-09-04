@@ -115,6 +115,7 @@ add_library(statewright_sources STATIC
   Core/src/sources/records.cpp
   Core/src/sources/scheduler.cpp
   Core/src/sources/snapshot.cpp
+  Core/src/sources/watchlist.cpp
 )
 add_library(StateWright::sources ALIAS statewright_sources)
 target_include_directories(statewright_sources
@@ -253,6 +254,7 @@ add_library(statewright_egcf STATIC
   Core/src/egcf/internet_experiment.cpp
   Core/src/egcf/internet_improvement_director.cpp
   Core/src/egcf/internet_improvement_orchestrator.cpp
+  Core/src/egcf/internet_improvement_supervisor.cpp
   Core/src/egcf/internet_improvement_store.cpp
   Core/src/egcf/internet_orchestration_records.cpp
   Core/src/egcf/internet_probation.cpp
@@ -299,7 +301,15 @@ add_executable(statewright-shadow Apps/statewright-shadow/main.cpp)
 target_link_libraries(statewright-shadow PRIVATE StateWright::contracts)
 statewright_enable_warnings(statewright-shadow)
 
-install(TARGETS statewright statewright-shadow
+add_executable(statewright-internet-supervisor
+  Apps/statewright-internet-supervisor/main.cpp
+)
+target_link_libraries(statewright-internet-supervisor
+  PRIVATE StateWright::egcf StateWright::contracts
+)
+statewright_enable_warnings(statewright-internet-supervisor)
+
+install(TARGETS statewright statewright-shadow statewright-internet-supervisor
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 )
 install(DIRECTORY resources/

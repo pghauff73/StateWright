@@ -509,6 +509,9 @@ std::vector<std::string> execute_action(
     if (!result.artifact_bytes_id.empty()) {
       outputs.push_back(result.artifact_bytes_id);
     }
+    if (!result.source_assessment_input_id.empty()) {
+      outputs.push_back(result.source_assessment_input_id);
+    }
     static_cast<void>(attempt_number);
     return outputs;
   }
@@ -927,17 +930,88 @@ InternetImprovementRunResult InternetImprovementOrchestrator::run(
   return result;
 }
 
-Json InternetImprovementOrchestrator::run_status(std::string_view run_id) const {
+Json InternetImprovementOrchestrator::run_status(
+    std::string_view run_id, std::string_view worker_id,
+    bool nonterminal_only) const {
   InternetImprovementStore internet(store_);
+  if (run_id.empty() && worker_id.empty() && !nonterminal_only) {
+    return {{"action_leases",
+             stored_objects(
+                 internet.list("internet-improvement-action-lease"))},
+            {"action_receipts",
+             stored_objects(
+                 internet.list("internet-improvement-action-receipt"))},
+            {"plans",
+             stored_objects(internet.list("internet-improvement-plan"))},
+            {"run_events",
+             stored_objects(
+                 internet.list("internet-improvement-run-event"))},
+            {"runs",
+             stored_objects(internet.list("internet-improvement-run"))}};
+  }
+  const auto runs = internet.list("internet-improvement-run");
+  const auto run_events = internet.list("internet-improvement-run-event");
+  const auto action_leases =
+      internet.list("internet-improvement-action-lease");
+  const auto action_receipts =
+      internet.list("internet-improvement-action-receipt");
+  const auto plans = internet.list("internet-improvement-plan");
+  std::set<std::string> terminal_run_ids;
+  for (const auto &record : run_events) {
+    const auto event =
+        internet_improvement_run_event_from_json(record.payload);
+    if (event.event_type == "COMPLETED" || event.event_type == "ABANDONED") {
+      terminal_run_ids.insert(event.run_id);
+    }
+  }
+  std::set<std::string> resumed_run_ids;
+  for (const auto &record : runs) {
+    const auto run = internet_improvement_run_from_json(record.payload);
+    if (!run.resume_of_run_id.empty()) {
+      resumed_run_ids.insert(run.resume_of_run_id);
+    }
+  }
+  std::set<std::string> selected_run_ids;
+  std::set<std::string> selected_plan_ids;
+  std::vector<StoredObject> selected_runs;
+  for (const auto &record : runs) {
+    const auto run = internet_improvement_run_from_json(record.payload);
+    if ((!run_id.empty() && record.object_id != run_id) ||
+        (!worker_id.empty() && run.worker_id != worker_id) ||
+        (nonterminal_only &&
+         (terminal_run_ids.contains(record.object_id) ||
+          resumed_run_ids.contains(record.object_id)))) {
+      continue;
+    }
+    selected_runs.push_back(record);
+    selected_run_ids.insert(record.object_id);
+    selected_plan_ids.insert(run.plan_id);
+  }
+  auto records_for_selected_runs = [&](const std::vector<StoredObject> &records) {
+    std::vector<StoredObject> selected;
+    for (const auto &record : records) {
+      if (selected_run_ids.contains(
+              record.payload.at("run_id").get<std::string>())) {
+        selected.push_back(record);
+      }
+    }
+    return selected;
+  };
+  std::vector<StoredObject> selected_plans;
+  for (const auto &record : plans) {
+    if (selected_plan_ids.contains(record.object_id)) {
+      selected_plans.push_back(record);
+    }
+  }
   Json result = {
       {"action_leases",
-       stored_objects(internet.list("internet-improvement-action-lease"))},
+       stored_objects(records_for_selected_runs(action_leases))},
       {"action_receipts",
-       stored_objects(internet.list("internet-improvement-action-receipt"))},
-      {"plans", stored_objects(internet.list("internet-improvement-plan"))},
+       stored_objects(records_for_selected_runs(action_receipts))},
+      {"plans", stored_objects(selected_plans)},
       {"run_events",
-       stored_objects(internet.list("internet-improvement-run-event"))},
-      {"runs", stored_objects(internet.list("internet-improvement-run"))}};
+       stored_objects(records_for_selected_runs(run_events))},
+      {"runs", stored_objects(selected_runs)}};
   if (!run_id.empty()) {
     const auto record = store_.get(run_id);
     if (record.object_type != "internet-improvement-run") {

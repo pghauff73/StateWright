@@ -7,6 +7,7 @@
 #include <ctime>
 #include <map>
 #include <set>
+#include <string>
 #include <tuple>
 #include <utility>
 
@@ -35,6 +36,20 @@ std::chrono::system_clock::time_point parse_utc(std::string_view timestamp) {
   return std::chrono::system_clock::from_time_t(seconds);
 }
 
+std::string format_utc(std::chrono::system_clock::time_point time) {
+  const std::time_t seconds = std::chrono::system_clock::to_time_t(time);
+  std::tm parts{};
+  if (gmtime_r(&seconds, &parts) == nullptr) {
+    schedule_error("scheduler timestamp cannot be formatted");
+  }
+  char buffer[21]{};
+  if (std::strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", &parts) ==
+      0U) {
+    schedule_error("scheduler timestamp cannot be formatted");
+  }
+  return buffer;
+}
+
 void validate_limits(const InternetSchedulerLimits &limits) {
   if (limits.global_concurrency == 0U ||
       limits.per_source_group_concurrency == 0U ||
@@ -46,6 +61,27 @@ void validate_limits(const InternetSchedulerLimits &limits) {
 }
 
 } // namespace
+
+InternetPollingWindow polling_window(const InternetWatch &watch_value,
+                                      std::string_view current_timestamp) {
+  const auto watch = canonical_watch(watch_value);
+  const auto current = parse_utc(current_timestamp);
+  const auto interval = std::chrono::seconds(watch.polling_interval_seconds);
+  const auto jitter = std::chrono::seconds(
+      watch.deterministic_jitter_seconds % watch.polling_interval_seconds);
+  const auto elapsed =
+      std::chrono::duration_cast<std::chrono::seconds>(
+          current.time_since_epoch());
+  const auto shifted = elapsed - jitter;
+  const auto interval_count = shifted.count() >= 0
+                                  ? shifted.count() / interval.count()
+                                  : -1;
+  const auto start = std::chrono::system_clock::time_point(
+      std::chrono::seconds(interval_count * interval.count()) + jitter);
+  return {.scheduled_interval = format_utc(start),
+          .earliest_start = format_utc(start),
+          .deadline = format_utc(start + interval)};
+}
 
 InternetFetchJob make_fetch_job(const InternetWatch &watch,
                                 std::string scheduled_interval,

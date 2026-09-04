@@ -16,13 +16,18 @@ mkdir -p "$output/logs" "$output/packages" "$output/manifests"
 "$root/Tools/verify_release_inputs.sh" \
   >"$output/logs/release-inputs.log" 2>&1
 
-for preset in developer sanitizer release; do
+for preset in sanitizer developer release; do
   cmake --preset "$preset" -S "$root" \
     >"$output/logs/configure-$preset.log" 2>&1
   cmake --build --preset "$preset" -j2 \
     >"$output/logs/build-$preset.log" 2>&1
-  ctest --preset "$preset" --output-on-failure \
-    >"$output/logs/ctest-$preset.log" 2>&1
+  if [[ $preset == sanitizer ]]; then
+    "$root/Tools/run_sanitizer_qualification.sh" \
+      >"$output/logs/ctest-$preset.log" 2>&1
+  else
+    ctest --preset "$preset" --output-on-failure \
+      >"$output/logs/ctest-$preset.log" 2>&1
+  fi
 done
 
 "$root/Tests/internet_cli_smoke.sh" \
@@ -46,6 +51,11 @@ done
   "$root/build/release/statewright" \
   >"$output/logs/internet-orchestrator-fault-smoke.log" 2>&1
 
+"$root/Tests/internet_supervisor_smoke.sh" \
+  "$root/build/release/statewright-internet-supervisor" \
+  "$root/build/release/statewright" \
+  >"$output/logs/internet-supervisor-smoke.log" 2>&1
+
 approval_workspace=$(mktemp -d)
 trap 'rm -rf "$approval_workspace"' EXIT
 if "$root/build/release/statewright" internet-improvement \
@@ -61,7 +71,8 @@ if grep -Eq '^#!.*python|^[[:space:]]*(env[[:space:]]+)?python(3)?([[:space:]]|$
   "$root/Tests/internet_cli_smoke.sh" \
   "$root/Tests/saa_internet_howto_smoke.sh" \
   "$root/Tests/internet_orchestrator_cli_smoke.sh" \
-  "$root/Tests/internet_orchestrator_fault_smoke.sh"; then
+  "$root/Tests/internet_orchestrator_fault_smoke.sh" \
+  "$root/Tests/internet_supervisor_smoke.sh"; then
   printf 'qualified internet fixture path references a Python runtime\n' >&2
   exit 1
 fi
@@ -99,6 +110,8 @@ cp "$root/docs/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_IMPLEMENTATION_PLAN
   "$output/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_IMPLEMENTATION_PLAN.md"
 cp "$root/docs/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_GOAL_PROMPT.md" \
   "$output/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_GOAL_PROMPT.md"
+cp "$root/docs/SAA_INTERNET_SUPERVISOR_MODE.md" \
+  "$output/SAA_INTERNET_SUPERVISOR_MODE.md"
 cp "$root/resources/fixtures/internet/identity-v1.json" \
   "$output/internet-fixture-metadata.json"
 cp "$root/resources/policies/internet/default-source-policy-v1.json" \
@@ -143,6 +156,7 @@ cat >"$output/internet-qualification-status.json" <<EOF
   "director_orchestrator": {
     "approval_operation_present": false,
     "bounded_run_once_verified": true,
+    "bounded_supervisor_verified": true,
     "durable_action_failure_receipt_verified": true,
     "multi_process_daemon_claimed": false,
     "exactly_once_http_claimed": false

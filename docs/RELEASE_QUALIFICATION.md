@@ -14,20 +14,25 @@ and demotion policies require no per-candidate human approval and do not create
 or consume approval records. Passing that lifecycle does not approve production
 cutover or grant EGCF command execution authority.
 
-As of September 4, 2026, the deterministic Director and bounded Orchestrator
-implementation passes the developer, sanitizer, and release presets with 12 of
-12 tests in each preset. The qualified orchestration surface persists plans,
-runs, run events, action leases, and terminal receipts; executes one closed
-typed action per invocation; and keeps `approve` unsupported. This is a
-single-process `run-once` qualification, not a production daemon or an
-exactly-once HTTP claim.
+As of September 4, 2026, the deterministic Director, bounded Orchestrator, and
+timer-oriented supervisor implementation pass 13 of 13 developer tests, 44 of
+44 sanitizer tests, and 13 of 13 release tests. Two consecutive full sanitizer
+runs completed in 42.218 and 46.220 seconds on the qualification host. The
+qualified orchestration
+surface persists plans, runs, run events, action leases, and terminal receipts;
+executes one closed typed action per child invocation; recovers worker-scoped
+expired runs; defers live leases; and keeps `approve` unsupported. Supervisor
+mode is a bounded oneshot process model, not a continuously running production
+daemon or an exactly-once HTTP claim.
 
 ## Required Gates
 
 1. Run `Tools/verify_release_inputs.sh` against the frozen oracle and packaged
    resource manifests.
 2. Configure and build the `developer`, `sanitizer`, and `release` presets.
-3. Run the full CTest suite for each applicable preset.
+3. Run the developer and release CTest suites, then run
+   `Tools/run_sanitizer_qualification.sh`; the sanitizer suite must pass with a
+   strict wall-clock result below 60 seconds.
 4. Install into an empty prefix and run the packaged CLI smoke test.
 5. Generate a new evidence directory with
    `Tools/generate_release_evidence.sh`.
@@ -46,10 +51,12 @@ packaged fixture result. It also runs
 bundle, and records `howto_validated: true`. This subsystem evidence is
 qualification evidence, not production cutover approval.
 
-The internet bundle also runs
-`Tests/internet_orchestrator_cli_smoke.sh` and
-`Tests/internet_orchestrator_fault_smoke.sh`, and copies the Director and
-Orchestrator implementation plan and goal prompt into the evidence directory.
+The internet bundle also runs the strict sanitizer runtime gate,
+`Tests/internet_orchestrator_cli_smoke.sh`, and
+`Tests/internet_orchestrator_fault_smoke.sh`, runs
+`Tests/internet_supervisor_smoke.sh`, and copies the Director and Orchestrator
+implementation plan, goal prompt, and supervisor-mode HOWTO into the evidence
+directory.
 
 ## Authority Boundary
 

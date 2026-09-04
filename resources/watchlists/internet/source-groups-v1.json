@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "registry_version": "saa-source-groups-v1",
+  "source_groups": [
+    {
+      "source_group": "crossref",
+      "controlling_publisher": "Crossref",
+      "evidence_independence_group": "crossref",
+      "tier": 3,
+      "allowed_hostnames": ["api.crossref.org"],
+      "allowed_templates": [],
+      "allowed_mime_types": ["application/json"],
+      "default_mime_types": ["application/json"],
+      "default_polling_interval_seconds": 86400,
+      "default_purpose": "discovery",
+      "default_subject": "algorithm-discovery",
+      "default_stability": "api-query",
+      "default_extraction_strategy": "crossref-json",
+      "license": {
+        "classification": "CROSSREF_METADATA_CC0_ABSTRACTS_REVIEW_REQUIRED",
+        "status": "review-required",
+        "evidence_urls": ["https://www.crossref.org/documentation/retrieve-metadata/rest-api/rest-api-metadata-license-information/"]
+      }
+    },
+    {
+      "source_group": "europe-pmc",
+      "controlling_publisher": "Europe PMC",
+      "evidence_independence_group": "europe-pmc",
+      "tier": 3,
+      "allowed_hostnames": ["www.ebi.ac.uk"],
+      "allowed_templates": [],
+      "allowed_mime_types": ["application/json"],
+      "default_mime_types": ["application/json"],
+      "default_polling_interval_seconds": 86400,
+      "default_purpose": "discovery",
+      "default_subject": "algorithm-discovery",
+      "default_stability": "api-query",
+      "default_extraction_strategy": "europe-pmc-json",
+      "license": {
+        "classification": "PER_ARTICLE_LICENSE_REVIEW_REQUIRED",
+        "status": "review-required",
+        "evidence_urls": ["https://europepmc.org/downloads/openaccess"]
+      }
+    },
+    {
+      "source_group": "nist-dlmf",
+      "controlling_publisher": "National Institute of Standards and Technology",
+      "evidence_independence_group": "nist",
+      "tier": 2,
+      "allowed_hostnames": ["dlmf.nist.gov"],
+      "allowed_templates": ["nist-dlmf-section"],
+      "allowed_mime_types": ["text/html"],
+      "default_mime_types": ["text/html"],
+      "default_polling_interval_seconds": 604800,
+      "default_purpose": "authoritative-evidence",
+      "default_subject": "numerical-methods",
+      "default_stability": "stable-section",
+      "default_extraction_strategy": "html-section",
+      "license": {
+        "classification": "NIST_DLMF_REFERENCE_ONLY_REVIEW_REQUIRED",
+        "status": "review-required",
+        "evidence_urls": ["https://dlmf.nist.gov/about/copyright"]
+      }
+    },
+    {
+      "source_group": "ietf-rfc-editor",
+      "controlling_publisher": "RFC Editor",
+      "evidence_independence_group": "ietf-rfc-editor",
+      "tier": 1,
+      "allowed_hostnames": ["www.rfc-editor.org"],
+      "allowed_templates": ["rfc-number"],
+      "allowed_mime_types": ["text/html", "text/plain"],
+      "default_mime_types": ["text/html", "text/plain"],
+      "default_polling_interval_seconds": 2592000,
+      "default_purpose": "authoritative-evidence",
+      "default_subject": "standards-algorithms",
+      "default_stability": "dated",
+      "default_extraction_strategy": "rfc-document",
+      "license": {
+        "classification": "IETF_TRUST_LEGAL_PROVISIONS",
+        "status": "verified",
+        "evidence_urls": ["https://trustee.ietf.org/documents/trust-legal-provisions/tlp-5/commitments-and-licenses-granted-to-ietf-trust/"]
+      }
+    },
+    {
+      "source_group": "w3c",
+      "controlling_publisher": "World Wide Web Consortium",
+      "evidence_independence_group": "w3c",
+      "tier": 1,
+      "allowed_hostnames": ["www.w3.org"],
+      "allowed_templates": ["w3c-recommendation"],
+      "allowed_mime_types": ["text/html"],
+      "default_mime_types": ["text/html"],
+      "default_polling_interval_seconds": 604800,
+      "default_purpose": "authoritative-evidence",
+      "default_subject": "deterministic-transformations",
+      "default_stability": "living",
+      "default_extraction_strategy": "w3c-specification",
+      "license": {
+        "classification": "W3C_DOCUMENT_LICENSE_IMPLEMENTATION_USE",
+        "status": "verified",
+        "evidence_urls": ["https://www.w3.org/copyright/document-license-2023/"]
+      }
+    }
+  ]
+}
