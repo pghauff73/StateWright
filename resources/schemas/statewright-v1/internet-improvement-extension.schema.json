@@ -63,6 +63,12 @@
           },
           "type": "array"
         },
+        "reasoning_analysis_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "probation_admission_ids": {
           "items": {
             "type": "string"
@@ -1580,6 +1586,226 @@
         "schema_version",
         "snapshot_signature",
         "source_group"
+      ],
+      "type": "object"
+    },
+    "internet-experiment-protocol": {
+      "additionalProperties": false,
+      "properties": {
+        "applicable_candidate_statuses": {"items": {"type": "string"}, "minItems": 1, "type": "array"},
+        "applicable_domains": {"items": {"type": "string"}, "type": "array"},
+        "applicable_primitives": {"items": {"type": "string"}, "type": "array"},
+        "baseline_ref": {"minLength": 1, "type": "string"},
+        "baseline_saa_ir": {"type": "object"},
+        "benchmark_policy": {"type": "object"},
+        "benchmark_track_scores": {"type": "object"},
+        "dataset_snapshot_ids": {"items": {"type": "string"}, "type": "array"},
+        "independent_review": {"type": "boolean"},
+        "integrity_policy": {"type": "object"},
+        "integrity_snapshots": {"type": "array"},
+        "maximum_output": {"minLength": 1, "type": "string"},
+        "maximum_total_trials": {"minimum": 1, "type": "integer"},
+        "minimum_experiments": {"minimum": 1, "type": "integer"},
+        "minimum_independence_groups": {"minimum": 1, "type": "integer"},
+        "minimum_material_effect": {"minLength": 1, "type": "string"},
+        "minimum_output": {"minLength": 1, "type": "string"},
+        "minimum_trials_per_group": {"minimum": 1, "type": "integer"},
+        "protocol_signature": {"minLength": 1, "type": "string"},
+        "protocol_version": {"minLength": 1, "type": "string"},
+        "schema_version": {"const": 1},
+        "source_provenance": {"type": "object"},
+        "supersedes_protocol_id": {"type": "string"},
+        "trial_groups": {"minItems": 1, "type": "array"},
+        "valid_from": {"minLength": 1, "type": "string"},
+        "valid_until": {"type": "string"}
+      },
+      "required": [
+        "applicable_candidate_statuses", "applicable_domains",
+        "applicable_primitives", "baseline_ref", "baseline_saa_ir",
+        "benchmark_policy", "benchmark_track_scores", "dataset_snapshot_ids",
+        "independent_review", "integrity_policy", "integrity_snapshots",
+        "maximum_output", "maximum_total_trials", "minimum_experiments",
+        "minimum_independence_groups", "minimum_material_effect",
+        "minimum_output", "minimum_trials_per_group", "protocol_signature",
+        "protocol_version", "schema_version", "source_provenance",
+        "supersedes_protocol_id", "trial_groups", "valid_from", "valid_until"
+      ],
+      "type": "object"
+    },
+    "internet-improvement-action-lease": {
+      "additionalProperties": false,
+      "properties": {
+        "acquired_at": {"minLength": 1, "type": "string"},
+        "action_key": {"minLength": 1, "type": "string"},
+        "attempt_number": {"minimum": 1, "type": "integer"},
+        "expires_at": {"minLength": 1, "type": "string"},
+        "lease_signature": {"minLength": 1, "type": "string"},
+        "predecessor_lease_id": {"type": "string"},
+        "run_id": {"minLength": 1, "type": "string"},
+        "schema_version": {"const": 1},
+        "state": {"enum": ["ACTIVE", "COMPLETED", "EXPIRED", "ABANDONED"]},
+        "worker_id": {"minLength": 1, "type": "string"}
+      },
+      "required": [
+        "acquired_at", "action_key", "attempt_number", "expires_at",
+        "lease_signature", "predecessor_lease_id", "run_id",
+        "schema_version", "state", "worker_id"
+      ],
+      "type": "object"
+    },
+    "internet-improvement-action-receipt": {
+      "additionalProperties": false,
+      "properties": {
+        "action_key": {"minLength": 1, "type": "string"},
+        "completed_at": {"minLength": 1, "type": "string"},
+        "diagnostic": {"type": "string"},
+        "disposition": {"enum": ["EXECUTED", "RECONCILED", "STALE", "SKIPPED"]},
+        "error_code": {"type": "string"},
+        "executor_version": {"minLength": 1, "type": "string"},
+        "expected_preconditions": {"type": "object"},
+        "input_ids": {"items": {"type": "string"}, "type": "array"},
+        "lease_id": {"minLength": 1, "type": "string"},
+        "model_identity": {"type": "string"},
+        "observed_preconditions": {"type": "object"},
+        "output_ids": {"items": {"type": "string"}, "type": "array"},
+        "plan_id": {"minLength": 1, "type": "string"},
+        "provider_identity": {"type": "string"},
+        "receipt_signature": {"minLength": 1, "type": "string"},
+        "result_signature": {"minLength": 1, "type": "string"},
+        "run_id": {"minLength": 1, "type": "string"},
+        "schema_version": {"const": 1},
+        "started_at": {"minLength": 1, "type": "string"},
+        "terminal_state": {"enum": ["COMPLETED", "SKIPPED", "FAILED", "STALE"]}
+      },
+      "required": [
+        "action_key", "completed_at", "diagnostic", "disposition",
+        "error_code", "executor_version", "expected_preconditions",
+        "input_ids", "lease_id", "model_identity", "observed_preconditions",
+        "output_ids", "plan_id", "provider_identity", "receipt_signature",
+        "result_signature", "run_id", "schema_version", "started_at",
+        "terminal_state"
+      ],
+      "type": "object"
+    },
+    "internet-improvement-plan": {
+      "additionalProperties": false,
+      "properties": {
+        "actions": {"items": {"type": "object"}, "type": "array"},
+        "allocated_cost_bp": {"minimum": 0, "type": "integer"},
+        "allocated_cpu_units": {"minimum": 0, "type": "integer"},
+        "allocated_provider_calls": {"minimum": 0, "type": "integer"},
+        "allocated_response_bytes": {"minimum": 0, "type": "integer"},
+        "allocated_risk_bp": {"minimum": 0, "type": "integer"},
+        "baseline_event_head": {"minLength": 1, "type": "string"},
+        "cycle_key": {"minLength": 1, "type": "string"},
+        "deferred_actions": {"items": {"type": "object"}, "type": "array"},
+        "director_policy": {"type": "object"},
+        "director_version": {"minLength": 1, "type": "string"},
+        "plan_signature": {"minLength": 1, "type": "string"},
+        "planned_at": {"minLength": 1, "type": "string"},
+        "projection_digest": {"minLength": 1, "type": "string"},
+        "schema_version": {"const": 1}
+      },
+      "required": [
+        "actions", "allocated_cost_bp", "allocated_cpu_units",
+        "allocated_provider_calls", "allocated_response_bytes",
+        "allocated_risk_bp", "baseline_event_head", "cycle_key",
+        "deferred_actions", "director_policy", "director_version",
+        "plan_signature", "planned_at", "projection_digest", "schema_version"
+      ],
+      "type": "object"
+    },
+    "internet-improvement-run": {
+      "additionalProperties": false,
+      "properties": {
+        "plan_id": {"minLength": 1, "type": "string"},
+        "requested_budgets": {"type": "object"},
+        "resume_of_run_id": {"type": "string"},
+        "run_signature": {"minLength": 1, "type": "string"},
+        "schema_version": {"const": 1},
+        "started_at": {"minLength": 1, "type": "string"},
+        "worker_id": {"minLength": 1, "type": "string"}
+      },
+      "required": [
+        "plan_id", "requested_budgets", "resume_of_run_id", "run_signature",
+        "schema_version", "started_at", "worker_id"
+      ],
+      "type": "object"
+    },
+    "internet-improvement-run-event": {
+      "additionalProperties": false,
+      "properties": {
+        "action_key": {"type": "string"},
+        "details": {"type": "object"},
+        "event_signature": {"minLength": 1, "type": "string"},
+        "event_type": {
+          "enum": [
+            "STARTED", "ACTION_LEASED", "ACTION_COMPLETED",
+            "ACTION_SKIPPED", "ACTION_FAILED", "REPLANNED",
+            "BUDGET_EXHAUSTED", "NO_ELIGIBLE_WORK", "COMPLETED", "ABANDONED"
+          ]
+        },
+        "occurred_at": {"minLength": 1, "type": "string"},
+        "run_id": {"minLength": 1, "type": "string"},
+        "schema_version": {"const": 1}
+      },
+      "required": [
+        "action_key", "details", "event_signature", "event_type",
+        "occurred_at", "run_id", "schema_version"
+      ],
+      "type": "object"
+    },
+    "internet-probation-observation-input": {
+      "additionalProperties": false,
+      "properties": {
+        "admission_id": {"minLength": 1, "type": "string"},
+        "baseline_correct": {"type": "boolean"},
+        "benchmark_passed": {"type": "boolean"},
+        "candidate_correct": {"type": "boolean"},
+        "candidate_id": {"minLength": 1, "type": "string"},
+        "context_signature": {"minLength": 1, "type": "string"},
+        "evidence_ids": {"items": {"type": "string"}, "minItems": 1, "type": "array"},
+        "integrity_passed": {"type": "boolean"},
+        "invariant_passed": {"type": "boolean"},
+        "observation_input_signature": {"minLength": 1, "type": "string"},
+        "observed_at": {"minLength": 1, "type": "string"},
+        "producer_identity": {"minLength": 1, "type": "string"},
+        "provenance": {"type": "object"},
+        "query_signature": {"minLength": 1, "type": "string"},
+        "regression_signals": {"type": "object"},
+        "reproduction_passed": {"type": "boolean"},
+        "schema_version": {"const": 1},
+        "source_valid": {"type": "boolean"},
+        "window_index": {"minimum": 0, "type": "integer"}
+      },
+      "required": [
+        "admission_id", "baseline_correct", "benchmark_passed",
+        "candidate_correct", "candidate_id", "context_signature",
+        "evidence_ids", "integrity_passed", "invariant_passed",
+        "observation_input_signature", "observed_at", "producer_identity",
+        "provenance", "query_signature", "regression_signals",
+        "reproduction_passed", "schema_version", "source_valid", "window_index"
+      ],
+      "type": "object"
+    },
+    "internet-source-assessment-input": {
+      "additionalProperties": false,
+      "properties": {
+        "assessment_input_signature": {"minLength": 1, "type": "string"},
+        "evidence_ids": {"items": {"type": "string"}, "minItems": 1, "type": "array"},
+        "fetch_receipt_id": {"minLength": 1, "type": "string"},
+        "license_classification": {"minLength": 1, "type": "string"},
+        "producer_identity": {"minLength": 1, "type": "string"},
+        "provenance": {"type": "object"},
+        "robots_allowed": {"type": "boolean"},
+        "schema_version": {"const": 1},
+        "snapshot_id": {"minLength": 1, "type": "string"},
+        "source_policy_id": {"minLength": 1, "type": "string"}
+      },
+      "required": [
+        "assessment_input_signature", "evidence_ids", "fetch_receipt_id",
+        "license_classification", "producer_identity", "provenance",
+        "robots_allowed", "schema_version", "snapshot_id", "source_policy_id"
       ],
       "type": "object"
     },

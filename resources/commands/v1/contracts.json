@@ -3368,6 +3368,155 @@
         "rollback": "none"
       }
     },
+    "internet-improvement.explain-action@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema"
+      ],
+      "required_inputs": [
+        "action_key"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "governance.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "internet-improvement.plan@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema"
+      ],
+      "required_inputs": [
+        "cycle_key"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "workflow.plan"
+        ],
+        "level": "C1",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
+    "internet-improvement.resume@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "execution_receipts"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema",
+        "qualified_algorithm_available"
+      ],
+      "required_inputs": [
+        "run_id",
+        "cycle_key"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "workflow.execute"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "compensating"
+      }
+    },
+    "internet-improvement.run-once@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance",
+        "execution_receipts"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema",
+        "canonical_record_persisted"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema"
+      ],
+      "required_inputs": [
+        "cycle_key"
+      ],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "workflow.execute"
+        ],
+        "level": "C2",
+        "risk": "L1",
+        "rollback": "compensating"
+      }
+    },
+    "internet-improvement.run-status@1": {
+      "aliases": [],
+      "evidence_requirements": [
+        "provenance"
+      ],
+      "invariants": [
+        "authority_not_broadened",
+        "provenance_preserved",
+        "source_snapshot_binding_preserved"
+      ],
+      "postconditions": [
+        "output_validates_against_command_schema"
+      ],
+      "preconditions": [
+        "inputs_validate_against_command_schema"
+      ],
+      "required_inputs": [],
+      "settings": {
+        "approval": "automatic",
+        "facets": [
+          "governance.read"
+        ],
+        "level": "C0",
+        "risk": "L0",
+        "rollback": "none"
+      }
+    },
     "iurm.baseline@1": {
       "aliases": [],
       "evidence_requirements": [

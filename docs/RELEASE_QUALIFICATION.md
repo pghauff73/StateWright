@@ -14,6 +14,14 @@ and demotion policies require no per-candidate human approval and do not create
 or consume approval records. Passing that lifecycle does not approve production
 cutover or grant EGCF command execution authority.
 
+As of September 4, 2026, the deterministic Director and bounded Orchestrator
+implementation passes the developer, sanitizer, and release presets with 12 of
+12 tests in each preset. The qualified orchestration surface persists plans,
+runs, run events, action leases, and terminal receipts; executes one closed
+typed action per invocation; and keeps `approve` unsupported. This is a
+single-process `run-once` qualification, not a production daemon or an
+exactly-once HTTP claim.
+
 ## Required Gates
 
 1. Run `Tools/verify_release_inputs.sh` against the frozen oracle and packaged
@@ -37,6 +45,11 @@ packaged fixture result. It also runs
 `Tests/saa_internet_howto_smoke.sh`, copies the operational HOWTO into the
 bundle, and records `howto_validated: true`. This subsystem evidence is
 qualification evidence, not production cutover approval.
+
+The internet bundle also runs
+`Tests/internet_orchestrator_cli_smoke.sh` and
+`Tests/internet_orchestrator_fault_smoke.sh`, and copies the Director and
+Orchestrator implementation plan and goal prompt into the evidence directory.
 
 ## Authority Boundary
 

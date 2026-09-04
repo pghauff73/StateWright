@@ -1,0 +1,16 @@
+{
+  "migration_id": "statewright-internet-experiment-protocol-extension-v1",
+  "schema_version": 1,
+  "extension_contract": "schemas/statewright-v1/internet-improvement-extension.schema.json",
+  "frozen_contract_modified": false,
+  "added_object_types": [
+    "internet-experiment-protocol",
+    "internet-probation-observation-input",
+    "internet-source-assessment-input"
+  ],
+  "extended_object_types": [],
+  "authority_effect": "none",
+  "canonical_algorithm_effect": "qualification_only",
+  "human_approval_required": false,
+  "compatibility": "protocol and observation input records are required only for new orchestrated actions"
+}

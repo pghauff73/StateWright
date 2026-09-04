@@ -115,6 +115,7 @@ canonical_internet_algorithm_candidate(InternetAlgorithmCandidate candidate) {
   canonical_strings(candidate.failure_match_ids);
   canonical_strings(candidate.oiec_sr_proposal_ids);
   canonical_strings(candidate.oiec_sr_falsifier_ids);
+  canonical_strings(candidate.reasoning_analysis_ids);
   canonical_strings(candidate.experiment_qualification_ids);
   canonical_strings(candidate.promotion_assessment_ids);
   canonical_strings(candidate.probation_admission_ids);
@@ -135,7 +136,8 @@ internet_algorithm_candidate_from_json(const contracts::Json &value) {
       !value.contains("probation_observation_ids") ||
       !value.contains("promotion_decision_ids") ||
       !value.contains("demotion_decision_ids") ||
-      !value.contains("canonical_algorithm_ids");
+      !value.contains("canonical_algorithm_ids") ||
+      !value.contains("reasoning_analysis_ids");
   InternetAlgorithmCandidate candidate{
       .schema_version = value.at("schema_version").get<int>(),
       .source_fragment_id =
@@ -169,6 +171,8 @@ internet_algorithm_candidate_from_json(const contracts::Json &value) {
           value.at("oiec_sr_proposal_ids").get<std::vector<std::string>>(),
       .oiec_sr_falsifier_ids =
           value.at("oiec_sr_falsifier_ids").get<std::vector<std::string>>(),
+      .reasoning_analysis_ids =
+          value.value("reasoning_analysis_ids", std::vector<std::string>{}),
       .experiment_qualification_ids =
           value.at("experiment_qualification_ids")
               .get<std::vector<std::string>>(),
@@ -323,6 +327,7 @@ contracts::Json to_json(const InternetAlgorithmCandidate &value) {
           {"demotion_decision_ids", value.demotion_decision_ids},
           {"oiec_sr_falsifier_ids", value.oiec_sr_falsifier_ids},
           {"oiec_sr_proposal_ids", value.oiec_sr_proposal_ids},
+          {"reasoning_analysis_ids", value.reasoning_analysis_ids},
           {"proposed_saa_ir", value.proposed_saa_ir},
           {"promotion_assessment_ids", value.promotion_assessment_ids},
           {"promotion_decision_ids", value.promotion_decision_ids},

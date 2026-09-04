@@ -51,6 +51,7 @@ struct InternetAlgorithmCandidate final {
   std::vector<std::string> failure_match_ids;
   std::vector<std::string> oiec_sr_proposal_ids;
   std::vector<std::string> oiec_sr_falsifier_ids;
+  std::vector<std::string> reasoning_analysis_ids;
   std::vector<std::string> experiment_qualification_ids;
   std::vector<std::string> promotion_assessment_ids;
   std::vector<std::string> probation_admission_ids;

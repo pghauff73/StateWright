@@ -12,6 +12,7 @@
     "algorithm": ["register", "search", "compare", "qualify", "benchmark", "compose", "evolve", "retire", "explain", "select"],
     "evidence": ["collect", "classify", "compare", "graph", "export", "confidence", "conflicts", "history"],
     "invariant": ["discover", "register", "validate", "compare", "conflicts", "supersede"],
+    "internet-improvement": ["plan", "run-once", "resume", "run-status", "explain-action"],
     "decision": ["create", "query", "history", "supersede", "explain", "conflicts"],
     "debug": ["reproduce", "minimise", "bisect", "hypotheses", "trace", "compare", "rootcause", "verify"],
     "experiment": ["design", "ofat", "factorial", "covering", "benchmark", "analyse", "repeat", "compare"],

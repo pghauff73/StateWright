@@ -251,11 +251,15 @@ add_library(statewright_egcf STATIC
   Core/src/egcf/governance.cpp
   Core/src/egcf/improvement_loop_store.cpp
   Core/src/egcf/internet_experiment.cpp
+  Core/src/egcf/internet_improvement_director.cpp
+  Core/src/egcf/internet_improvement_orchestrator.cpp
   Core/src/egcf/internet_improvement_store.cpp
+  Core/src/egcf/internet_orchestration_records.cpp
   Core/src/egcf/internet_probation.cpp
   Core/src/egcf/internet_records.cpp
   Core/src/egcf/internet_feed.cpp
   Core/src/egcf/internet_reasoning.cpp
+  Core/src/egcf/internet_source_coordinator.cpp
   Core/src/egcf/knowledge_governance_store.cpp
   Core/src/egcf/lifecycle.cpp
   Core/src/egcf/nonlinear_store.cpp

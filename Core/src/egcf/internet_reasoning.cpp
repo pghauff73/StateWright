@@ -182,6 +182,7 @@ InternetReasoningResult InternetReasoningCoordinator::analyze(
   InternetAlgorithmCandidate updated = candidate;
   updated.oiec_sr_proposal_ids = analysis.proposal_ids;
   updated.oiec_sr_falsifier_ids = analysis.falsifier_ids;
+  updated.reasoning_analysis_ids.push_back(analysis_id);
   updated.unresolved_assumptions.insert(updated.unresolved_assumptions.end(),
                                         unresolved.begin(), unresolved.end());
   updated.candidate_signature.clear();

@@ -51,7 +51,7 @@ Json read_json_file(const std::filesystem::path &path) {
 
 TEST_CASE("EGCF schema registry covers every durable record type") {
   const statewright::egcf::RecordSchemaRegistry schemas(STATEWRIGHT_RESOURCE_ROOT);
-  REQUIRE(schemas.object_types().size() == 47U);
+  REQUIRE(schemas.object_types().size() == 55U);
   REQUIRE(schemas.schema_for("intent").at("additionalProperties") == false);
   REQUIRE_THROWS_AS(schemas.schema_for("Intent"), statewright::common::Error);
 
@@ -124,7 +124,7 @@ TEST_CASE("EGCF workflow references and resource imports are strict") {
   const auto bundle =
       statewright::egcf::load_resource_bundle(STATEWRIGHT_RESOURCE_ROOT);
   REQUIRE(bundle.receipt.verified_files == 42U);
-  REQUIRE(bundle.command_definitions.size() == 183U);
+  REQUIRE(bundle.command_definitions.size() == 188U);
   REQUIRE(bundle.algorithm_definitions.empty());
   REQUIRE(bundle.workflow_definitions.size() == 1U);
   REQUIRE(bundle.workflow_definitions.front().payload.at("nodes").front().at(
@@ -139,13 +139,13 @@ TEST_CASE("EGCF resource admission persists one exact canonical catalog") {
   const auto bundle =
       statewright::egcf::load_resource_bundle(STATEWRIGHT_RESOURCE_ROOT);
   const auto first_ids = store.register_resources(bundle);
-  REQUIRE(first_ids.size() == 184U);
-  REQUIRE(store.events().size() == 184U);
-  REQUIRE(store.list("command-definition").size() == 183U);
+  REQUIRE(first_ids.size() == 189U);
+  REQUIRE(store.events().size() == 189U);
+  REQUIRE(store.list("command-definition").size() == 188U);
   REQUIRE(store.list("workflow-definition").size() == 1U);
   REQUIRE(store.register_resources(bundle) == first_ids);
-  REQUIRE(store.events().size() == 184U);
-  REQUIRE(store.active_ids("command-definition").size() == 183U);
+  REQUIRE(store.events().size() == 189U);
+  REQUIRE(store.active_ids("command-definition").size() == 188U);
   std::filesystem::remove_all(root);
 }
 

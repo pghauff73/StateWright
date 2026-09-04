@@ -39,6 +39,16 @@ std::string signature_for(const Value &value, std::string_view signature_key) {
   return contracts::sha256_json(material);
 }
 
+template <typename Value, typename Canonicalizer>
+Value parse_and_verify(Value value, const Json &source,
+                       Canonicalizer canonicalizer) {
+  const auto canonical = canonicalizer(std::move(value));
+  if (to_json(canonical) != source) {
+    record_error("persisted internet source record is invalid");
+  }
+  return canonical;
+}
+
 } // namespace
 
 std::string InternetWatch::object_id() const {
@@ -226,6 +236,187 @@ InternetSourceFragment canonical_source_fragment(InternetSourceFragment fragment
   fragment.fragment_signature =
       signature_for(fragment, "fragment_signature");
   return fragment;
+}
+
+InternetWatch internet_watch_from_json(const Json &value) {
+  return parse_and_verify(
+      InternetWatch{
+          .schema_version = value.at("schema_version").get<int>(),
+          .canonical_url = value.at("canonical_url").get<std::string>(),
+          .enabled = value.at("enabled").get<bool>(),
+          .supersedes_watch_id =
+              value.at("supersedes_watch_id").get<std::string>(),
+          .source_policy_id =
+              value.at("source_policy_id").get<std::string>(),
+          .source_group = value.at("source_group").get<std::string>(),
+          .accepted_mime_types =
+              value.at("accepted_mime_types").get<std::vector<std::string>>(),
+          .polling_interval_seconds =
+              value.at("polling_interval_seconds").get<int>(),
+          .deterministic_jitter_seconds =
+              value.at("deterministic_jitter_seconds").get<int>(),
+          .maximum_redirects = value.at("maximum_redirects").get<int>(),
+          .maximum_response_bytes =
+              value.at("maximum_response_bytes").get<std::size_t>(),
+          .maximum_decompressed_bytes =
+              value.at("maximum_decompressed_bytes").get<std::size_t>(),
+          .request_timeout_seconds =
+              value.at("request_timeout_seconds").get<int>(),
+          .schedule_generation =
+              value.at("schedule_generation").get<int>(),
+          .watch_signature = value.at("watch_signature").get<std::string>()},
+      value, canonical_watch);
+}
+
+InternetFetchJob internet_fetch_job_from_json(const Json &value) {
+  return parse_and_verify(
+      InternetFetchJob{
+          .schema_version = value.at("schema_version").get<int>(),
+          .watch_id = value.at("watch_id").get<std::string>(),
+          .scheduled_interval =
+              value.at("scheduled_interval").get<std::string>(),
+          .expected_watch_generation =
+              value.at("expected_watch_generation").get<int>(),
+          .earliest_start = value.at("earliest_start").get<std::string>(),
+          .deadline = value.at("deadline").get<std::string>(),
+          .retry_number = value.at("retry_number").get<int>(),
+          .retry_ceiling = value.at("retry_ceiling").get<int>(),
+          .priority_class = value.at("priority_class").get<std::string>(),
+          .opportunity_score = value.at("opportunity_score").get<int>(),
+          .source_group = value.at("source_group").get<std::string>(),
+          .allocated_response_bytes =
+              value.at("allocated_response_bytes").get<std::size_t>(),
+          .allocated_cpu_units =
+              value.at("allocated_cpu_units").get<std::size_t>(),
+          .job_signature = value.at("job_signature").get<std::string>()},
+      value, canonical_fetch_job);
+}
+
+InternetFetchLease internet_fetch_lease_from_json(const Json &value) {
+  return parse_and_verify(
+      InternetFetchLease{
+          .schema_version = value.at("schema_version").get<int>(),
+          .job_id = value.at("job_id").get<std::string>(),
+          .worker_id = value.at("worker_id").get<std::string>(),
+          .acquired_at = value.at("acquired_at").get<std::string>(),
+          .expires_at = value.at("expires_at").get<std::string>(),
+          .predecessor_lease_id =
+              value.at("predecessor_lease_id").get<std::string>(),
+          .state = value.at("state").get<std::string>(),
+          .lease_signature = value.at("lease_signature").get<std::string>()},
+      value, canonical_fetch_lease);
+}
+
+InternetFetchReceipt internet_fetch_receipt_from_json(const Json &value) {
+  return parse_and_verify(
+      InternetFetchReceipt{
+          .schema_version = value.at("schema_version").get<int>(),
+          .job_id = value.at("job_id").get<std::string>(),
+          .lease_id = value.at("lease_id").get<std::string>(),
+          .requested_url = value.at("requested_url").get<std::string>(),
+          .final_url = value.at("final_url").get<std::string>(),
+          .resolved_addresses =
+              value.at("resolved_addresses").get<std::vector<std::string>>(),
+          .redirect_chain =
+              value.at("redirect_chain").get<std::vector<std::string>>(),
+          .http_status = value.at("http_status").get<int>(),
+          .selected_headers = value.at("selected_headers"),
+          .tls_verified = value.at("tls_verified").get<bool>(),
+          .compressed_bytes = value.at("compressed_bytes").get<std::size_t>(),
+          .decompressed_bytes =
+              value.at("decompressed_bytes").get<std::size_t>(),
+          .total_time_milliseconds =
+              value.at("total_time_milliseconds").get<long long>(),
+          .provider_identity =
+              value.at("provider_identity").get<std::string>(),
+          .snapshot_id = value.at("snapshot_id").get<std::string>(),
+          .status = value.at("status").get<std::string>(),
+          .failure_reason = value.at("failure_reason").get<std::string>(),
+          .receipt_signature = value.at("receipt_signature").get<std::string>()},
+      value, canonical_fetch_receipt);
+}
+
+InternetSourceSnapshot internet_source_snapshot_from_json(const Json &value) {
+  return parse_and_verify(
+      InternetSourceSnapshot{
+          .schema_version = value.at("schema_version").get<int>(),
+          .canonical_url = value.at("canonical_url").get<std::string>(),
+          .final_url = value.at("final_url").get<std::string>(),
+          .body_sha256 = value.at("body_sha256").get<std::string>(),
+          .content_type = value.at("content_type").get<std::string>(),
+          .body_size = value.at("body_size").get<std::size_t>(),
+          .artifact_id = value.at("artifact_id").get<std::string>(),
+          .source_group = value.at("source_group").get<std::string>(),
+          .snapshot_signature =
+              value.at("snapshot_signature").get<std::string>()},
+      value, canonical_source_snapshot);
+}
+
+InternetPolicyAssessment
+internet_policy_assessment_from_json(const Json &value) {
+  return parse_and_verify(
+      InternetPolicyAssessment{
+          .schema_version = value.at("schema_version").get<int>(),
+          .snapshot_id = value.at("snapshot_id").get<std::string>(),
+          .fetch_receipt_id =
+              value.at("fetch_receipt_id").get<std::string>(),
+          .source_policy_id =
+              value.at("source_policy_id").get<std::string>(),
+          .public_address_valid =
+              value.at("public_address_valid").get<bool>(),
+          .redirects_valid = value.at("redirects_valid").get<bool>(),
+          .robots_allowed = value.at("robots_allowed").get<bool>(),
+          .license_classification =
+              value.at("license_classification").get<std::string>(),
+          .mime_valid = value.at("mime_valid").get<bool>(),
+          .encoding_valid = value.at("encoding_valid").get<bool>(),
+          .credential_free = value.at("credential_free").get<bool>(),
+          .size_valid = value.at("size_valid").get<bool>(),
+          .status = value.at("status").get<std::string>(),
+          .blocking_reasons =
+              value.at("blocking_reasons").get<std::vector<std::string>>(),
+          .assessment_signature =
+              value.at("assessment_signature").get<std::string>()},
+      value, canonical_policy_assessment);
+}
+
+InternetExtractionReceipt
+internet_extraction_receipt_from_json(const Json &value) {
+  return parse_and_verify(
+      InternetExtractionReceipt{
+          .schema_version = value.at("schema_version").get<int>(),
+          .snapshot_id = value.at("snapshot_id").get<std::string>(),
+          .extractor_versions =
+              value.at("extractor_versions").get<std::vector<std::string>>(),
+          .decoded_text_signature =
+              value.at("decoded_text_signature").get<std::string>(),
+          .fragment_ids =
+              value.at("fragment_ids").get<std::vector<std::string>>(),
+          .rejected_fragments =
+              value.at("rejected_fragments").get<std::vector<std::string>>(),
+          .diagnostics =
+              value.at("diagnostics").get<std::vector<std::string>>(),
+          .truncated = value.at("truncated").get<bool>(),
+          .extraction_signature =
+              value.at("extraction_signature").get<std::string>()},
+      value, canonical_extraction_receipt);
+}
+
+InternetSourceFragment internet_source_fragment_from_json(const Json &value) {
+  return parse_and_verify(
+      InternetSourceFragment{
+          .schema_version = value.at("schema_version").get<int>(),
+          .snapshot_id = value.at("snapshot_id").get<std::string>(),
+          .fragment_kind = value.at("fragment_kind").get<std::string>(),
+          .byte_start = value.at("byte_start").get<std::size_t>(),
+          .byte_end = value.at("byte_end").get<std::size_t>(),
+          .selector = value.at("selector").get<std::string>(),
+          .text = value.at("text").get<std::string>(),
+          .language = value.at("language").get<std::string>(),
+          .metadata = value.at("metadata"),
+          .fragment_signature =
+              value.at("fragment_signature").get<std::string>()},
+      value, canonical_source_fragment);
 }
 
 Json to_json(const InternetWatch &value) {

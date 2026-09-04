@@ -2,6 +2,7 @@
 
 #include "statewright/egcf/store.hpp"
 #include "statewright/egcf/internet_records.hpp"
+#include "statewright/egcf/internet_orchestration_records.hpp"
 #include "statewright/saa/autonomous_promotion_policy.hpp"
 #include "statewright/saa/probation.hpp"
 #include "statewright/sources/extraction.hpp"
@@ -80,6 +81,22 @@ public:
   [[nodiscard]] std::string register_demotion_decision(
       std::string admission_id,
       const saa::AutomaticDemotionDecision &decision);
+  [[nodiscard]] std::string register_improvement_plan(
+      const InternetImprovementPlan &plan);
+  [[nodiscard]] std::string register_improvement_run(
+      const InternetImprovementRun &run);
+  [[nodiscard]] std::string register_improvement_run_event(
+      const InternetImprovementRunEvent &event);
+  [[nodiscard]] std::string register_improvement_action_lease(
+      const InternetImprovementActionLease &lease);
+  [[nodiscard]] std::string register_improvement_action_receipt(
+      const InternetImprovementActionReceipt &receipt);
+  [[nodiscard]] std::string register_experiment_protocol(
+      const InternetExperimentProtocol &protocol);
+  [[nodiscard]] std::string register_source_assessment_input(
+      const InternetSourceAssessmentInput &input);
+  [[nodiscard]] std::string register_probation_observation_input(
+      const InternetProbationObservationInput &input);
   [[nodiscard]] std::string supersede_algorithm_candidate(
       std::string old_candidate_id,
       const InternetAlgorithmCandidate &replacement, std::string reason);
@@ -89,8 +106,14 @@ public:
   [[nodiscard]] std::vector<StoredObject>
   list(std::string_view object_type);
   [[nodiscard]] std::vector<std::string> active_watch_ids();
+  [[nodiscard]] std::vector<std::string> active_candidate_ids();
+  [[nodiscard]] std::vector<std::string> active_experiment_protocol_ids();
   [[nodiscard]] std::optional<sources::InternetFetchLease>
   latest_lease(std::string_view job_id);
+  [[nodiscard]] std::optional<InternetImprovementActionLease>
+  latest_action_lease(std::string_view action_key);
+  [[nodiscard]] std::optional<InternetImprovementActionReceipt>
+  terminal_action_receipt(std::string_view action_key);
   [[nodiscard]] std::vector<std::byte>
   snapshot_bytes(std::string_view snapshot_id) const;
 

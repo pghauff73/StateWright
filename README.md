@@ -76,3 +76,13 @@ the unchanged EGCF execution-authority boundary.
 - `docs/SAA_PERSISTENT_INTERNET_IMPROVEMENT_PLAN.md` records the implemented
   persistent internet acquisition, autonomous approval-free SAA promotion,
   probation, automatic demotion, and qualification boundaries.
+- `docs/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_IMPLEMENTATION_PLAN.md`
+  records the implemented deterministic Director, bounded restart-safe
+  Orchestrator, immutable run records, compatibility, fault recovery, and
+  release gates.
+
+## Goal Prompts
+
+- `docs/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_GOAL_PROMPT.md` is the
+  source-grounded coding-agent prompt used to implement and qualify the
+  Director and Orchestrator.

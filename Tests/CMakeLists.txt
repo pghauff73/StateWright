@@ -84,9 +84,13 @@ add_executable(statewright_contract_tests
   egcf/test_evidence_assurance.cpp
   egcf/test_improvement_loop_store.cpp
   egcf/test_internet_experiment.cpp
+  egcf/test_internet_improvement_director.cpp
+  egcf/test_internet_improvement_orchestrator.cpp
   egcf/test_internet_feed.cpp
   egcf/test_internet_improvement_store.cpp
+  egcf/test_internet_orchestration_records.cpp
   egcf/test_internet_reasoning.cpp
+  egcf/test_internet_source_coordinator.cpp
   egcf/test_knowledge_governance_store.cpp
   egcf/test_lifecycle.cpp
   egcf/test_nonlinear_store.cpp
@@ -168,6 +172,18 @@ add_test(NAME statewright_saa_internet_howto_smoke
     "$<TARGET_FILE:statewright_internet_fixture_server>"
     "${PROJECT_SOURCE_DIR}/resources/fixtures/internet/identity-v1.json")
 set_tests_properties(statewright_saa_internet_howto_smoke PROPERTIES
+  RUN_SERIAL TRUE)
+
+add_test(NAME statewright_internet_orchestrator_cli_smoke
+  COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/internet_orchestrator_cli_smoke.sh"
+    "$<TARGET_FILE:statewright>")
+set_tests_properties(statewright_internet_orchestrator_cli_smoke PROPERTIES
+  RUN_SERIAL TRUE)
+
+add_test(NAME statewright_internet_orchestrator_fault_smoke
+  COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/internet_orchestrator_fault_smoke.sh"
+    "$<TARGET_FILE:statewright>")
+set_tests_properties(statewright_internet_orchestrator_fault_smoke PROPERTIES
   RUN_SERIAL TRUE)
 
 add_test(NAME statewright_package_smoke

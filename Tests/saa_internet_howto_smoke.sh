@@ -63,6 +63,8 @@ for action in \
   register supersede enable disable list get schedule select lease execute \
   assess explain migrate feed reason experiment-qualify policy-assess \
   probation-admit probation-select probation-observe advance status \
+  plan run-once resume run-status explain-action protocol-register \
+  source-assessment-input-register probation-observation-input-register \
   register-default rebuild verify; do
   require_text "$action"
 done
@@ -80,6 +82,9 @@ require_text 'IDENTITY'
 require_text 'CONST'
 require_text 'Tests/saa_internet_howto_smoke.sh'
 require_text 'Tools/generate_internet_release_evidence.sh'
+require_text 'Tests/internet_orchestrator_cli_smoke.sh'
+require_text 'Tests/internet_orchestrator_fault_smoke.sh'
+require_text 'does not claim a continuously running multi-process daemon'
 require_text 'version --json` is the build-identity exception'
 
 for referenced_path in \
@@ -88,6 +93,8 @@ for referenced_path in \
   docs/RESIDUAL_RISKS.md \
   Apps/statewright/cli.cpp \
   Tests/internet_cli_smoke.sh \
+  Tests/internet_orchestrator_cli_smoke.sh \
+  Tests/internet_orchestrator_fault_smoke.sh \
   Tests/sources/internet_fixture_server.cpp \
   resources/fixtures/internet/identity-v1.json \
   resources/policies/internet/default-source-policy-v1.json \

@@ -339,7 +339,7 @@ TEST_CASE("EGCF engine executes priority handlers and stable replay") {
   const auto qualified =
       engine.invoke("ieps.qualify", {{"subject_id", "priority"}});
   REQUIRE(qualified.at("outputs").at(0).at("result").at("qualified") == true);
-  REQUIRE(engine.algorithms().algorithms().size() == 176U);
+  REQUIRE(engine.algorithms().algorithms().size() == 181U);
   const auto searched =
       engine.invoke("algorithm.search", {{"command_id", "repo.metrics"}});
   REQUIRE(searched.at("outputs").at(0).at("result").at("algorithms").size() ==

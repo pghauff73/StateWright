@@ -1,0 +1,18 @@
+{
+  "migration_id": "statewright-internet-orchestration-record-extension-v1",
+  "schema_version": 1,
+  "extension_contract": "schemas/statewright-v1/internet-improvement-extension.schema.json",
+  "frozen_contract_modified": false,
+  "added_object_types": [
+    "internet-improvement-action-lease",
+    "internet-improvement-action-receipt",
+    "internet-improvement-plan",
+    "internet-improvement-run",
+    "internet-improvement-run-event"
+  ],
+  "extended_object_types": [],
+  "authority_effect": "none",
+  "canonical_algorithm_effect": "none",
+  "human_approval_required": false,
+  "compatibility": "new orchestration records are additive and existing manual lifecycle operations remain valid"
+}

@@ -167,6 +167,23 @@ canonical_extraction_receipt(InternetExtractionReceipt receipt);
 [[nodiscard]] InternetSourceFragment
 canonical_source_fragment(InternetSourceFragment fragment);
 
+[[nodiscard]] InternetWatch
+internet_watch_from_json(const contracts::Json &value);
+[[nodiscard]] InternetFetchJob
+internet_fetch_job_from_json(const contracts::Json &value);
+[[nodiscard]] InternetFetchLease
+internet_fetch_lease_from_json(const contracts::Json &value);
+[[nodiscard]] InternetFetchReceipt
+internet_fetch_receipt_from_json(const contracts::Json &value);
+[[nodiscard]] InternetSourceSnapshot
+internet_source_snapshot_from_json(const contracts::Json &value);
+[[nodiscard]] InternetPolicyAssessment
+internet_policy_assessment_from_json(const contracts::Json &value);
+[[nodiscard]] InternetExtractionReceipt
+internet_extraction_receipt_from_json(const contracts::Json &value);
+[[nodiscard]] InternetSourceFragment
+internet_source_fragment_from_json(const contracts::Json &value);
+
 [[nodiscard]] contracts::Json to_json(const InternetWatch &value);
 [[nodiscard]] contracts::Json to_json(const InternetFetchJob &value);
 [[nodiscard]] contracts::Json to_json(const InternetFetchLease &value);

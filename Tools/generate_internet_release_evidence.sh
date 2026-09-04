@@ -38,6 +38,14 @@ done
   "$root/resources/fixtures/internet/identity-v1.json" \
   >"$output/logs/saa-internet-howto-smoke.log" 2>&1
 
+"$root/Tests/internet_orchestrator_cli_smoke.sh" \
+  "$root/build/release/statewright" \
+  >"$output/logs/internet-orchestrator-cli-smoke.log" 2>&1
+
+"$root/Tests/internet_orchestrator_fault_smoke.sh" \
+  "$root/build/release/statewright" \
+  >"$output/logs/internet-orchestrator-fault-smoke.log" 2>&1
+
 approval_workspace=$(mktemp -d)
 trap 'rm -rf "$approval_workspace"' EXIT
 if "$root/build/release/statewright" internet-improvement \
@@ -51,7 +59,9 @@ grep -q 'unsupported internet-improvement action' \
 
 if grep -Eq '^#!.*python|^[[:space:]]*(env[[:space:]]+)?python(3)?([[:space:]]|$)' \
   "$root/Tests/internet_cli_smoke.sh" \
-  "$root/Tests/saa_internet_howto_smoke.sh"; then
+  "$root/Tests/saa_internet_howto_smoke.sh" \
+  "$root/Tests/internet_orchestrator_cli_smoke.sh" \
+  "$root/Tests/internet_orchestrator_fault_smoke.sh"; then
   printf 'qualified internet fixture path references a Python runtime\n' >&2
   exit 1
 fi
@@ -85,6 +95,10 @@ cp "$root/contracts/oracle/source_manifest.sha256" \
 cp "$root/docs/RESIDUAL_RISKS.md" "$output/RESIDUAL_RISKS.md"
 cp "$root/docs/SAA_PERSISTENT_INTERNET_IMPROVEMENT_HOWTO.md" \
   "$output/SAA_PERSISTENT_INTERNET_IMPROVEMENT_HOWTO.md"
+cp "$root/docs/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_IMPLEMENTATION_PLAN.md" \
+  "$output/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_IMPLEMENTATION_PLAN.md"
+cp "$root/docs/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_GOAL_PROMPT.md" \
+  "$output/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_GOAL_PROMPT.md"
 cp "$root/resources/fixtures/internet/identity-v1.json" \
   "$output/internet-fixture-metadata.json"
 cp "$root/resources/policies/internet/default-source-policy-v1.json" \
@@ -125,6 +139,13 @@ cat >"$output/internet-qualification-status.json" <<EOF
     "autonomous_promotion_verified": true,
     "autonomous_demotion_verified": true,
     "previous_preference_restoration_verified": true
+  },
+  "director_orchestrator": {
+    "approval_operation_present": false,
+    "bounded_run_once_verified": true,
+    "durable_action_failure_receipt_verified": true,
+    "multi_process_daemon_claimed": false,
+    "exactly_once_http_claimed": false
   },
   "authority": {
     "egcf_execution_authority_expanded": false,

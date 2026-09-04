@@ -469,6 +469,183 @@ std::string InternetImprovementStore::register_demotion_decision(
       "internet_demotion_decision_registered");
 }
 
+std::string InternetImprovementStore::register_improvement_plan(
+    const InternetImprovementPlan &plan) {
+  const auto canonical = canonical_internet_improvement_plan(plan);
+  return store_.register_record(
+      {.object_type = "internet-improvement-plan",
+       .payload = to_json(canonical)},
+      "internet_improvement_plan_registered");
+}
+
+std::string InternetImprovementStore::register_improvement_run(
+    const InternetImprovementRun &run) {
+  const auto canonical = canonical_internet_improvement_run(run);
+  require_type(canonical.plan_id, "internet-improvement-plan");
+  if (!canonical.resume_of_run_id.empty()) {
+    require_type(canonical.resume_of_run_id, "internet-improvement-run");
+  }
+  return store_.register_record(
+      {.object_type = "internet-improvement-run",
+       .payload = to_json(canonical)},
+      "internet_improvement_run_registered");
+}
+
+std::string InternetImprovementStore::register_improvement_run_event(
+    const InternetImprovementRunEvent &event) {
+  const auto canonical = canonical_internet_improvement_run_event(event);
+  require_type(canonical.run_id, "internet-improvement-run");
+  return store_.register_record(
+      {.object_type = "internet-improvement-run-event",
+       .payload = to_json(canonical)},
+      "internet_improvement_run_event_registered");
+}
+
+std::optional<InternetImprovementActionLease>
+InternetImprovementStore::latest_action_lease(std::string_view action_key) {
+  std::vector<std::pair<std::string, InternetImprovementActionLease>> leases;
+  std::set<std::string> predecessors;
+  for (const auto &object : list("internet-improvement-action-lease")) {
+    const auto lease =
+        internet_improvement_action_lease_from_json(object.payload);
+    if (lease.action_key != action_key) {
+      continue;
+    }
+    if (!lease.predecessor_lease_id.empty()) {
+      predecessors.insert(lease.predecessor_lease_id);
+    }
+    leases.emplace_back(object.object_id, lease);
+  }
+  std::vector<InternetImprovementActionLease> latest;
+  for (const auto &[object_id, lease] : leases) {
+    if (!predecessors.contains(object_id)) {
+      latest.push_back(lease);
+    }
+  }
+  if (latest.size() > 1U) {
+    internet_store_error("improvement action has conflicting latest leases");
+  }
+  return latest.empty()
+             ? std::nullopt
+             : std::optional<InternetImprovementActionLease>(latest.front());
+}
+
+std::string InternetImprovementStore::register_improvement_action_lease(
+    const InternetImprovementActionLease &lease) {
+  const auto canonical = canonical_internet_improvement_action_lease(lease);
+  require_type(canonical.run_id, "internet-improvement-run");
+  const auto latest = latest_action_lease(canonical.action_key);
+  if (!latest && !canonical.predecessor_lease_id.empty()) {
+    internet_store_error("first improvement action lease cannot declare a predecessor");
+  }
+  if (!latest && !canonical.active()) {
+    internet_store_error("first improvement action lease must be active");
+  }
+  if (latest && canonical.predecessor_lease_id != latest->object_id()) {
+    internet_store_error("improvement action lease predecessor is not current");
+  }
+  if (latest && canonical.active() && latest->active() &&
+      canonical.acquired_at < latest->expires_at) {
+    internet_store_error("active improvement action leases cannot overlap");
+  }
+  if (latest && !canonical.active() &&
+      (!latest->active() || canonical.worker_id != latest->worker_id ||
+       canonical.run_id != latest->run_id ||
+       canonical.attempt_number != latest->attempt_number ||
+       canonical.acquired_at != latest->acquired_at ||
+       canonical.expires_at != latest->expires_at)) {
+    internet_store_error(
+        "terminal improvement action lease must close the current lease");
+  }
+  return store_.register_record(
+      {.object_type = "internet-improvement-action-lease",
+       .payload = to_json(canonical)},
+      "internet_improvement_action_lease_registered");
+}
+
+std::optional<InternetImprovementActionReceipt>
+InternetImprovementStore::terminal_action_receipt(std::string_view action_key) {
+  std::optional<InternetImprovementActionReceipt> result;
+  for (const auto &object : list("internet-improvement-action-receipt")) {
+    const auto receipt =
+        internet_improvement_action_receipt_from_json(object.payload);
+    if (receipt.action_key != action_key) {
+      continue;
+    }
+    if (result && result->object_id() != object.object_id) {
+      internet_store_error(
+          "improvement action has conflicting terminal receipts");
+    }
+    result = receipt;
+  }
+  return result;
+}
+
+std::string InternetImprovementStore::register_improvement_action_receipt(
+    const InternetImprovementActionReceipt &receipt) {
+  const auto canonical = canonical_internet_improvement_action_receipt(receipt);
+  require_type(canonical.plan_id, "internet-improvement-plan");
+  require_type(canonical.run_id, "internet-improvement-run");
+  require_type(canonical.lease_id, "internet-improvement-action-lease");
+  const auto latest = latest_action_lease(canonical.action_key);
+  if (!latest || latest->object_id() != canonical.lease_id ||
+      !latest->active() || latest->run_id != canonical.run_id) {
+    internet_store_error(
+        "improvement action receipt requires the current active lease");
+  }
+  const auto existing = terminal_action_receipt(canonical.action_key);
+  if (existing && existing->object_id() != canonical.object_id()) {
+    internet_store_error("improvement action already has a terminal receipt");
+  }
+  return store_.register_record(
+      {.object_type = "internet-improvement-action-receipt",
+       .payload = to_json(canonical)},
+      "internet_improvement_action_receipt_registered");
+}
+
+std::string InternetImprovementStore::register_experiment_protocol(
+    const InternetExperimentProtocol &protocol) {
+  const auto canonical = canonical_internet_experiment_protocol(protocol);
+  if (!canonical.supersedes_protocol_id.empty()) {
+    require_type(canonical.supersedes_protocol_id,
+                 "internet-experiment-protocol");
+  }
+  const std::string id = store_.register_record(
+      {.object_type = "internet-experiment-protocol",
+       .payload = to_json(canonical)},
+      "internet_experiment_protocol_registered");
+  if (!canonical.supersedes_protocol_id.empty()) {
+    static_cast<void>(store_.supersede(
+        canonical.supersedes_protocol_id, id,
+        "internet experiment protocol superseded",
+        "statewright-internet-improvement-director"));
+  }
+  return id;
+}
+
+std::string InternetImprovementStore::register_source_assessment_input(
+    const InternetSourceAssessmentInput &input) {
+  const auto canonical = canonical_internet_source_assessment_input(input);
+  require_type(canonical.snapshot_id, "internet-source-snapshot");
+  require_type(canonical.fetch_receipt_id, "internet-fetch-receipt");
+  require_type(canonical.source_policy_id, "internet-source-policy");
+  return store_.register_record(
+      {.object_type = "internet-source-assessment-input",
+       .payload = to_json(canonical)},
+      "internet_source_assessment_input_registered");
+}
+
+std::string InternetImprovementStore::register_probation_observation_input(
+    const InternetProbationObservationInput &input) {
+  const auto canonical = canonical_internet_probation_observation_input(input);
+  require_type(canonical.candidate_id, "internet-algorithm-candidate");
+  require_type(canonical.admission_id, "internet-probation-admission");
+  return store_.register_record(
+      {.object_type = "internet-probation-observation-input",
+       .payload = to_json(canonical)},
+      "internet_probation_observation_input_registered");
+}
+
 std::string InternetImprovementStore::supersede_algorithm_candidate(
     std::string old_candidate_id,
     const InternetAlgorithmCandidate &replacement, std::string reason) {
@@ -506,6 +683,15 @@ InternetImprovementStore::list(std::string_view object_type) {
 
 std::vector<std::string> InternetImprovementStore::active_watch_ids() {
   return store_.active_ids("internet-watch");
+}
+
+std::vector<std::string> InternetImprovementStore::active_candidate_ids() {
+  return store_.active_ids("internet-algorithm-candidate");
+}
+
+std::vector<std::string>
+InternetImprovementStore::active_experiment_protocol_ids() {
+  return store_.active_ids("internet-experiment-protocol");
 }
 
 std::vector<std::byte> InternetImprovementStore::snapshot_bytes(

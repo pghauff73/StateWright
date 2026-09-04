@@ -1,13 +1,16 @@
 # SAA Internet Implementation Audit
 
-**Audit date:** 2026-09-03
+**Audit date:** 2026-09-04
 
-**Scope:** `docs/SAA_PERSISTENT_INTERNET_IMPROVEMENT_PLAN.md`, phases I0-I11
+**Scope:** `docs/SAA_PERSISTENT_INTERNET_IMPROVEMENT_PLAN.md`, phases I0-I11,
+and
+`docs/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_IMPLEMENTATION_PLAN.md`,
+phases D0-D10
 
 **Result:** PASS for the documented Linux/POSIX fixture scope
 
 This audit binds completion to the implemented source, immutable resource
-manifest, seven additive migration receipts, the developer/sanitizer/release
+manifest, ten additive migration receipts, the developer/sanitizer/release
 preset matrix, clean-package smoke tests, and the non-overwriting internet
 release-evidence generator. It does not approve production cutover or expand
 EGCF execution authority.
@@ -29,15 +32,34 @@ EGCF execution authority.
 | I10 — Probation and demotion | PASS | Exact `IDENTITY` candidates enter `PROBATIONARY_CANONICAL`, use bounded deterministic canary selection and observation windows, promote automatically after success, demote on injected regression, restore the previous preference, and remain historically immutable. Demoted algorithms are excluded from preferred retrieval. |
 | I11 — CLI, operations, and release | PASS | Stable JSON operations cover watches, polling, fetch, source assessment, extraction, candidates, reasoning, experiments, policy, probation, migration, integrity, and deterministic advancement. Clean installation smoke passes without Python or live internet. Developer, sanitizer, release, package, resource, migration, replay, rebuild, promotion, and demotion gates pass. `Tools/generate_internet_release_evidence.sh` records source, dependency, resource, policy, migration, test, and package hashes without claiming command-authority expansion. |
 
+## Director and Orchestrator Matrix
+
+| Phase | Result | Implementation and gate evidence |
+| --- | --- | --- |
+| D0 — Freeze and inventory | PASS | The implementation preserves the original dirty README and documentation additions, remains based on `857639cf80c7cb12fbcbefd751328df2cb887a03`, and revalidated the live branch, remotes, object types, migrations, CLI, coordinators, projection, and store-lock behavior. |
+| D1 — Records and schemas | PASS | Closed directed actions, plans, runs, run events, action leases, action receipts, experiment protocols, source-assessment inputs, probation-observation inputs, and candidate reasoning lineage are canonical, signed, schema validated, and covered by migrations `0008` through `0010`. |
+| D2 — Persistence | PASS | `InternetImprovementStore` remains the single internet lifecycle persistence surface and now owns orchestration records, active protocol/candidate lookup, latest action leases, and unique terminal receipts without adding a parallel database. |
+| D3 — Pure Director | PASS | `InternetImprovementDirector` reads normalized immutable state, reuses the source and SAA schedulers, produces deterministic bounded plans, exposes blocked work, requires protocols and observation inputs, and performs no writes or provider calls. |
+| D4 — Source coordinator | PASS | Fetch, failure capture, lease closure, source assessment, and extraction assembly moved from CLI-specific code into `InternetSourceCoordinator`; the manual CLI paths delegate to it and retain fixture behavior. |
+| D5 — One-action Orchestrator | PASS | `run_once` and `resume` register the plan and run, acquire a bounded action lease, revalidate preconditions, execute one closed typed action, persist one terminal receipt, close the lease, and record terminal run events. No generic command executor exists. |
+| D6 — Experiment and observation inputs | PASS | Qualification consumes active immutable experiment protocols; source assessment and probation observations require registered provenance-bound inputs instead of Director-invented evidence. |
+| D7 — Restart and fault behavior | PASS | Existing terminal receipts reconcile without re-execution, expired action leases form immutable predecessor chains, stale preconditions produce `STALE` receipts, and provider failures produce durable failed action and fetch receipts. |
+| D8 — CLI compatibility | PASS | Manual actions remain available. `advance` is a candidate-scoped `run-once`, while `plan`, `run-once`, `resume`, `run-status`, and `explain-action` expose the core orchestration service. `approve` remains unsupported. |
+| D9 — Adversarial and integrity gates | PASS | Focused tests cover deterministic ordering, disabled/deferred actions, genesis state, source assembly, durable no-work and scheduled runs, approval rejection, and provider-failure receipts. Existing hostile-source, projection, promotion, and demotion tests remain green. |
+| D10 — Documentation and release | PASS | README, HOWTO, implementation plan, goal prompt, command resources, residual risks, release qualification, package smoke, and release-evidence generation describe and verify the bounded single-process system without claiming a multi-process daemon or exactly-once HTTP. |
+
 ## Qualification Results
 
-- Focused corrected contract suite: 373 test cases, 2,215 assertions, all passed.
-- Developer preset: 9 of 9 CTest tests passed in 599.65 seconds.
-- Sanitizer preset: 9 of 9 CTest tests passed in 2,993.72 seconds.
-- Release preset: 9 of 9 CTest tests passed in 74.00 seconds.
-- HOWTO extension: the current release matrix adds
-  `statewright_saa_internet_howto_smoke`; 10 of 10 tests passed on 2026-09-03,
-  including installed-document and canonical fixture validation.
+- Contract suite inventory: 381 test cases; the complete suite passed in every
+  preset.
+- Developer preset: 12 of 12 CTest tests passed in 622.81 seconds.
+- Sanitizer preset: 12 of 12 CTest tests passed in 3,419.04 seconds.
+- Release preset: 12 of 12 CTest tests passed in 76.40 seconds.
+- HOWTO and orchestration extension: the current matrix includes
+  `statewright_saa_internet_howto_smoke`,
+  `statewright_internet_orchestrator_cli_smoke`, and
+  `statewright_internet_orchestrator_fault_smoke`; all 12 tests passed on
+  2026-09-04.
 - Installed package smoke: passed and found both internet policies, the extension
   schema, migration `0005`, and the packaged fixture metadata.
 - Direct release CLI smoke: autonomous probation, promotion, regression
@@ -48,12 +70,14 @@ EGCF execution authority.
   and the complete runtime fixture.
 - Explicit `internet-improvement` action `approve`: rejected as unsupported.
 - Resource manifest: 42 of 42 files verified.
-- Additive migration receipts: `0001` through `0007` parse as valid JSON.
+- Additive migration receipts: `0001` through `0010` parse as valid JSON.
 
 ## Authority Audit
 
 - `CanonicalAlgorithmStore` remains the sole canonical algorithm owner.
 - The internet lifecycle has no approval operation or approval dependency.
+- The Director and Orchestrator cannot grant command authority and never call
+  the general EGCF approval path.
 - General EGCF exact-plan C3 approval remains unchanged and separate.
 - No internet path grants C3/C5 command authority or executes workspace changes.
 - OIEC-SR and provider models remain advisory proposal sources only.
@@ -71,3 +95,6 @@ EGCF execution authority.
   public internet or a Python runtime.
 - Scheduler-scale performance and exhaustive compound disk-fault matrices remain
   residual work documented in `docs/RESIDUAL_RISKS.md`.
+- Orchestration is qualified as sequential bounded `run-once` processes under
+  the existing workspace lock, not as a continuously running multi-process
+  daemon or exactly-once external transport.

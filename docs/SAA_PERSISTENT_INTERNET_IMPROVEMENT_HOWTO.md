@@ -122,7 +122,7 @@ commands have `.ok == true`; operation-specific data is under `.result`.
 | `internet-source` | `assess`, `list`, `get` |
 | `internet-extract` | `execute`, `list` |
 | `internet-candidate` | `list`, `get`, `explain`, `migrate` |
-| `internet-improvement` | `status`, `advance`, `feed`, `reason`, `experiment-qualify`, `policy-assess`, `probation-admit`, `probation-select`, `probation-observe` |
+| `internet-improvement` | `status`, `plan`, `run-once`, `resume`, `run-status`, `explain-action`, `advance`, `protocol-register`, `source-assessment-input-register`, `probation-observation-input-register`, `feed`, `reason`, `experiment-qualify`, `policy-assess`, `probation-admit`, `probation-select`, `probation-observe` |
 | `internet-promotion-policy` | `list`, `get`, `register`, `register-default`, `assess` |
 | `internet-probation` | `list`, `admit`, `select`, `observe` |
 | `internet-integrity` | `verify`, `rebuild` |
@@ -822,12 +822,74 @@ saa_run internet-improvement "$(jq -cn --arg workspace "$SAA_WORKSPACE" \
   '{workspace: $workspace, action: "status"}')" | jq '.result'
 ```
 
-`internet-improvement advance` selects the next deterministic transition from
-the current candidate status. It is not a gate bypass: provide the same required
-experiment, policy, admission, selection, or observation fields that the chosen
-underlying action requires.
+`internet-improvement advance` is a compatibility adapter for a
+candidate-scoped `run-once`. The core Director, not the CLI, selects the next
+transition. It is not a gate bypass: qualification requires an active registered
+experiment protocol, promotion requires the selected immutable policy, and
+probation observation requires a registered provenance-bound observation input.
 
-### 6.5 Promotion Policies and Probation History
+### 6.5 Director and Bounded Orchestrator
+
+Create a read-only signed plan:
+
+```bash
+orchestration_request=$(jq -cn --arg workspace "$SAA_WORKSPACE" '{
+  workspace: $workspace,
+  current_timestamp: "2026-09-04T00:00:00Z",
+  cycle_key: "2026-09-04T00:00:00Z",
+  worker_id: "saa-timer-worker",
+  action_lease_expires_at: "2026-09-04T00:01:00Z",
+  fetch_lease_expires_at: "2026-09-04T00:01:00Z",
+  policy: {
+    maximum_actions: 1,
+    maximum_provider_calls: 1,
+    action_deadline: "2026-09-04T00:05:00Z"
+  }
+}')
+
+saa_run internet-improvement \
+  "$(jq -c '. + {action:"plan"}' <<<"$orchestration_request")" \
+  | jq '.result.plan'
+```
+
+Execute at most one directed action and persist its plan, run, run events,
+action lease, and terminal receipt:
+
+```bash
+run_result=$(saa_run internet-improvement \
+  "$(jq -c '. + {action:"run-once"}' <<<"$orchestration_request")")
+run_id=$(jq -er '.result.run_id' <<<"$run_result")
+action_key=$(jq -er '.result.action_key // empty' <<<"$run_result")
+
+saa_run internet-improvement "$(jq -cn \
+  --arg workspace "$SAA_WORKSPACE" --arg run_id "$run_id" \
+  '{workspace:$workspace,action:"run-status",run_id:$run_id}')" \
+  | jq '.result'
+
+if [[ -n $action_key ]]; then
+  saa_run internet-improvement "$(jq -cn \
+    --arg workspace "$SAA_WORKSPACE" --arg action_key "$action_key" \
+    '{workspace:$workspace,action:"explain-action",action_key:$action_key}')" \
+    | jq '.result'
+fi
+```
+
+Resume a prior run by supplying its ID and a fresh bounded timestamp/lease
+request:
+
+```bash
+saa_run internet-improvement \
+  "$(jq -c --arg run_id "$run_id" '. + {action:"resume",run_id:$run_id}' \
+    <<<"$orchestration_request")" | jq '.result'
+```
+
+The first release is intentionally process-bounded. Operate it from a system
+timer or job runner that invokes `run-once`, waits for process exit, and then
+invokes it again. The EGCF workspace lock is held for one invocation, so this
+release does not claim a continuously running multi-process daemon or
+exactly-once HTTP transport.
+
+### 6.6 Promotion Policies and Probation History
 
 ```bash
 saa_run internet-promotion-policy "$(jq -cn \
@@ -848,7 +910,7 @@ age is derived from the exact fetch lease acquisition timestamp, or from exact
 experiment evidence creation time when there is no fetch lineage. Missing,
 malformed, future, or stale timestamps fail closed.
 
-### 6.6 Migrate Legacy Candidate Lineage
+### 6.7 Migrate Legacy Candidate Lineage
 
 Only use migration for an actual pre-probation candidate that loads under its
 original exact signature:
@@ -1093,13 +1155,20 @@ Tests/saa_internet_howto_smoke.sh \
   resources/fixtures/internet/identity-v1.json
 ```
 
+Run the Director/Orchestrator persistence and fault-receipt smoke tests:
+
+```bash
+Tests/internet_orchestrator_cli_smoke.sh build/release/statewright
+Tests/internet_orchestrator_fault_smoke.sh build/release/statewright
+```
+
 Generate a new non-overwriting evidence bundle. Use a new output path for every
 source state:
 
 ```bash
-STATEWRIGHT_QUALIFICATION_DATE=2026-09-03 \
+STATEWRIGHT_QUALIFICATION_DATE=2026-09-04 \
   Tools/generate_internet_release_evidence.sh \
-  build/release-evidence/internet-howto-release-2026-09-03
+  build/release-evidence/internet-howto-release-2026-09-04
 ```
 
 The resulting `internet-qualification-status.json` must retain:
@@ -1118,7 +1187,7 @@ Verify the bundle from its directory:
 
 ```bash
 (
-  cd build/release-evidence/internet-howto-release-2026-09-03
+  cd build/release-evidence/internet-howto-release-2026-09-04
   sha256sum -c manifest.sha256
 )
 ```

@@ -14,9 +14,11 @@
 #include "statewright/egcf/engine.hpp"
 #include "statewright/egcf/internet_experiment.hpp"
 #include "statewright/egcf/internet_feed.hpp"
+#include "statewright/egcf/internet_improvement_orchestrator.hpp"
 #include "statewright/egcf/internet_improvement_store.hpp"
 #include "statewright/egcf/internet_probation.hpp"
 #include "statewright/egcf/internet_reasoning.hpp"
+#include "statewright/egcf/internet_source_coordinator.hpp"
 #include "statewright/egcf/knowledge_governance_store.hpp"
 #include "statewright/egcf/registry.hpp"
 #include "statewright/egcf/workflow.hpp"
@@ -33,6 +35,8 @@
 #include "statewright/sources/snapshot.hpp"
 
 #include <algorithm>
+#include <array>
+#include <ctime>
 #include <cstdlib>
 #include <filesystem>
 #include <gmpxx.h>
@@ -50,6 +54,33 @@ namespace statewright::app {
 namespace {
 
 using Json = contracts::Json;
+
+[[nodiscard]] std::string timestamp_after(std::string_view timestamp,
+                                          int seconds) {
+  if (timestamp.size() != 20U) {
+    throw common::Error(common::ErrorCode::invalid_argument,
+                        "timestamp must use canonical UTC form");
+  }
+  std::tm parts{};
+  const std::string value(timestamp);
+  if (strptime(value.c_str(), "%Y-%m-%dT%H:%M:%SZ", &parts) == nullptr) {
+    throw common::Error(common::ErrorCode::invalid_argument,
+                        "timestamp must use canonical UTC form");
+  }
+  const std::time_t shifted = timegm(&parts) + seconds;
+  std::tm shifted_parts{};
+  if (gmtime_r(&shifted, &shifted_parts) == nullptr) {
+    throw common::Error(common::ErrorCode::invalid_argument,
+                        "timestamp is out of range");
+  }
+  std::array<char, 21> buffer{};
+  if (strftime(buffer.data(), buffer.size(), "%Y-%m-%dT%H:%M:%SZ",
+               &shifted_parts) != 20U) {
+    throw common::Error(common::ErrorCode::internal_failure,
+                        "timestamp formatting failed");
+  }
+  return buffer.data();
+}
 
 void usage(std::ostream &output) {
   output
@@ -316,190 +347,6 @@ private:
           {"payload", record.payload}};
 }
 
-[[nodiscard]] sources::InternetWatch watch_from_json(const Json &value) {
-  sources::InternetWatch watch;
-  watch.schema_version = value.at("schema_version").get<int>();
-  watch.canonical_url = value.at("canonical_url").get<std::string>();
-  watch.enabled = value.at("enabled").get<bool>();
-  watch.supersedes_watch_id =
-      value.at("supersedes_watch_id").get<std::string>();
-  watch.source_policy_id = value.at("source_policy_id").get<std::string>();
-  watch.source_group = value.at("source_group").get<std::string>();
-  watch.accepted_mime_types =
-      value.at("accepted_mime_types").get<std::vector<std::string>>();
-  watch.polling_interval_seconds =
-      value.at("polling_interval_seconds").get<int>();
-  watch.deterministic_jitter_seconds =
-      value.at("deterministic_jitter_seconds").get<int>();
-  watch.maximum_redirects = value.at("maximum_redirects").get<int>();
-  watch.maximum_response_bytes =
-      value.at("maximum_response_bytes").get<std::size_t>();
-  watch.maximum_decompressed_bytes =
-      value.at("maximum_decompressed_bytes").get<std::size_t>();
-  watch.request_timeout_seconds =
-      value.at("request_timeout_seconds").get<int>();
-  watch.schedule_generation = value.at("schedule_generation").get<int>();
-  watch.watch_signature = value.at("watch_signature").get<std::string>();
-  const auto canonical = sources::canonical_watch(std::move(watch));
-  if (sources::to_json(canonical) != value) {
-    throw common::Error(common::ErrorCode::json_contract,
-                        "persisted internet watch is invalid");
-  }
-  return canonical;
-}
-
-[[nodiscard]] sources::InternetFetchJob fetch_job_from_json(
-    const Json &value) {
-  sources::InternetFetchJob job;
-  job.schema_version = value.at("schema_version").get<int>();
-  job.watch_id = value.at("watch_id").get<std::string>();
-  job.scheduled_interval =
-      value.at("scheduled_interval").get<std::string>();
-  job.expected_watch_generation =
-      value.at("expected_watch_generation").get<int>();
-  job.earliest_start = value.at("earliest_start").get<std::string>();
-  job.deadline = value.at("deadline").get<std::string>();
-  job.retry_number = value.at("retry_number").get<int>();
-  job.retry_ceiling = value.at("retry_ceiling").get<int>();
-  job.priority_class = value.at("priority_class").get<std::string>();
-  job.opportunity_score = value.at("opportunity_score").get<int>();
-  job.source_group = value.at("source_group").get<std::string>();
-  job.allocated_response_bytes =
-      value.at("allocated_response_bytes").get<std::size_t>();
-  job.allocated_cpu_units =
-      value.at("allocated_cpu_units").get<std::size_t>();
-  job.job_signature = value.at("job_signature").get<std::string>();
-  const auto canonical = sources::canonical_fetch_job(std::move(job));
-  if (sources::to_json(canonical) != value) {
-    throw common::Error(common::ErrorCode::json_contract,
-                        "persisted internet fetch job is invalid");
-  }
-  return canonical;
-}
-
-[[nodiscard]] sources::InternetFetchLease fetch_lease_from_json(
-    const Json &value) {
-  sources::InternetFetchLease lease;
-  lease.schema_version = value.at("schema_version").get<int>();
-  lease.job_id = value.at("job_id").get<std::string>();
-  lease.worker_id = value.at("worker_id").get<std::string>();
-  lease.acquired_at = value.at("acquired_at").get<std::string>();
-  lease.expires_at = value.at("expires_at").get<std::string>();
-  lease.predecessor_lease_id =
-      value.at("predecessor_lease_id").get<std::string>();
-  lease.state = value.at("state").get<std::string>();
-  lease.lease_signature = value.at("lease_signature").get<std::string>();
-  const auto canonical = sources::canonical_fetch_lease(std::move(lease));
-  if (sources::to_json(canonical) != value) {
-    throw common::Error(common::ErrorCode::json_contract,
-                        "persisted internet fetch lease is invalid");
-  }
-  return canonical;
-}
-
-[[nodiscard]] sources::InternetSourceSnapshot source_snapshot_from_json(
-    const Json &value) {
-  sources::InternetSourceSnapshot snapshot;
-  snapshot.schema_version = value.at("schema_version").get<int>();
-  snapshot.canonical_url = value.at("canonical_url").get<std::string>();
-  snapshot.final_url = value.at("final_url").get<std::string>();
-  snapshot.body_sha256 = value.at("body_sha256").get<std::string>();
-  snapshot.content_type = value.at("content_type").get<std::string>();
-  snapshot.body_size = value.at("body_size").get<std::size_t>();
-  snapshot.artifact_id = value.at("artifact_id").get<std::string>();
-  snapshot.source_group = value.at("source_group").get<std::string>();
-  snapshot.snapshot_signature =
-      value.at("snapshot_signature").get<std::string>();
-  const auto canonical = sources::canonical_source_snapshot(std::move(snapshot));
-  if (sources::to_json(canonical) != value) {
-    throw common::Error(common::ErrorCode::json_contract,
-                        "persisted internet source snapshot is invalid");
-  }
-  return canonical;
-}
-
-[[nodiscard]] sources::InternetPolicyAssessment policy_assessment_from_json(
-    const Json &value) {
-  sources::InternetPolicyAssessment assessment;
-  assessment.schema_version = value.at("schema_version").get<int>();
-  assessment.snapshot_id = value.at("snapshot_id").get<std::string>();
-  assessment.fetch_receipt_id =
-      value.at("fetch_receipt_id").get<std::string>();
-  assessment.source_policy_id =
-      value.at("source_policy_id").get<std::string>();
-  assessment.public_address_valid =
-      value.at("public_address_valid").get<bool>();
-  assessment.redirects_valid = value.at("redirects_valid").get<bool>();
-  assessment.robots_allowed = value.at("robots_allowed").get<bool>();
-  assessment.license_classification =
-      value.at("license_classification").get<std::string>();
-  assessment.mime_valid = value.at("mime_valid").get<bool>();
-  assessment.encoding_valid = value.at("encoding_valid").get<bool>();
-  assessment.credential_free = value.at("credential_free").get<bool>();
-  assessment.size_valid = value.at("size_valid").get<bool>();
-  assessment.status = value.at("status").get<std::string>();
-  assessment.blocking_reasons =
-      value.at("blocking_reasons").get<std::vector<std::string>>();
-  assessment.assessment_signature =
-      value.at("assessment_signature").get<std::string>();
-  const auto canonical =
-      sources::canonical_policy_assessment(std::move(assessment));
-  if (sources::to_json(canonical) != value) {
-    throw common::Error(common::ErrorCode::json_contract,
-                        "persisted internet policy assessment is invalid");
-  }
-  return canonical;
-}
-
-[[nodiscard]] sources::InternetExtractionReceipt extraction_receipt_from_json(
-    const Json &value) {
-  sources::InternetExtractionReceipt receipt;
-  receipt.schema_version = value.at("schema_version").get<int>();
-  receipt.snapshot_id = value.at("snapshot_id").get<std::string>();
-  receipt.extractor_versions =
-      value.at("extractor_versions").get<std::vector<std::string>>();
-  receipt.decoded_text_signature =
-      value.at("decoded_text_signature").get<std::string>();
-  receipt.fragment_ids =
-      value.at("fragment_ids").get<std::vector<std::string>>();
-  receipt.rejected_fragments =
-      value.at("rejected_fragments").get<std::vector<std::string>>();
-  receipt.diagnostics =
-      value.at("diagnostics").get<std::vector<std::string>>();
-  receipt.truncated = value.at("truncated").get<bool>();
-  receipt.extraction_signature =
-      value.at("extraction_signature").get<std::string>();
-  const auto canonical =
-      sources::canonical_extraction_receipt(std::move(receipt));
-  if (sources::to_json(canonical) != value) {
-    throw common::Error(common::ErrorCode::json_contract,
-                        "persisted internet extraction receipt is invalid");
-  }
-  return canonical;
-}
-
-[[nodiscard]] sources::InternetSourceFragment source_fragment_from_json(
-    const Json &value) {
-  sources::InternetSourceFragment fragment;
-  fragment.schema_version = value.at("schema_version").get<int>();
-  fragment.snapshot_id = value.at("snapshot_id").get<std::string>();
-  fragment.fragment_kind = value.at("fragment_kind").get<std::string>();
-  fragment.byte_start = value.at("byte_start").get<std::size_t>();
-  fragment.byte_end = value.at("byte_end").get<std::size_t>();
-  fragment.selector = value.at("selector").get<std::string>();
-  fragment.text = value.at("text").get<std::string>();
-  fragment.language = value.at("language").get<std::string>();
-  fragment.metadata = value.at("metadata");
-  fragment.fragment_signature =
-      value.at("fragment_signature").get<std::string>();
-  const auto canonical = sources::canonical_source_fragment(std::move(fragment));
-  if (sources::to_json(canonical) != value) {
-    throw common::Error(common::ErrorCode::json_contract,
-                        "persisted internet source fragment is invalid");
-  }
-  return canonical;
-}
-
 [[nodiscard]] sources::InternetExtractionResult extraction_from_store(
     egcf::EgcfStore &store, std::string_view receipt_id) {
   const auto stored = store.get(receipt_id);
@@ -509,14 +356,16 @@ private:
         "extraction_receipt_id does not reference an internet extraction");
   }
   sources::InternetExtractionResult result;
-  result.receipt = extraction_receipt_from_json(stored.payload);
+  result.receipt =
+      sources::internet_extraction_receipt_from_json(stored.payload);
   for (const auto &fragment_id : result.receipt.fragment_ids) {
     const auto fragment = store.get(fragment_id);
     if (fragment.object_type != "internet-source-fragment") {
       throw common::Error(common::ErrorCode::json_contract,
                           "extraction fragment reference has wrong type");
     }
-    result.fragments.push_back(source_fragment_from_json(fragment.payload));
+    result.fragments.push_back(
+        sources::internet_source_fragment_from_json(fragment.payload));
   }
   return result;
 }
@@ -732,6 +581,154 @@ probation_observation_request(const Json &request) {
           .regression_signals = regression_signals(request)};
 }
 
+[[nodiscard]] egcf::InternetImprovementRunRequest
+internet_improvement_run_request(const Json &request) {
+  egcf::InternetImprovementRunRequest result;
+  result.current_timestamp = request.value(
+      "current_timestamp",
+      request.value("recorded_at",
+                    request.value("observed_at",
+                                  std::string("1970-01-01T00:00:00Z"))));
+  result.cycle_key = request.value("cycle_key", result.current_timestamp);
+  result.worker_id = request.value("worker_id", std::string{});
+  result.action_lease_expires_at = request.value(
+      "action_lease_expires_at",
+      request.value("lease_expires_at", std::string{}));
+  if (result.action_lease_expires_at.empty()) {
+    result.action_lease_expires_at =
+        timestamp_after(result.current_timestamp, 60);
+  }
+  result.fetch_lease_expires_at = request.value(
+      "fetch_lease_expires_at", result.action_lease_expires_at);
+  result.prior_snapshot_id =
+      request.value("prior_snapshot_id", std::string{});
+  result.source_label =
+      request.value("source_label", result.source_label);
+  result.strict_feed = request.value("strict", result.strict_feed);
+  result.policy = egcf::internet_director_policy_from_json(
+      request.value("policy", Json::object()));
+  if (request.contains("promotion_policy_id")) {
+    result.policy.promotion_policy_id =
+        request.at("promotion_policy_id").get<std::string>();
+  }
+  if (request.contains("query_signature")) {
+    result.policy.probation_query_signature =
+        request.at("query_signature").get<std::string>();
+  }
+  if (request.contains("candidate_id")) {
+    result.policy.candidate_scope_id =
+        request.at("candidate_id").get<std::string>();
+  }
+  if (result.policy.action_deadline.empty()) {
+    result.policy.action_deadline = request.value(
+        "action_deadline", result.current_timestamp);
+  }
+  result.policy =
+      egcf::canonical_internet_director_policy(std::move(result.policy));
+  return result;
+}
+
+[[nodiscard]] egcf::InternetExperimentProtocol
+internet_experiment_protocol(const Json &request) {
+  const auto &value = request.contains("protocol") ? request.at("protocol")
+                                                    : request;
+  egcf::InternetExperimentProtocol protocol;
+  protocol.protocol_version =
+      value.value("protocol_version", std::string("v1"));
+  protocol.applicable_candidate_statuses = value.value(
+      "applicable_candidate_statuses",
+      std::vector<std::string>{"VALIDATION_READY"});
+  protocol.applicable_primitives =
+      value.value("applicable_primitives", std::vector<std::string>{});
+  protocol.applicable_domains =
+      value.value("applicable_domains", std::vector<std::string>{});
+  protocol.baseline_ref = value.at("baseline_ref").get<std::string>();
+  protocol.baseline_saa_ir = value.at("baseline_saa_ir");
+  protocol.dataset_snapshot_ids =
+      value.at("dataset_snapshot_ids").get<std::vector<std::string>>();
+  protocol.trial_groups = value.at("trial_groups");
+  protocol.minimum_material_effect = value.value(
+      "minimum_material_effect", protocol.minimum_material_effect);
+  protocol.minimum_output =
+      value.value("minimum_output", protocol.minimum_output);
+  protocol.maximum_output =
+      value.value("maximum_output", protocol.maximum_output);
+  protocol.minimum_trials_per_group = value.value(
+      "minimum_trials_per_group", protocol.minimum_trials_per_group);
+  protocol.minimum_experiments =
+      value.value("minimum_experiments", protocol.minimum_experiments);
+  protocol.minimum_independence_groups = value.value(
+      "minimum_independence_groups", protocol.minimum_independence_groups);
+  protocol.maximum_total_trials =
+      value.value("maximum_total_trials", protocol.maximum_total_trials);
+  protocol.benchmark_track_scores =
+      value.value("benchmark_track_scores", Json::object());
+  protocol.benchmark_policy =
+      value.value("benchmark_policy", Json::object());
+  protocol.integrity_snapshots =
+      value.value("integrity_snapshots", Json::array());
+  protocol.integrity_policy =
+      value.value("integrity_policy", Json::object());
+  protocol.independent_review = value.value("independent_review", true);
+  protocol.valid_from = value.at("valid_from").get<std::string>();
+  protocol.valid_until = value.value("valid_until", std::string{});
+  protocol.supersedes_protocol_id =
+      value.value("supersedes_protocol_id", std::string{});
+  protocol.source_provenance =
+      value.value("source_provenance", Json::object());
+  return egcf::canonical_internet_experiment_protocol(std::move(protocol));
+}
+
+[[nodiscard]] egcf::InternetSourceAssessmentInput
+internet_source_assessment_input(const Json &request) {
+  const auto &value = request.contains("input") ? request.at("input") : request;
+  egcf::InternetSourceAssessmentInput input;
+  input.snapshot_id = value.at("snapshot_id").get<std::string>();
+  input.fetch_receipt_id =
+      value.at("fetch_receipt_id").get<std::string>();
+  input.source_policy_id =
+      value.at("source_policy_id").get<std::string>();
+  input.robots_allowed = value.at("robots_allowed").get<bool>();
+  input.license_classification =
+      value.at("license_classification").get<std::string>();
+  input.evidence_ids =
+      value.at("evidence_ids").get<std::vector<std::string>>();
+  input.producer_identity =
+      value.at("producer_identity").get<std::string>();
+  input.provenance = value.value("provenance", Json::object());
+  return egcf::canonical_internet_source_assessment_input(std::move(input));
+}
+
+[[nodiscard]] egcf::InternetProbationObservationInput
+internet_probation_observation_input(const Json &request) {
+  const auto &value = request.contains("input") ? request.at("input") : request;
+  egcf::InternetProbationObservationInput input;
+  input.candidate_id = value.at("candidate_id").get<std::string>();
+  input.admission_id = value.at("admission_id").get<std::string>();
+  input.query_signature = value.at("query_signature").get<std::string>();
+  input.context_signature =
+      value.at("context_signature").get<std::string>();
+  input.observed_at = value.at("observed_at").get<std::string>();
+  input.window_index = value.at("window_index").get<int>();
+  input.candidate_correct = value.at("candidate_correct").get<bool>();
+  input.baseline_correct = value.at("baseline_correct").get<bool>();
+  input.invariant_passed = value.at("invariant_passed").get<bool>();
+  input.benchmark_passed = value.at("benchmark_passed").get<bool>();
+  input.integrity_passed = value.at("integrity_passed").get<bool>();
+  input.source_valid = value.at("source_valid").get<bool>();
+  input.reproduction_passed =
+      value.at("reproduction_passed").get<bool>();
+  input.evidence_ids =
+      value.at("evidence_ids").get<std::vector<std::string>>();
+  input.regression_signals =
+      value.value("regression_signals", Json::object());
+  input.producer_identity =
+      value.at("producer_identity").get<std::string>();
+  input.provenance = value.value("provenance", Json::object());
+  return egcf::canonical_internet_probation_observation_input(
+      std::move(input));
+}
+
 [[nodiscard]] Json execute_internet_watch(const Json &request) {
   egcf::EgcfStore store(request_root(request), resource_root(request));
   egcf::InternetImprovementStore internet(store);
@@ -746,7 +743,7 @@ probation_observation_request(const Json &request) {
   sources::InternetWatch watch;
   if (action == "enable" || action == "disable" || action == "supersede") {
     const std::string old_id = request.at("watch_id").get<std::string>();
-    watch = watch_from_json(store.get(old_id).payload);
+    watch = sources::internet_watch_from_json(store.get(old_id).payload);
     watch.supersedes_watch_id = old_id;
     watch.schedule_generation += 1;
     if (action == "enable") {
@@ -820,16 +817,17 @@ probation_observation_request(const Json &request) {
   }
   std::vector<sources::InternetFetchJob> jobs;
   for (const auto &item : internet.list("internet-fetch-job")) {
-    jobs.push_back(fetch_job_from_json(item.payload));
+    jobs.push_back(sources::internet_fetch_job_from_json(item.payload));
   }
   std::vector<sources::InternetFetchLease> leases;
   for (const auto &item : internet.list("internet-fetch-lease")) {
-    leases.push_back(fetch_lease_from_json(item.payload));
+    leases.push_back(sources::internet_fetch_lease_from_json(item.payload));
   }
   if (action == "schedule") {
     std::vector<sources::InternetWatch> watches;
     for (const auto &watch_id : internet.active_watch_ids()) {
-      watches.push_back(watch_from_json(store.get(watch_id).payload));
+      watches.push_back(
+          sources::internet_watch_from_json(store.get(watch_id).payload));
     }
     const auto created = sources::schedule_fetch_interval(
         watches, jobs, request.at("scheduled_interval").get<std::string>(),
@@ -876,60 +874,13 @@ probation_observation_request(const Json &request) {
     throw common::Error(common::ErrorCode::invalid_argument,
                         "unsupported internet-fetch action");
   }
-  const std::string job_id = request.at("job_id").get<std::string>();
-  const std::string lease_id = request.at("lease_id").get<std::string>();
-  const auto job = fetch_job_from_json(store.get(job_id).payload);
-  const auto lease = fetch_lease_from_json(store.get(lease_id).payload);
-  const auto watch = watch_from_json(store.get(job.watch_id).payload);
-  auto policy = sources::source_policy_from_json(
-      store.get(watch.source_policy_id).payload);
-  policy.maximum_redirects =
-      std::min(policy.maximum_redirects, watch.maximum_redirects);
-  policy.maximum_response_bytes =
-      std::min(policy.maximum_response_bytes, watch.maximum_response_bytes);
-  policy.maximum_decompressed_bytes = std::min(
-      policy.maximum_decompressed_bytes, watch.maximum_decompressed_bytes);
-  policy.request_timeout_seconds =
-      std::min(policy.request_timeout_seconds, watch.request_timeout_seconds);
-  policy.accepted_mime_types = watch.accepted_mime_types;
-  policy.policy_signature.clear();
-  policy = sources::canonical_source_policy(std::move(policy));
-  if (lease.job_id != job_id ||
-      !sources::latest_lease_is_current(
-          lease, request.at("current_timestamp").get<std::string>())) {
-    throw common::Error(common::ErrorCode::invalid_argument,
-                        "internet fetch requires the current active lease");
-  }
   sources::CurlHttpFetchProvider provider;
-  try {
-    const auto response = provider.fetch({.url = watch.canonical_url,
-                                          .method = "GET",
-                                          .headers = {},
-                                          .policy = policy,
-                                          .cancellation_requested = {}});
-    Json result;
-    if (response.http_status == 304) {
-      result = {{"fetch_receipt_id",
-                 internet.capture_not_modified(
-                     job_id, lease_id, response,
-                     request.at("snapshot_id").get<std::string>())}};
-    } else {
-      result = egcf::to_json(internet.capture_success(
-          job_id, lease_id, response, watch.source_group));
-    }
-    const auto closed = sources::close_fetch_lease(lease, "COMPLETED");
-    result["closed_lease_id"] = internet.register_fetch_lease(closed);
-    return result;
-  } catch (const std::exception &error) {
-    const std::string receipt_id = internet.capture_failure(
-        job_id, lease_id, watch.canonical_url,
-        "libcurl/unavailable-before-response", error.what());
-    const auto closed = sources::close_fetch_lease(lease, "ABANDONED");
-    static_cast<void>(internet.register_fetch_lease(closed));
-    throw common::Error(common::ErrorCode::internal_failure,
-                        "internet fetch failed; receipt " + receipt_id +
-                            ": " + error.what());
-  }
+  egcf::InternetSourceCoordinator coordinator(store);
+  return egcf::to_json(coordinator.execute_fetch(
+      request.at("job_id").get<std::string>(),
+      request.at("lease_id").get<std::string>(),
+      request.at("current_timestamp").get<std::string>(), provider,
+      request.value("snapshot_id", std::string{})));
 }
 
 [[nodiscard]] Json execute_internet_source(const Json &request) {
@@ -940,57 +891,13 @@ probation_observation_request(const Json &request) {
     return record_json(store.get(request.at("object_id").get<std::string>()));
   }
   if (action == "assess") {
-    const auto snapshot_record =
-        store.get(request.at("snapshot_id").get<std::string>());
-    const auto receipt_record =
-        store.get(request.at("fetch_receipt_id").get<std::string>());
-    const auto policy_record =
-        store.get(request.at("source_policy_id").get<std::string>());
-    const auto snapshot = source_snapshot_from_json(snapshot_record.payload);
-    sources::InternetFetchReceipt receipt;
-    receipt.schema_version =
-        receipt_record.payload.at("schema_version").get<int>();
-    receipt.job_id = receipt_record.payload.at("job_id").get<std::string>();
-    receipt.lease_id =
-        receipt_record.payload.at("lease_id").get<std::string>();
-    receipt.requested_url =
-        receipt_record.payload.at("requested_url").get<std::string>();
-    receipt.final_url =
-        receipt_record.payload.at("final_url").get<std::string>();
-    receipt.resolved_addresses = receipt_record.payload.at("resolved_addresses")
-                                     .get<std::vector<std::string>>();
-    receipt.redirect_chain = receipt_record.payload.at("redirect_chain")
-                                 .get<std::vector<std::string>>();
-    receipt.http_status = receipt_record.payload.at("http_status").get<int>();
-    receipt.selected_headers = receipt_record.payload.at("selected_headers");
-    receipt.tls_verified =
-        receipt_record.payload.at("tls_verified").get<bool>();
-    receipt.compressed_bytes =
-        receipt_record.payload.at("compressed_bytes").get<std::size_t>();
-    receipt.decompressed_bytes =
-        receipt_record.payload.at("decompressed_bytes").get<std::size_t>();
-    receipt.total_time_milliseconds = receipt_record.payload
-                                          .at("total_time_milliseconds")
-                                          .get<long long>();
-    receipt.provider_identity =
-        receipt_record.payload.at("provider_identity").get<std::string>();
-    receipt.snapshot_id =
-        receipt_record.payload.at("snapshot_id").get<std::string>();
-    receipt.status = receipt_record.payload.at("status").get<std::string>();
-    receipt.failure_reason =
-        receipt_record.payload.at("failure_reason").get<std::string>();
-    receipt.receipt_signature =
-        receipt_record.payload.at("receipt_signature").get<std::string>();
-    receipt = sources::canonical_fetch_receipt(std::move(receipt));
-    const auto snapshot_bytes = internet.snapshot_bytes(snapshot.object_id());
-    const auto assessment = sources::assess_internet_source(
-        snapshot, receipt, sources::source_policy_from_json(policy_record.payload),
-        snapshot_bytes,
+    egcf::InternetSourceCoordinator coordinator(store);
+    return egcf::to_json(coordinator.assess(
+        request.at("snapshot_id").get<std::string>(),
+        request.at("fetch_receipt_id").get<std::string>(),
+        request.at("source_policy_id").get<std::string>(),
         request.at("robots_allowed").get<bool>(),
-        request.value("license_classification", std::string("UNKNOWN")));
-    return {{"assessment", sources::to_json(assessment)},
-            {"assessment_id",
-             internet.register_policy_assessment(assessment)}};
+        request.value("license_classification", std::string("UNKNOWN"))));
   }
   static const std::map<std::string, std::string> kinds = {
       {"assessments", "internet-policy-assessment"},
@@ -1020,9 +927,6 @@ probation_observation_request(const Json &request) {
     throw common::Error(common::ErrorCode::invalid_argument,
                         "unsupported internet-extract action");
   }
-  const std::string snapshot_id =
-      request.at("snapshot_id").get<std::string>();
-  const auto snapshot = source_snapshot_from_json(store.get(snapshot_id).payload);
   sources::InternetExtractionLimits limits;
   limits.maximum_input_bytes =
       request.value("maximum_input_bytes", limits.maximum_input_bytes);
@@ -1032,12 +936,9 @@ probation_observation_request(const Json &request) {
       request.value("maximum_fragment_bytes", limits.maximum_fragment_bytes);
   limits.maximum_nesting_depth =
       request.value("maximum_nesting_depth", limits.maximum_nesting_depth);
-  const auto bytes = internet.snapshot_bytes(snapshot_id);
-  const auto extraction = sources::extract_internet_snapshot(
-      snapshot_id, snapshot.content_type, bytes, limits);
-  const std::string receipt_id = internet.register_extraction(extraction);
-  return {{"extraction", sources::to_json(extraction)},
-          {"extraction_receipt_id", receipt_id}};
+  egcf::InternetSourceCoordinator coordinator(store);
+  return egcf::to_json(coordinator.extract(
+      request.at("snapshot_id").get<std::string>(), limits));
 }
 
 [[nodiscard]] Json execute_internet_candidate(const Json &request) {
@@ -1171,26 +1072,8 @@ probation_observation_request(const Json &request) {
 }
 
 [[nodiscard]] Json execute_internet_improvement(const Json &request) {
-  std::string action = request.value("action", std::string("status"));
-  if (action == "advance") {
-    egcf::EgcfStore store(request_root(request), resource_root(request));
-    const auto candidate = candidate_from_store(
-        store, request.at("candidate_id").get<std::string>());
-    if (candidate.status == "VALIDATION_READY") {
-      action = "experiment-qualify";
-    } else if (candidate.status == "EXPERIMENT_QUALIFIED") {
-      action = "policy-assess";
-    } else if (candidate.status == "POLICY_QUALIFIED") {
-      action = "probation-admit";
-    } else if (candidate.status == "PROBATIONARY_CANONICAL") {
-      action = request.contains("observed_at") ? "probation-observe"
-                                               : "probation-select";
-    } else {
-      return {{"candidate", egcf::to_json(candidate)},
-              {"next_action", nullptr},
-              {"status", candidate.status}};
-    }
-  }
+  const std::string action =
+      request.value("action", std::string("status"));
   if (action == "feed") {
     egcf::EgcfStore store(request_root(request), resource_root(request));
     const auto assessment_record = store.get(
@@ -1201,7 +1084,8 @@ probation_observation_request(const Json &request) {
     }
     egcf::InternetFeedCoordinator coordinator(store);
     return egcf::to_json(coordinator.process(
-        policy_assessment_from_json(assessment_record.payload),
+        sources::internet_policy_assessment_from_json(
+            assessment_record.payload),
         extraction_from_store(
             store, request.at("extraction_receipt_id").get<std::string>()),
         request.value("source_label", std::string("internet-source")),
@@ -1224,7 +1108,8 @@ probation_observation_request(const Json &request) {
         throw common::Error(common::ErrorCode::invalid_argument,
                             "fragment_id has wrong type");
       }
-      fragments.push_back(source_fragment_from_json(fragment.payload));
+      fragments.push_back(
+          sources::internet_source_fragment_from_json(fragment.payload));
     }
     egcf::InternetReasoningCoordinator coordinator(store);
     return egcf::to_json(coordinator.analyze(candidate, fragments));
@@ -1248,21 +1133,91 @@ probation_observation_request(const Json &request) {
     forwarded["action"] = action.substr(std::string("probation-").size());
     return execute_internet_probation(forwarded);
   }
+  egcf::EgcfStore store(request_root(request), resource_root(request));
+  egcf::InternetImprovementStore internet(store);
+  if (action == "protocol-register") {
+    const auto protocol = internet_experiment_protocol(request);
+    return {{"protocol", egcf::to_json(protocol)},
+            {"protocol_id", internet.register_experiment_protocol(protocol)}};
+  }
+  if (action == "source-assessment-input-register") {
+    const auto input = internet_source_assessment_input(request);
+    return {{"input", egcf::to_json(input)},
+            {"input_id", internet.register_source_assessment_input(input)}};
+  }
+  if (action == "probation-observation-input-register") {
+    const auto input = internet_probation_observation_input(request);
+    return {{"input", egcf::to_json(input)},
+            {"input_id",
+             internet.register_probation_observation_input(input)}};
+  }
+  if (action == "plan") {
+    egcf::InternetImprovementOrchestrator orchestrator(store);
+    const auto plan = orchestrator.plan(internet_improvement_run_request(request));
+    Json result = {{"plan", egcf::to_json(plan)}};
+    if (request.value("register", false)) {
+      result["plan_id"] = internet.register_improvement_plan(plan);
+    }
+    return result;
+  }
+  if (action == "run-once" || action == "advance" || action == "resume") {
+    if (action == "advance" && request.contains("baseline_ref") &&
+        request.contains("trial_groups") &&
+        request.contains("valid_from")) {
+      static_cast<void>(internet.register_experiment_protocol(
+          internet_experiment_protocol(request)));
+    }
+    sources::CurlHttpFetchProvider fetch_provider;
+    egcf::InternetImprovementOrchestrator orchestrator(
+        store, &fetch_provider);
+    auto run_request = internet_improvement_run_request(request);
+    if (action == "advance") {
+      run_request.policy.maximum_actions = 1;
+      run_request.policy.enable_acquisition = false;
+      run_request.policy.candidate_scope_id =
+          request.at("candidate_id").get<std::string>();
+      run_request.policy = egcf::canonical_internet_director_policy(
+          std::move(run_request.policy));
+    }
+    return egcf::to_json(
+        action == "resume"
+            ? orchestrator.resume(
+                  request.at("run_id").get<std::string>(), run_request)
+            : orchestrator.run_once(run_request));
+  }
+  if (action == "run-status") {
+    egcf::InternetImprovementOrchestrator orchestrator(store);
+    return orchestrator.run_status(request.value("run_id", std::string{}));
+  }
+  if (action == "explain-action") {
+    egcf::InternetImprovementOrchestrator orchestrator(store);
+    return orchestrator.explain_action(
+        request.at("action_key").get<std::string>());
+  }
   if (action != "status") {
     throw common::Error(common::ErrorCode::invalid_argument,
                         "unsupported internet-improvement action");
   }
-  egcf::EgcfStore store(request_root(request), resource_root(request));
-  egcf::InternetImprovementStore internet(store);
-  return {{"candidates",
+  return {{"action_leases",
+           stored_objects(
+               internet.list("internet-improvement-action-lease"))},
+          {"action_receipts",
+           stored_objects(
+               internet.list("internet-improvement-action-receipt"))},
+          {"candidates",
            stored_objects(internet.list("internet-algorithm-candidate"))},
+          {"experiment_protocols",
+           stored_objects(internet.list("internet-experiment-protocol"))},
           {"experiment_qualifications",
            stored_objects(
                internet.list("internet-experiment-qualification"))},
+          {"plans",
+           stored_objects(internet.list("internet-improvement-plan"))},
           {"promotion_assessments",
            stored_objects(internet.list("internet-promotion-assessment"))},
           {"probation_admissions",
-           stored_objects(internet.list("internet-probation-admission"))}};
+           stored_objects(internet.list("internet-probation-admission"))},
+          {"runs", stored_objects(internet.list("internet-improvement-run"))}};
 }
 
 [[nodiscard]] Json execute_operation(std::string_view operation,

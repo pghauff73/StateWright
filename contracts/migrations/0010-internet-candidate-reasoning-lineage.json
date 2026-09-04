@@ -1,0 +1,15 @@
+{
+  "migration_id": "statewright-internet-candidate-reasoning-lineage-v1",
+  "schema_version": 1,
+  "extension_contract": "schemas/statewright-v1/internet-improvement-extension.schema.json",
+  "frozen_contract_modified": false,
+  "added_object_types": [],
+  "extended_object_types": [
+    "internet-algorithm-candidate"
+  ],
+  "authority_effect": "none",
+  "canonical_algorithm_effect": "none",
+  "human_approval_required": false,
+  "migration_mode": "explicit_immutable_successor",
+  "compatibility": "reasoning_analysis_ids is optional for persisted legacy candidates and emitted by newly reasoned successors"
+}
