@@ -41,6 +41,9 @@ struct InternetScalarTrialGroup final {
 };
 
 struct InternetExperimentRequest final {
+  // Empty only for the legacy experiment API. V2 binds execution to a
+  // registered immutable protocol and independently signed review evidence.
+  std::string protocol_id;
   std::string baseline_ref;
   contracts::Json baseline_saa_ir = contracts::Json::object();
   std::string context_signature;

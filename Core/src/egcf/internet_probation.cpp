@@ -368,9 +368,19 @@ InternetProbationController::select(const InternetAlgorithmCandidate &candidate,
   } else {
     explanation = "AUTOMATIC_DEMOTION_RESTORED_PREVIOUS_PREFERENCE";
   }
-  const std::string fallback = plan.previous_preferred_canonical_ref.empty()
+  std::string fallback = plan.previous_preferred_canonical_ref.empty()
                                    ? baseline_ref
                                    : plan.previous_preferred_canonical_ref;
+  if (!candidate_selected && plan.previous_preferred_canonical_ref.empty() &&
+      baseline_ref.starts_with("egcf-evidence:")) {
+    const auto baseline = store_.get(baseline_ref);
+    if (baseline.object_type == "egcf-evidence" &&
+        baseline.payload.at("content").value("kind", std::string{}) ==
+            "CANONICAL_CATALOG_UNSUPPORTED_BASELINE_V1") {
+      fallback.clear();
+      explanation = "BASELINE_UNSUPPORTED_NO_CANONICAL_FALLBACK";
+    }
+  }
   InternetProbationSelection result{
       .admission_id = admission_id,
       .plan_signature = plan.plan_signature,

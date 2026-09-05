@@ -1,12 +1,14 @@
 #include "statewright/sources/extraction.hpp"
 
 #include "statewright/contracts/hash.hpp"
+#include "statewright/core/file_io.hpp"
 #include "statewright/sources/snapshot.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
 #include <cstddef>
+#include <filesystem>
 #include <span>
 #include <string>
 #include <string_view>
@@ -147,7 +149,7 @@ TEST_CASE("internet extraction quarantines invalid and unsupported content") {
       "text/plain", std::span<const std::byte>(invalid));
   REQUIRE(invalid_result.fragments.empty());
   REQUIRE(invalid_result.receipt.rejected_fragments ==
-          std::vector<std::string>{"snapshot:INVALID_UTF8"});
+          std::vector<std::string>{"snapshot:INVALID_OR_UNSUPPORTED_DECLARED_ENCODING"});
 
   const auto unsupported = sources::extract_internet_snapshot(
       "internet-source-snapshot:sha256:" +
@@ -281,4 +283,144 @@ TEST_CASE("internet HTML extraction preserves inline procedure math and code "
           "<math><mi>x</mi><mo>+</mo><mn>1</mn></math>");
   REQUIRE(result.fragments[2].fragment_kind == "CODE_BLOCK");
   REQUIRE(result.fragments[2].text == "test(1) = 3\ntest(2) = 5");
+}
+
+TEST_CASE("internet classification separates procedure declarations from mentions") {
+  using namespace statewright;
+  const std::vector<std::pair<std::string, bool>> corpus = {
+      {"This specification defines a set of algorithms for JSON documents.", false},
+      {"Table of Contents: Algorithm overview ........ 12", false},
+      {"The algorithm parameter identifies a certificate.", false},
+      {"See the procedure in RFC 3986.", false},
+      {"Algorithm registration requests go to the review list.", false},
+      {"test(1) = 3", false},
+      {"algorithm identity(x) = x", true},
+      {"HKDF-Extract(salt, IKM) -> PRK; Inputs: salt, IKM; Output: PRK", true},
+      {"Identity algorithm; inputs: x; outputs: y; procedure: return x", true},
+      {"Affine algorithm; inputs: x; outputs: y; procedure: return 2*x", true}};
+  for (const auto &[text, candidate] : corpus) {
+    INFO(text);
+    const auto result = sources::extract_internet_snapshot(
+        "internet-source-snapshot:sha256:" + contracts::sha256_text(text),
+        "text/plain", bytes(text));
+    REQUIRE(result.fragments.size() == 1U);
+    REQUIRE((result.fragments.front().fragment_kind == "ALGORITHM_DESCRIPTION") ==
+            candidate);
+    REQUIRE(result.fragments.front().text == text);
+    REQUIRE(result.fragments.front().metadata.at("classification_version") ==
+            "procedure-evidence-v1");
+  }
+}
+
+TEST_CASE("internet section extraction keeps conditions and nested steps together") {
+  using namespace statewright;
+  const std::string html =
+      "<h2>Affine algorithm</h2><p>Only for x greater than zero.</p>"
+      "<h3>Procedure</h3><p>Affine algorithm; inputs: x; outputs: y; "
+      "procedure: return 2*x</p><p>Dependent definition: x is a scalar.</p>"
+      "<h2>References</h2><p>Other material</p>";
+  const auto snapshot = "internet-source-snapshot:sha256:" +
+                        contracts::sha256_text(html);
+  const auto result = sources::extract_internet_snapshot(
+      snapshot, "text/html", bytes(html));
+  const auto &section = result.fragments.front();
+  REQUIRE(section.fragment_kind == "ALGORITHM_DESCRIPTION");
+  REQUIRE(section.metadata.at("section_completeness") == "COMPLETE");
+  REQUIRE(section.text.find("Only for x greater than zero") != std::string::npos);
+  REQUIRE(section.text.find("Dependent definition") != std::string::npos);
+  REQUIRE(section.text.find("Other material") == std::string::npos);
+  REQUIRE(section.byte_start == 0U);
+  REQUIRE(section.byte_end == html.find("<h2>References"));
+  REQUIRE(section.metadata.at("member_spans").size() == 5U);
+  auto limits = sources::InternetExtractionLimits{};
+  limits.maximum_fragments = 1;
+  const auto cut = sources::extract_internet_snapshot(
+      snapshot, "text/html", bytes(html), limits);
+  REQUIRE(cut.receipt.truncated);
+  REQUIRE(cut.fragments.front().metadata.at("section_completeness") == "COMPLETE");
+  REQUIRE(cut.fragments.front().metadata.at("document_extraction_truncated") == true);
+  REQUIRE(cut.fragments.front().text == section.text);
+  const auto missing_boundary = sources::extract_internet_snapshot(
+      snapshot, "text/html", bytes(html.substr(0, html.find("<h2>References"))));
+  REQUIRE(missing_boundary.fragments.front().metadata.at("section_completeness") == "INCOMPLETE");
+  limits = {};
+  limits.maximum_fragment_bytes = 100;
+  const auto oversized = sources::extract_internet_snapshot(
+      snapshot, "text/html", bytes(html), limits);
+  REQUIRE(oversized.receipt.truncated);
+  REQUIRE(std::ranges::all_of(oversized.fragments, [](const auto &fragment) {
+    return fragment.fragment_kind != "ALGORITHM_DESCRIPTION" ||
+        fragment.metadata.value("section_completeness", std::string{}) == "INCOMPLETE";
+  }));
+}
+
+TEST_CASE("internet CSS section preserves reviewed source bytes") {
+  using namespace statewright;
+  const auto section = core::read_text(std::filesystem::path(__FILE__)
+      .parent_path().parent_path() / "fixtures/css-absolute-lengths-20240322.html");
+  const auto html = section + "<h2>Next section</h2>";
+  const auto result = sources::extract_internet_snapshot(
+      "internet-source-snapshot:sha256:" + contracts::sha256_text(html),
+      "text/html", bytes(html));
+  REQUIRE(result.fragments.front().text == section);
+  REQUIRE(result.fragments.front().metadata.at("section_completeness") == "COMPLETE");
+  REQUIRE(contracts::sha256_text(result.fragments.front().text) ==
+          "cd24adf3f40876a83f6b179f3417317d0124e1dd475fe2abde7880b2785201ec");
+}
+
+TEST_CASE("internet HTML optional table tags do not consume nesting budget") {
+  using namespace statewright;
+  std::string html = "<h2>Table</h2><table><tbody>";
+  for (int i = 0; i < 100; ++i)
+    html += "<tr><th>unit<td>name<td>value";
+  html += "</table><h2>Procedure</h2><p>Algorithm; inputs: x; outputs: y; "
+          "procedure: return x</p><h2>End</h2>";
+  auto limits = sources::InternetExtractionLimits{};
+  limits.maximum_nesting_depth = 8;
+  const auto result = sources::extract_internet_snapshot(
+      "internet-source-snapshot:sha256:" + contracts::sha256_text(html),
+      "text/html", bytes(html), limits);
+  REQUIRE_FALSE(result.receipt.truncated);
+  REQUIRE(std::ranges::count_if(result.fragments, [](const auto &fragment) {
+    return fragment.fragment_kind == "TABLE_ROW";
+  }) == 100);
+  REQUIRE(std::ranges::any_of(result.fragments, [](const auto &fragment) {
+    return fragment.metadata.value("section_completeness", std::string{}) == "COMPLETE";
+  }));
+  REQUIRE_THROWS(sources::extract_internet_snapshot(
+      "internet-source-snapshot:sha256:" + contracts::sha256_text("deep"),
+      "text/html", bytes("<div><div><div><div><div><div><div><div><div>"), limits));
+}
+
+TEST_CASE("internet v5 declared Latin1 preserves original byte offsets") {
+  using namespace statewright;
+  const std::string source = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?><html><p>caf" +
+      std::string(1, static_cast<char>(0xe9)) + "</p><p>Procedure: return x</p></html>";
+  const auto result = sources::extract_internet_snapshot(
+      "internet-source-snapshot:sha256:" + contracts::sha256_text("latin1"), "text/html", bytes(source));
+  REQUIRE_FALSE(result.fragments.empty());
+  REQUIRE(result.receipt.decoded_text_signature != contracts::sha256_text(source));
+  for (const auto &fragment : result.fragments) {
+    REQUIRE(fragment.byte_end <= source.size());
+    REQUIRE(fragment.metadata.at("source_encoding") == "ISO-8859-1");
+  }
+  REQUIRE(result.fragments.front().text == "caf\xc3\xa9");
+  const auto invalid = sources::extract_internet_snapshot(
+      "internet-source-snapshot:sha256:" + contracts::sha256_text("unsupported-charset"),
+      "text/html", bytes("<?xml version=\"1.0\" encoding=\"shift-jis\"?><p>plain ASCII</p>"));
+  REQUIRE(invalid.fragments.empty());
+}
+
+TEST_CASE("internet v5 RFC sections retain subsections without keyword candidates") {
+  using namespace statewright;
+  const std::string source = "RFC 123 Algorithms header\n\n1.  Introduction\nMention algorithm only.\n"
+      "2.  Procedure\nInputs: x\nOutputs: y\nProcedure: return x\n2.1.  Conditions\nx must be valid\n"
+      "3.  References\nExternal definitions\n";
+  const auto result = sources::extract_internet_snapshot(
+      "internet-source-snapshot:sha256:" + contracts::sha256_text("rfc-v5"),
+      "text/plain", bytes(source), {}, "rfc-document");
+  REQUIRE(result.fragments.size() == 4);
+  REQUIRE(result.fragments.front().fragment_kind == "TEXT");
+  REQUIRE(result.fragments[2].text.find("x must be valid") != std::string::npos);
+  REQUIRE(result.fragments[2].metadata.at("section_completeness") == "COMPLETE");
 }

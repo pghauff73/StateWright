@@ -1,0 +1,136 @@
+<h3 class="heading settled" data-level="5.2" id="absolute-lengths"><span class="secno">5.2. </span><span class="content"> Absolute Lengths: the <a class="css" data-link-type="maybe" href="#cm" id="ref-for-cm">cm</a>, <a class="css" data-link-type="maybe" href="#mm" id="ref-for-mm">mm</a>, <a class="css" data-link-type="maybe" href="#Q" id="ref-for-Q">Q</a>, <a class="css" data-link-type="maybe" href="#in" id="ref-for-in①">in</a>, <a class="css" data-link-type="maybe" href="#pt" id="ref-for-pt">pt</a>, <a class="css" data-link-type="maybe" href="#pc" id="ref-for-pc">pc</a>, <a class="css" data-link-type="maybe" href="#px" id="ref-for-px②">px</a> units</span><a class="self-link" href="#absolute-lengths"></a></h3>
+   <p>The <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="absolute length | absolute length unit" data-noexport id="absolute-length">absolute length units</dfn> are fixed in relation to each other
+	and <a data-link-type="dfn" href="#anchor-unit" id="ref-for-anchor-unit">anchored</a> to some physical measurement.
+	They are mainly useful when the output environment is known.
+	The absolute units consist of
+	the <dfn class="dfn-paneled" data-dfn-type="dfn" data-export data-lt="physical unit" id="physical-unit">physical units</dfn> (<a class="css" data-link-type="maybe" href="#in" id="ref-for-in②">in</a>, <a class="css" data-link-type="maybe" href="#cm" id="ref-for-cm①">cm</a>, <a class="css" data-link-type="maybe" href="#mm" id="ref-for-mm①">mm</a>, <a class="css" data-link-type="maybe" href="#pt" id="ref-for-pt①">pt</a>, <a class="css" data-link-type="maybe" href="#pc" id="ref-for-pc①">pc</a>, <a class="css" data-link-type="maybe" href="#Q" id="ref-for-Q①">Q</a>)
+	and the <dfn class="dfn-paneled" data-dfn-type="dfn" data-export data-lt="visual angle unit | pixel unit" id="visual-angle-unit">visual angle unit (pixel unit)</dfn> (<a class="css" data-link-type="maybe" href="#px" id="ref-for-px③">px</a>):</p>
+   <table class="data">
+    <thead>
+     <tr>
+      <th>unit 
+      <th>name 
+      <th>equivalence 
+    <tbody>
+     <tr>
+      <th><dfn class="dfn-paneled css" data-dfn-for="<length>" data-dfn-type="value" data-export id="cm">cm</dfn> 
+      <td>centimeters 
+      <td>1cm = 96px/2.54 
+     <tr>
+      <th><dfn class="dfn-paneled css" data-dfn-for="<length>" data-dfn-type="value" data-export id="mm">mm</dfn> 
+      <td>millimeters 
+      <td>1mm = 1/10th of 1cm 
+     <tr>
+      <th><dfn class="dfn-paneled css" data-dfn-for="<length>" data-dfn-type="value" data-export id="Q">Q</dfn> 
+      <td>quarter-millimeters 
+      <td>1Q = 1/40th of 1cm 
+     <tr>
+      <th><dfn class="dfn-paneled css" data-dfn-for="<length>" data-dfn-type="value" data-export id="in">in</dfn> 
+      <td>inches 
+      <td>1in = 2.54cm = 96px 
+     <tr>
+      <th><dfn class="dfn-paneled css" data-dfn-for="<length>" data-dfn-type="value" data-export id="pc">pc</dfn> 
+      <td>picas 
+      <td>1pc = 1/6th of 1in 
+     <tr>
+      <th><dfn class="dfn-paneled css" data-dfn-for="<length>" data-dfn-type="value" data-export id="pt">pt</dfn> 
+      <td>points 
+      <td>1pt = 1/72nd of 1in 
+     <tr>
+      <th><dfn class="dfn-paneled css" data-dfn-for="<length>" data-dfn-type="value" data-export id="px">px</dfn> 
+      <td>pixels 
+      <td>1px = 1/96th of 1in 
+   </table>
+   <div class="example" id="example-afc1f57e">
+    <a class="self-link" href="#example-afc1f57e"></a> 
+<pre class="highlight">h1 <c- p>{</c-> <c- k>margin</c-><c- p>:</c-> <c- m>0.5</c-><c- k>in</c-> <c- p>}</c->      <c- c>/* inches  */</c->
+h2 <c- p>{</c-> <c- k>line-height</c-><c- p>:</c-> <c- m>3</c-><c- k>cm</c-> <c- p>}</c->   <c- c>/* centimeters */</c->
+h3 <c- p>{</c-> <c- k>word-spacing</c-><c- p>:</c-> <c- m>4</c-><c- k>mm</c-> <c- p>}</c->  <c- c>/* millimeters */</c->
+h3 <c- p>{</c-> <c- k>letter-spacing</c-><c- p>:</c-> <c- m>1</c-><c- k>Q</c-> <c- p>}</c-> <c- c>/* quarter-millimeters */</c->
+h4 <c- p>{</c-> <c- k>font-size</c-><c- p>:</c-> <c- m>12</c-><c- k>pt</c-> <c- p>}</c->    <c- c>/* points */</c->
+h4 <c- p>{</c-> <c- k>font-size</c-><c- p>:</c-> <c- m>1</c-><c- k>pc</c-> <c- p>}</c->     <c- c>/* picas */</c->
+p  <c- p>{</c-> <c- k>font-size</c-><c- p>:</c-> <c- m>12</c-><c- k>px</c-> <c- p>}</c->    <c- c>/* px */</c->
+</pre>
+   </div>
+   <p class="note" role="note"><span class="marker">Note:</span> Lengths in publishing contexts
+	are sometimes written like <code class="highlight"><c- m>2</c-><c- k>p</c-><c- m>3</c-></code>,
+	indicating a length of 2 picas and 3 points.
+	These can be written in CSS as <span class="css">calc(2pc + 3pt)</span> (see <a href="#calc-notation">§ 8.1 Mathematical Expressions: calc()</a>).</p>
+   <p>All of the absolute length units are <a data-link-type="dfn" href="#compatible-units" id="ref-for-compatible-units③">compatible</a>,
+	and <a class="css" data-link-type="maybe" href="#px" id="ref-for-px④">px</a> is their <a data-link-type="dfn" href="#canonical-unit" id="ref-for-canonical-unit①">canonical unit</a>.</p>
+   <p>For a CSS device, these dimensions are <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="anchor unit | anchor" data-noexport id="anchor-unit">anchored</dfn> either</p>
+   <ol type="i">
+    <li>by relating the <a data-link-type="dfn" href="#physical-unit" id="ref-for-physical-unit">physical units</a> to their physical measurements, or 
+    <li>by relating the <a data-link-type="dfn" href="#visual-angle-unit" id="ref-for-visual-angle-unit">pixel unit</a> to the <a data-link-type="dfn" href="#reference-pixel" id="ref-for-reference-pixel">reference pixel</a>. 
+   </ol>
+   <p>For print media at typical viewing distances,
+	the <a data-link-type="dfn" href="#anchor-unit" id="ref-for-anchor-unit①">anchor unit</a> should be one of the <a data-link-type="dfn" href="#physical-unit" id="ref-for-physical-unit①">physical units</a> (inches, centimeters, etc).
+	For screen media (including high-resolution devices),
+	low-resolution devices,
+	and devices with unusual viewing distances,
+	it is recommended instead that the <span id="ref-for-anchor-unit②">anchor unit</span> be the <a data-link-type="dfn" href="#visual-angle-unit" id="ref-for-visual-angle-unit①">pixel unit</a>.
+	For such devices it is recommended that the <span id="ref-for-visual-angle-unit②">pixel unit</span> refer to the whole number of <a data-link-type="dfn" href="#device-pixel" id="ref-for-device-pixel">device pixels</a> that best approximates the reference pixel.</p>
+   <p class="note" role="note"><span class="marker">Note:</span> If the <a data-link-type="dfn" href="#anchor-unit" id="ref-for-anchor-unit③">anchor unit</a> is the <a data-link-type="dfn" href="#visual-angle-unit" id="ref-for-visual-angle-unit③">pixel unit</a>,
+	the <a data-link-type="dfn" href="#physical-unit" id="ref-for-physical-unit②">physical units</a> might not match their physical measurements.
+	Alternatively if the <span id="ref-for-anchor-unit④">anchor unit</span> is a <span id="ref-for-physical-unit③">physical unit</span>,
+	the <span id="ref-for-visual-angle-unit④">pixel unit</span> might not map to a whole number of <a data-link-type="dfn" href="#device-pixel" id="ref-for-device-pixel①">device pixels</a>.</p>
+   <p class="note" role="note"><span class="marker">Note:</span> This definition of the <a data-link-type="dfn" href="#visual-angle-unit" id="ref-for-visual-angle-unit⑤">pixel unit</a> and the <a data-link-type="dfn" href="#physical-unit" id="ref-for-physical-unit④">physical units</a> differs from the earlier editions of CSS1 and CSS2.
+	In particular, in previous versions of CSS the <span id="ref-for-visual-angle-unit⑥">pixel unit</span> and the <span id="ref-for-physical-unit⑤">physical units</span> were not related by a fixed ratio:
+	the <span id="ref-for-physical-unit⑥">physical units</span> were always tied to their physical measurements
+	while the <span id="ref-for-visual-angle-unit⑦">pixel unit</span> would vary to most closely match the reference pixel.
+	(This unfortunate change
+	was made because too much existing content relies on the assumption of 96dpi,
+	and breaking that assumption broke the content.)</p>
+   <p class="note" role="note"><span class="marker">Note:</span> Units are <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ascii-case-insensitive" id="ref-for-ascii-case-insensitive③">ASCII case-insensitive</a> and serialize as lowercase, for example 1Q serializes as 1q.</p>
+   <p>The <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="reference-pixel">reference pixel</dfn> is the visual angle of one pixel on a device with a <a data-link-type="dfn" href="#device-pixel" id="ref-for-device-pixel②">device pixel</a> density of 96dpi
+	and a distance from the reader of an arm’s length.
+	For a nominal arm’s length of 28 inches,
+	the visual angle is therefore about 0.0213 degrees.
+	For reading at arm’s length,
+	1px thus corresponds to about 0.26 mm (1/96 inch).</p>
+   <p>The image below illustrates the effect of viewing distance on the size of a reference pixel:
+	a reading distance of 71 cm (28 inches)
+	results in a reference pixel of 0.26 mm,
+	while a reading distance of 3.5 m (12 feet)
+	results in a reference pixel of 1.3 mm.</p>
+   <figure>
+     <img alt="This diagram illustrates how the definition of a pixel
+		          depends on the users distance from the viewing surface
+		          (paper or screen).
+		          The image depicts the user looking at two planes,
+		          one 28 inches (71 cm) from the user,
+		          the second 140 inches (3.5 m) from the user.
+		          An expanding cone is projected from the user&apos;s eye onto each plane.
+		          Where the cone strikes the first plane,
+		          the projected pixel is 0.26 mm high.
+		          Where the cone strikes the second plane,
+		          the projected pixel is 1.4 mm high." height="360" src="images/pixel1.png" width="500"> 
+    <figcaption> Showing that pixels must become larger if the viewing distance increases </figcaption>
+   </figure>
+   <p>This second image illustrates the effect of a device’s resolution on the pixel unit:
+	an area of 1px by 1px is covered by a single dot in a low-resolution device
+	(e.g. a typical computer display),
+	while the same area is covered by 16 dots in a higher resolution device
+	(such as a printer).</p>
+   <figure>
+     <img alt="This diagram illustrates the relationship between
+		          the reference pixel and device pixels (called “dots” below).
+		          The image depicts
+		          a high resolution (large dot density) laser printer output on the left
+		          and a low resolution monitor screen on the right.
+		          For the laser printer, one square reference pixel is implemented by 16 dots.
+		          For the monitor screen, one square reference pixel is implemented by a single dot." height="321" src="images/pixel2.png" width="412"> 
+    <figcaption> Showing that more device pixels (dots) are needed
+			to cover a 1px by 1px area on a high-resolution device
+			than on a lower-resolution one
+			(of the same approximate viewing distance) </figcaption>
+   </figure>
+   <p>A <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="device-pixel">device pixel</dfn> is the smallest unit of area on the device output
+	capable of displaying its full range of colors.
+	For typical color screens, it’s a square or somewhat rectangular region
+	containing a red, green, and blue subpixel.
+	Many non-traditional outputs exist that can blur this definition,
+	such as by displaying some colors at higher resolutions.
+	Such devices still expose some equivalent notion of "device pixel",
+	however.</p>
+   

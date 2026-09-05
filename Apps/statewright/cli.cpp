@@ -31,6 +31,7 @@
 #include "statewright/saa/oiec_bench_gate.hpp"
 #include "statewright/saa/search.hpp"
 #include "statewright/sources/extraction.hpp"
+#include "statewright/egcf/grounded_experiment.hpp"
 #include "statewright/sources/http_provider.hpp"
 #include "statewright/sources/scheduler.hpp"
 #include "statewright/sources/snapshot.hpp"
@@ -502,6 +503,7 @@ integrity_policy(const Json &request) {
 [[nodiscard]] egcf::InternetExperimentRequest
 experiment_request(const Json &request) {
   egcf::InternetExperimentRequest result;
+  result.protocol_id = request.value("protocol_id", std::string{});
   result.baseline_ref = request.at("baseline_ref").get<std::string>();
   result.baseline_saa_ir = request.at("baseline_saa_ir");
   result.dataset_snapshot_ids = strings(request, "dataset_snapshot_ids");
@@ -1412,6 +1414,82 @@ preflight_result(const Json &report, const Json &entry,
     egcf::EgcfStore store(request_root(request), resource_root(request));
     return egcf::internet_improvement_metrics(store);
   }
+  if (action == "capability-baseline" || action == "review-register") {
+    egcf::EgcfStore store(request_root(request), resource_root(request));
+    const auto candidate = candidate_from_store(store, request.at("candidate_id").get<std::string>());
+    Json content;
+    std::string producer = "native-canonical-catalog-query";
+    std::string group = "catalog-baseline";
+    const auto at = request.at("recorded_at").get<std::string>();
+    if (action == "capability-baseline") {
+      const auto search = egcf::exact_capability_search(store, candidate);
+      egcf::grounded_require(search.at("candidates").empty(), "CAPABILITY_ALREADY_PRESENT_IN_THIS_CATALOG");
+      content = {{"kind", "CANONICAL_CATALOG_UNSUPPORTED_BASELINE_V1"},
+          {"candidate_id", candidate.object_id()}, {"workspace", store.workspace_root().string()},
+          {"event_head", store.event_head()}, {"search", search}};
+    } else {
+      content = request.at("review");
+      egcf::verify_experiment_review(content, egcf::experiment_trust_policy(store));
+      producer = content.at("message").at("reviewer_id").get<std::string>();
+      group = content.at("message").at("independence_group").get<std::string>();
+    }
+    return {{"evidence_id", egcf::register_grounded_evidence(store, candidate, content,
+                  action, producer, group, at)}, {"content", content}};
+  }
+  if (action == "protocol-binding" || action == "protocol-check" || action == "protocol-qualify") {
+    egcf::EgcfStore store(request_root(request), resource_root(request));
+    egcf::InternetExperimentProtocol protocol;
+    if (request.contains("protocol_id"))
+      protocol = egcf::internet_experiment_protocol_from_json(store.get(request.at("protocol_id").get<std::string>()).payload);
+    else protocol = internet_experiment_protocol(request);
+    if (action == "protocol-binding")
+      return {{"binding_sha256", egcf::experiment_review_binding(protocol)},
+              {"note", "Sign this binding only after independent review; it is not an approval."}};
+    egcf::grounded_require(protocol.protocol_version == egcf::grounded_experiment_version,
+                          "GROUNDED_PROTOCOL_V2_REQUIRED");
+    auto execution = egcf::to_json(protocol);
+    execution["protocol_id"] = protocol.object_id();
+    execution["recorded_at"] = request.at("recorded_at");
+    auto experiment = experiment_request(execution);
+    const auto candidate = candidate_from_store(store,
+        protocol.source_provenance.at("grounded").at("candidate_id").get<std::string>());
+    if (action == "protocol-check") {
+      try {
+        static_cast<void>(egcf::validate_grounded_experiment(store, candidate, experiment));
+        return {{"status", "PROTOCOL_EVIDENCE_READY"}, {"admission", false}};
+      } catch (const std::exception &error) {
+        return {{"status", "PROTOCOL_BLOCKED"}, {"blocker", error.what()}, {"admission", false}};
+      }
+    }
+    egcf::InternetExperimentCoordinator coordinator(store);
+    return egcf::to_json(coordinator.qualify(candidate, std::move(experiment)));
+  }
+  if (action == "reprocess") {
+    egcf::EgcfStore store(request_root(request), resource_root(request));
+    const auto record = store.get(request.at("policy_assessment_id").get<std::string>());
+    if (record.object_type != "internet-policy-assessment")
+      throw common::Error(common::ErrorCode::invalid_argument, "reprocess requires a source assessment");
+    const auto previous = sources::internet_policy_assessment_from_json(record.payload);
+    // This is a historical-snapshot reprocessing operation, not renewed robots
+    // permission or a new live-source approval. Other policy denials survive.
+    if (!previous.admissible() && std::ranges::any_of(previous.blocking_reasons,
+        [](const auto &reason) { return reason != "ENCODING_INVALID"; }))
+      throw common::Error(common::ErrorCode::invalid_argument,
+                          "reprocess cannot override a source policy denial");
+    egcf::InternetSourceCoordinator sources(store);
+    const auto assessment = sources.assess(previous.snapshot_id, previous.fetch_receipt_id,
+        previous.source_policy_id, previous.robots_allowed, previous.license_classification);
+    if (!assessment.assessment.admissible())
+      return Json{{"status", "SOURCE_BLOCKED"}, {"assessment", egcf::to_json(assessment)}};
+    sources::InternetExtractionLimits limits;
+    limits.maximum_fragments = request.value("maximum_fragments", 256U);
+    const auto extracted = sources.extract(previous.snapshot_id, limits);
+    egcf::InternetFeedCoordinator feed(store);
+    return Json{{"status", "REPROCESSED"}, {"historical_assessment_id", record.object_id()},
+        {"extraction", egcf::to_json(extracted)},
+        {"feed", egcf::to_json(feed.process(assessment.assessment, extracted.extraction,
+                                          "versioned-source-reprocessing", true))}};
+  }
   if (action == "feed") {
     egcf::EgcfStore store(request_root(request), resource_root(request));
     const auto assessment_record =
@@ -1473,6 +1551,31 @@ preflight_result(const Json &report, const Json &entry,
   }
   egcf::EgcfStore store(request_root(request), resource_root(request));
   egcf::InternetImprovementStore internet(store);
+  if (action == "readiness") {
+    const auto protocols = store.active_ids("internet-experiment-protocol");
+    const auto policies = store.active_ids("internet-promotion-policy");
+    const auto watches = store.active_ids("internet-watch");
+    Json review_queue = Json::array();
+    for (const auto &record : internet.list("internet-watch-registration")) {
+      const auto &registration = record.payload;
+      if (std::ranges::find(watches, registration.value("watch_id", std::string{})) == watches.end())
+        continue;
+      if (registration.value("license_status", std::string{}) != "verified")
+        review_queue.push_back({{"registration_id", record.object_id},
+            {"watch_id", registration.value("watch_id", std::string{})},
+            {"required_action", "REVIEW_EXACT_SOURCE_LICENSE_AND_PROVENANCE"},
+            {"registration", registration}});
+    }
+    Json blockers = Json::array();
+    if (protocols.empty()) blockers.push_back("MISSING_EXPERIMENT_PROTOCOL");
+    if (policies.empty()) blockers.push_back("MISSING_PROMOTION_POLICY");
+    return {{"event_head", store.event_head()}, {"active_protocol_ids", protocols},
+            {"active_promotion_policy_ids", policies}, {"configuration_blockers", blockers},
+            {"source_review_queue", review_queue},
+            {"qualification_requirements", {"SOURCE_BOUND_EXPECTED_RESULTS", "DEFENSIBLE_BASELINE",
+                "INDEPENDENT_REVIEW_AND_EXPERIMENT_GROUPS", "REAL_PROBATION_OBSERVATIONS"}},
+            {"note", "Configuration presence is not qualification or acceptance. No approvals are inferred."}};
+  }
   if (action == "protocol-register") {
     const auto protocol = internet_experiment_protocol(request);
     return {{"protocol", egcf::to_json(protocol)},

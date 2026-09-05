@@ -11,7 +11,7 @@
 namespace statewright::sources {
 
 inline constexpr std::string_view internet_extractor_version =
-    "statewright-internet-extractor-v3";
+    "statewright-internet-extractor-v5";
 
 struct InternetExtractionLimits final {
   std::size_t maximum_input_bytes = 8U * 1024U * 1024U;

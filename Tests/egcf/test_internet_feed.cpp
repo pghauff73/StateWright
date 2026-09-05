@@ -1,6 +1,7 @@
 #include "statewright/egcf/internet_feed.hpp"
 
 #include "statewright/contracts/hash.hpp"
+#include "statewright/core/file_io.hpp"
 #include "statewright/saa/algorithm_ir.hpp"
 #include "statewright/sources/extraction.hpp"
 #include "statewright/sources/policy.hpp"
@@ -9,6 +10,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <filesystem>
@@ -44,7 +46,8 @@ struct FeedFixture final {
 };
 
 FeedFixture fixture(statewright::egcf::EgcfStore &store,
-                    std::string_view text) {
+                    std::string_view text,
+                    std::string_view content_type = "text/plain") {
   using namespace statewright;
   egcf::InternetImprovementStore internet(store);
 
@@ -71,7 +74,7 @@ FeedFixture fixture(statewright::egcf::EgcfStore &store,
   response.final_url = watch.canonical_url;
   response.resolved_addresses = {"93.184.216.34"};
   response.http_status = 200;
-  response.headers["content-type"] = "text/plain";
+  response.headers["content-type"] = content_type;
   response.body = bytes(text);
   response.tls_verified = true;
   response.compressed_bytes = response.body.size();
@@ -172,7 +175,15 @@ TEST_CASE(
       "precondition: x is positive",
       "Affine algorithm; inputs: x; outputs: y; procedure: return 1/0*x+1",
       "Affine algorithm; inputs: x; outputs: y; procedure: return 0*x+1",
-      "Affine algorithm; inputs: x; outputs: y; procedure: return 2*z+1"};
+      "Affine algorithm; inputs: x; outputs: y; procedure: return 2*z+1",
+      "Scale algorithm; inputs: x; outputs: y; procedure: return 1/0*x",
+      "Scale algorithm; inputs: x; outputs: y; procedure: return 0*x",
+      "Scale algorithm; inputs: x; outputs: y; procedure: return 2*z",
+      "Scale algorithm; inputs: x; outputs: y; procedure: return 2*x*x",
+      "Offset algorithm; inputs: x; outputs: y; procedure: return x+1/0",
+      "Offset algorithm; inputs: x; outputs: y; procedure: return z+1",
+      "Offset algorithm; inputs: x; outputs: y; procedure: return x+1 unless x "
+      "is negative"};
   for (const auto &description : descriptions) {
     INFO(description);
     const auto root = temporary_root();
@@ -214,6 +225,149 @@ TEST_CASE("internet feed binds exact affine translation to its source span") {
     altered.proposed_saa_ir["nodes"][1]["operands"][1]["constant"] = "0";
     REQUIRE_THROWS(egcf::verify_internet_candidate_translation(
         altered, source.extraction.fragments.front()));
+  }
+  std::filesystem::remove_all(root);
+}
+
+TEST_CASE("internet feed translates explicit scale and offset procedures") {
+  using namespace statewright;
+  struct Example {
+    std::string procedure;
+    std::string slope;
+    std::string bias;
+  };
+  const std::vector<Example> examples = {
+      {"return 2*x", "2", "0"},
+      {"return -3/2 * x", "-3/2", "0"},
+      {"return x+3", "1", "3"},
+      {"return x - 5/4", "1", "-5/4"},
+      {"return 010*x", "10", "0"},
+      {"return 2/2*x", "1", "0"},
+      {"return x+0", "1", "0"}};
+  for (const auto &example : examples) {
+    INFO(example.procedure);
+    const auto root = temporary_root();
+    {
+      egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+      const auto source = fixture(
+          store, "Affine algorithm; inputs: x; outputs: y; procedure: " +
+                     example.procedure);
+      const auto result = egcf::InternetFeedCoordinator(store).process(
+          source.assessment, source.extraction, "abbreviated-affine");
+      REQUIRE(result.candidates.size() == 1U);
+      const auto &candidate = result.candidates.front();
+      REQUIRE(candidate.status == "VALIDATION_READY");
+      const auto &provenance = candidate.applicability.at("translation");
+      REQUIRE(provenance.at("translator_version") ==
+              "exact-scalar-procedure-v3");
+      REQUIRE(provenance.at("slope") == example.slope);
+      REQUIRE(provenance.at("bias") == example.bias);
+      REQUIRE_NOTHROW(egcf::verify_internet_candidate_translation(
+          candidate, source.extraction.fragments.front()));
+      auto altered = candidate;
+      altered.applicability["translation"]["bias"] = "999";
+      REQUIRE_THROWS(egcf::verify_internet_candidate_translation(
+          altered, source.extraction.fragments.front()));
+      REQUIRE(store.list("algorithm-definition").empty());
+      const auto repeated = egcf::InternetFeedCoordinator(store).process(
+          source.assessment, source.extraction, "abbreviated-affine");
+      REQUIRE(repeated.result_signature == result.result_signature);
+    }
+    std::filesystem::remove_all(root);
+  }
+}
+
+TEST_CASE("internet diagnostics distinguish unparsed declarations from source absence") {
+  using namespace statewright;
+  const auto root = temporary_root();
+  {
+    egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+    const auto source = fixture(store,
+        "HKDF-Extract(salt, IKM) -> PRK; Inputs: salt, IKM; Output: PRK");
+    const auto result = egcf::InternetFeedCoordinator(store).process(
+        source.assessment, source.extraction, "declaration-diagnostics");
+    REQUIRE(result.candidates.size() == 1U);
+    REQUIRE(result.candidates.front().status == "QUARANTINED");
+    const auto &reasons = result.candidates.front().unresolved_assumptions;
+    REQUIRE(std::ranges::find(reasons, "SOURCE_INPUT_DECLARATION_NOT_PARSED") != reasons.end());
+    REQUIRE(result.candidates.front().semantic_outputs == std::vector<std::string>{"PRK"});
+    REQUIRE(std::ranges::find(reasons, "MISSING_SEMANTIC_INPUTS") == reasons.end());
+    REQUIRE(std::ranges::find(reasons, "UNSUPPORTED_PROCEDURE_SYNTAX_OR_FAMILY") != reasons.end());
+  }
+  std::filesystem::remove_all(root);
+}
+
+TEST_CASE("internet CSS translation binds revision units and complete context") {
+  using namespace statewright;
+  auto section = core::read_text(std::filesystem::path(__FILE__)
+      .parent_path().parent_path() / "fixtures/css-absolute-lengths-20240322.html");
+  const auto root = temporary_root();
+  {
+    egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+    bool accepted = true;
+    SECTION("reviewed section") {}
+    SECTION("altered ratio") {
+      section.replace(section.find("96px"), 4, "95px");
+      accepted = false;
+    }
+    SECTION("extra condition") {
+      section += "<p>Only for positive input.</p>";
+      accepted = false;
+    }
+    SECTION("missing context") {
+      section.erase(section.find("   <p>For a CSS device"));
+      accepted = false;
+    }
+    auto source = fixture(store, section + "<h2>Next section</h2>", "text/html");
+    const auto result = egcf::InternetFeedCoordinator(store).process(
+        source.assessment, source.extraction, "css-unit-conversion");
+    REQUIRE(result.candidates.size() == (accepted ? 6U : 1U));
+    const auto selected = std::ranges::find_if(result.candidates, [](const auto &value) {
+      return value.semantic_inputs == std::vector<std::string>{"css_length_in"};
+    });
+    const auto &candidate = accepted ? *selected : result.candidates.front();
+    REQUIRE(candidate.status == (accepted ? "VALIDATION_READY" : "QUARANTINED"));
+    if (accepted) {
+      const auto fragment = std::ranges::find_if(source.extraction.fragments, [&](const auto &value) {
+        return value.object_id() == candidate.source_fragment_id;
+      });
+      REQUIRE(fragment != source.extraction.fragments.end());
+      const std::map<std::string, std::string> expected = {{"CSS in", "96"}, {"CSS cm", "4800/127"},
+          {"CSS mm", "480/127"}, {"CSS Q", "120/127"}, {"CSS pc", "16"}, {"CSS pt", "4/3"}};
+      for (const auto &conversion : result.candidates) {
+        REQUIRE(conversion.status == "VALIDATION_READY");
+        REQUIRE(conversion.applicability.at("translation").at("slope") == expected.at(conversion.units.at("input").get<std::string>()));
+      }
+      REQUIRE(candidate.units.at("input") == "CSS in");
+      REQUIRE(candidate.units.at("output") == "CSS px");
+      REQUIRE_NOTHROW(egcf::verify_internet_candidate_translation(
+          candidate, *fragment));
+      auto changed = candidate;
+      changed.units["output"] = "device pixels";
+      REQUIRE_THROWS(egcf::verify_internet_candidate_translation(
+          changed, *fragment));
+    } else {
+      REQUIRE(candidate.proposed_saa_ir.empty());
+    }
+    REQUIRE(store.list("algorithm-definition").empty());
+  }
+  std::filesystem::remove_all(root);
+}
+
+TEST_CASE("internet feed never detaches an affine procedure from section conditions") {
+  using namespace statewright;
+  const auto root = temporary_root();
+  {
+    egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+    const auto source = fixture(store,
+        "<h2>Affine algorithm</h2><p>Only for positive x.</p>"
+        "<p>Affine algorithm; inputs: x; outputs: y; procedure: return 2*x</p>"
+        "<h2>References</h2>", "text/html");
+    const auto result = egcf::InternetFeedCoordinator(store).process(
+        source.assessment, source.extraction, "section-conditions");
+    REQUIRE(result.candidates.size() == 1U);
+    REQUIRE(result.candidates.front().status == "QUARANTINED");
+    REQUIRE(result.candidates.front().proposed_saa_ir.empty());
   }
   std::filesystem::remove_all(root);
 }

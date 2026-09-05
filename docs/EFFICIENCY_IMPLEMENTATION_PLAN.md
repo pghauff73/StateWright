@@ -373,6 +373,16 @@ bound.
 
 ## 11. Phase 8: Indexed internet failure matching
 
+### Incremental implementation (2026-09-05)
+
+Internet feed now lazily loads and normalizes failure records once per batch,
+and reuses each fragment's lexical terms for canonical retrieval and failure
+matching. Existing substring semantics and failure ordering are preserved.
+Batches that reuse all retrieval receipts do not load failure history.
+This removes repeated store listing, JSON serialization, and lowercasing; it
+does not implement the planned FTS index or bound in-memory matching by history
+size. No runtime speedup has yet been measured for this change.
+
 ### Work
 
 1. Project normalized failure text and structured failure fields into SQLite

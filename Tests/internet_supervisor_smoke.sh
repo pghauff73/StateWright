@@ -138,3 +138,32 @@ jq -s -e '
 ' "$signal_log" >/dev/null
 
 printf 'internet supervisor smoke passed\n'
+
+# A child must be allowed to write its store beyond the stdout/stderr cap.
+cat >"$fake" <<'CHILD'
+#!/usr/bin/env bash
+set -euo pipefail
+workspace=$(jq -r '.workspace' <<<"$2")
+dd if=/dev/zero of="$workspace/large-store-file" bs=1048576 count=2 status=none
+if [[ $(jq -r '.action' <<<"$2") == run-status ]]; then
+  printf '%s\n' '{"ok":true,"result":{"action_leases":[],"action_receipts":[],"plans":[],"run_events":[],"runs":[]}}'
+else
+  printf '%s\n' '{"ok":true,"result":{"status":"NO_ELIGIBLE_WORK"}}'
+fi
+CHILD
+"$supervisor" --statewright "$fake" --workspace "$root/large-store-workspace" \
+  --worker-id large-store-smoke --once --maximum-child-output-bytes 1024 >"$root/large-store.jsonl"
+test "$(stat -c %s "$root/large-store-workspace/large-store-file")" -eq 2097152
+
+cat >"$fake" <<'CHILD'
+#!/usr/bin/env bash
+head -c 100000 /dev/zero
+CHILD
+if "$supervisor" --statewright "$fake" --workspace "$root/noisy-workspace" \
+  --worker-id noisy-smoke --once --maximum-failures 1 \
+  --maximum-child-output-bytes 1024 >"$root/noisy.jsonl"; then
+  printf 'supervisor unexpectedly accepted output overflow\n' >&2
+  exit 1
+fi
+jq -s -e 'any(.[]; .event_type == "INVOCATION_FAILED" and .details.invocation.output_limit_exceeded)' \
+  "$root/noisy.jsonl" >/dev/null

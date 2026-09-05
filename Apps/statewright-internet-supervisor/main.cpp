@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include <sys/resource.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -256,61 +256,54 @@ Configuration parse_arguments(int argc, char **argv) {
   return result;
 }
 
-class TemporaryFile final {
+// Pipes bound kernel buffering without imposing a process-wide file-size limit
+// on the child's database and append-only evidence writes.
+class OutputPipe final {
 public:
-  explicit TemporaryFile(std::string_view label) {
-    std::string pattern = "/tmp/statewright-supervisor-" +
-                          std::string(label) + "-XXXXXX";
-    std::vector<char> mutable_pattern(pattern.begin(), pattern.end());
-    mutable_pattern.push_back('\0');
-    descriptor_ = ::mkstemp(mutable_pattern.data());
-    if (descriptor_ < 0) {
-      fail("cannot create supervisor temporary file");
-    }
-    path_ = mutable_pattern.data();
-  }
-
-  ~TemporaryFile() {
-    close_descriptor();
-    std::error_code ignored;
-    std::filesystem::remove(path_, ignored);
-  }
-
-  TemporaryFile(const TemporaryFile &) = delete;
-  TemporaryFile &operator=(const TemporaryFile &) = delete;
-
-  [[nodiscard]] int descriptor() const noexcept { return descriptor_; }
-  [[nodiscard]] const std::filesystem::path &path() const noexcept {
-    return path_;
-  }
-  void close_descriptor() noexcept {
-    if (descriptor_ >= 0) {
-      static_cast<void>(::close(descriptor_));
-      descriptor_ = -1;
+  OutputPipe() {
+    if (::pipe(descriptors_) != 0)
+      fail("cannot create supervisor output pipe");
+    const int flags = ::fcntl(descriptors_[0], F_GETFL, 0);
+    if (flags < 0 || ::fcntl(descriptors_[0], F_SETFL, flags | O_NONBLOCK) < 0 ||
+        ::fcntl(descriptors_[0], F_SETFD, FD_CLOEXEC) < 0 ||
+        ::fcntl(descriptors_[1], F_SETFD, FD_CLOEXEC) < 0) {
+      close_read();
+      close_write();
+      fail("cannot configure supervisor output pipe");
     }
   }
-
+  ~OutputPipe() { close_read(); close_write(); }
+  OutputPipe(const OutputPipe &) = delete;
+  OutputPipe &operator=(const OutputPipe &) = delete;
+  int writer() const { return descriptors_[1]; }
+  void close_read() { close_end(0); }
+  void close_write() { close_end(1); }
+  void drain(std::string &output, std::size_t maximum, bool &exceeded) {
+    std::array<char, 8192> buffer{};
+    // Bound work per poll so a noisy child cannot starve timeout handling.
+    for (int reads = 0; reads < 32 && descriptors_[0] >= 0; ++reads) {
+      const auto count = ::read(descriptors_[0], buffer.data(), buffer.size());
+      if (count == 0) { close_read(); return; }
+      if (count < 0) {
+        if (errno == EINTR) continue;
+        if (errno == EAGAIN || errno == EWOULDBLOCK) return;
+        fail("cannot read supervisor output pipe");
+      }
+      const auto bytes = static_cast<std::size_t>(count);
+      const auto remaining = maximum - output.size();
+      output.append(buffer.data(), std::min(bytes, remaining));
+      if (bytes > remaining) { exceeded = true; return; }
+    }
+  }
 private:
-  int descriptor_ = -1;
-  std::filesystem::path path_;
+  void close_end(int index) {
+    if (descriptors_[index] >= 0) {
+      static_cast<void>(::close(descriptors_[index]));
+      descriptors_[index] = -1;
+    }
+  }
+  int descriptors_[2] = {-1, -1};
 };
-
-std::string read_bounded(const std::filesystem::path &path,
-                         std::size_t maximum, bool &exceeded) {
-  std::ifstream input(path, std::ios::binary);
-  if (!input) {
-    fail("cannot read supervisor child output");
-  }
-  std::string result;
-  result.resize(maximum + 1U);
-  input.read(result.data(), static_cast<std::streamsize>(result.size()));
-  result.resize(static_cast<std::size_t>(input.gcount()));
-  if (result.size() > maximum) {
-    exceeded = true;
-    result.resize(maximum);
-  }
-  return result;
-}
 
 void signal_process_group(pid_t child, int signal_value) {
   if (::kill(-child, signal_value) != 0) {
@@ -340,8 +333,8 @@ void terminate_child(pid_t child, int &status) {
 Invocation run_child(const std::filesystem::path &executable,
                      const Json &request, std::chrono::milliseconds timeout,
                      std::size_t maximum_output_bytes) {
-  TemporaryFile stdout_file("stdout");
-  TemporaryFile stderr_file("stderr");
+  OutputPipe stdout_pipe;
+  OutputPipe stderr_pipe;
   const std::string request_text =
       statewright::contracts::canonical_json(request);
   const std::string executable_text = executable.string();
@@ -351,18 +344,14 @@ Invocation run_child(const std::filesystem::path &executable,
   }
   if (child == 0) {
     static_cast<void>(::setpgid(0, 0));
-    if (::dup2(stdout_file.descriptor(), STDOUT_FILENO) < 0 ||
-        ::dup2(stderr_file.descriptor(), STDERR_FILENO) < 0) {
+    if (::dup2(stdout_pipe.writer(), STDOUT_FILENO) < 0 ||
+        ::dup2(stderr_pipe.writer(), STDERR_FILENO) < 0) {
       _exit(126);
     }
-    rlimit limit{};
-    const auto file_limit = maximum_output_bytes ==
-                                    std::numeric_limits<std::size_t>::max()
-                                ? maximum_output_bytes
-                                : maximum_output_bytes + 1U;
-    limit.rlim_cur = static_cast<rlim_t>(file_limit);
-    limit.rlim_max = static_cast<rlim_t>(file_limit);
-    static_cast<void>(::setrlimit(RLIMIT_FSIZE, &limit));
+    stdout_pipe.close_read();
+    stdout_pipe.close_write();
+    stderr_pipe.close_read();
+    stderr_pipe.close_write();
     std::vector<char *> arguments = {
         const_cast<char *>(executable_text.c_str()),
         const_cast<char *>("internet-improvement"),
@@ -377,12 +366,32 @@ Invocation run_child(const std::filesystem::path &executable,
   }
 
   static_cast<void>(::setpgid(child, child));
+  stdout_pipe.close_write();
+  stderr_pipe.close_write();
   Invocation result;
   int status = 0;
   const auto deadline = std::chrono::steady_clock::now() + timeout;
   while (true) {
+    try {
+      stdout_pipe.drain(result.stdout_text, maximum_output_bytes,
+                        result.output_limit_exceeded);
+      stderr_pipe.drain(result.stderr_text, maximum_output_bytes,
+                        result.output_limit_exceeded);
+    } catch (...) {
+      terminate_child(child, status);
+      throw;
+    }
+    if (result.output_limit_exceeded) {
+      terminate_child(child, status);
+      break;
+    }
     const pid_t waited = ::waitpid(child, &status, WNOHANG);
     if (waited == child) {
+      // Capture the tail already buffered at exit; never wait for descendants.
+      stdout_pipe.drain(result.stdout_text, maximum_output_bytes,
+                        result.output_limit_exceeded);
+      stderr_pipe.drain(result.stderr_text, maximum_output_bytes,
+                        result.output_limit_exceeded);
       break;
     }
     if (waited < 0 && errno != EINTR) {
@@ -401,21 +410,12 @@ Invocation run_child(const std::filesystem::path &executable,
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
-  stdout_file.close_descriptor();
-  stderr_file.close_descriptor();
   if (WIFEXITED(status)) {
     result.exit_code = WEXITSTATUS(status);
   }
   if (WIFSIGNALED(status)) {
     result.termination_signal = WTERMSIG(status);
   }
-  bool stdout_exceeded = false;
-  bool stderr_exceeded = false;
-  result.stdout_text =
-      read_bounded(stdout_file.path(), maximum_output_bytes, stdout_exceeded);
-  result.stderr_text =
-      read_bounded(stderr_file.path(), maximum_output_bytes, stderr_exceeded);
-  result.output_limit_exceeded = stdout_exceeded || stderr_exceeded;
   return result;
 }
 

@@ -372,6 +372,7 @@ experiment_request_from_protocol(const InternetExperimentProtocol &protocol,
                                  std::string recorded_at) {
   InternetExperimentRequest request;
   request.baseline_ref = protocol.baseline_ref;
+  request.protocol_id = protocol.object_id();
   request.baseline_saa_ir = protocol.baseline_saa_ir;
   request.dataset_snapshot_ids = protocol.dataset_snapshot_ids;
   for (const auto &value : protocol.trial_groups) {

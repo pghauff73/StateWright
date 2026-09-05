@@ -2,6 +2,7 @@
 
 #include "statewright/common/error.hpp"
 #include "statewright/contracts/hash.hpp"
+#include "statewright/egcf/grounded_experiment.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -260,6 +261,29 @@ AutonomousPromotionResult AutonomousPromotionController::assess(
   }
   const auto freshness =
       internet_source_freshness(store_, canonical_candidate, assessed_at);
+  const auto &design = qualification.payload.at("experiment_design");
+  if (!design.contains("grounded_protocol_id") && std::filesystem::is_regular_file(
+      store_.workspace_root() / ".ourd-agent/egcf/experiment-trust.json"))
+    grounded_require(!experiment_trust_policy(store_).value("require_grounded_protocols", true),
+                     "LEGACY_QUALIFICATION_NOT_AUTHORIZED_FOR_THIS_STORE");
+  if (design.contains("grounded_protocol_id")) {
+    const auto protocol_id = design.at("grounded_protocol_id").get<std::string>();
+    const auto protocol = internet_experiment_protocol_from_json(store_.get(protocol_id).payload);
+    const auto active_protocols = store_.active_ids("internet-experiment-protocol");
+    grounded_require(std::ranges::find(active_protocols, protocol_id) != active_protocols.end() &&
+        assessed_at >= protocol.valid_from && (protocol.valid_until.empty() || assessed_at <= protocol.valid_until),
+        "GROUNDED_PROTOCOL_NO_LONGER_ACTIVE");
+    const auto trust = experiment_trust_policy(store_);
+    const auto modes = trust.at("allowed_adoption_modes").get<std::vector<std::string>>();
+    const auto mode = design.at("adoption_mode").get<std::string>();
+    grounded_require(std::ranges::find(modes, mode) != modes.end(), "ADOPTION_MODE_NO_LONGER_AUTHORIZED");
+    grounded_require(experiment_review_binding(protocol) == design.at("protocol_binding_sha256").get<std::string>(), "GROUNDED_PROTOCOL_BINDING_CHANGED");
+    for (const auto &id : design.at("review_evidence_ids"))
+      verify_experiment_review(store_.get(id.get<std::string>()).payload.at("content"), trust);
+    if (mode == "NEW_CAPABILITY")
+      grounded_require(exact_capability_search(store_, canonical_candidate).at("candidates").empty(),
+                       "CAPABILITY_ALREADY_PRESENT_IN_THIS_CATALOG");
+  }
   const auto source_assessment = store_.get(freshness.assessment_id);
   if (source_assessment.object_type != "internet-policy-assessment" ||
       string_value(source_assessment.payload, "snapshot_id") !=

@@ -8,6 +8,7 @@
 #include "statewright/egcf/knowledge_governance_store.hpp"
 #include "statewright/saa/autonomous_promotion_policy.hpp"
 #include "statewright/sources/records.hpp"
+#include "statewright/sources/extraction.hpp"
 
 #include <algorithm>
 #include <map>
@@ -658,6 +659,21 @@ InternetImprovementPlan InternetImprovementDirector::plan(
         continue;
       }
       const auto &candidate = candidate_iterator->second;
+      const bool refreshed_source = std::ranges::any_of(extractions, [&](const auto &entry) {
+        return entry.second.snapshot_id == candidate.snapshot_id &&
+            std::ranges::find(entry.second.extractor_versions, std::string(sources::internet_extractor_version)) != entry.second.extractor_versions.end();
+      });
+      const bool current_fragment = std::ranges::any_of(extractions, [&](const auto &entry) {
+        return entry.second.snapshot_id == candidate.snapshot_id &&
+            std::ranges::find(entry.second.extractor_versions, std::string(sources::internet_extractor_version)) != entry.second.extractor_versions.end() &&
+            std::ranges::find(entry.second.fragment_ids, candidate.source_fragment_id) != entry.second.fragment_ids.end();
+      });
+      if (refreshed_source && !current_fragment &&
+          (candidate.status == "QUARANTINED" || candidate.status == "VALIDATION_READY")) {
+        // Retain historical records, but do not spend recurring reasoning
+        // budgets on fragments superseded by a versioned source reprocessing.
+        continue;
+      }
       const int opportunity_boost =
           opportunity_priority[candidate.candidate_signature];
       const bool reasoning_candidate = candidate.status == "VALIDATION_READY" ||

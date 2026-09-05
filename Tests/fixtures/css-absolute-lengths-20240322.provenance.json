@@ -1,0 +1,11 @@
+{
+  "source_url": "https://www.w3.org/TR/2024/CRD-css-values-3-20240322/",
+  "section": "5.2 Absolute Lengths",
+  "selector": "#absolute-lengths",
+  "section_sha256": "cd24adf3f40876a83f6b179f3417317d0124e1dd475fe2abde7880b2785201ec",
+  "capture_method": "Verbatim HTML from the section heading up to, but excluding, the next heading of equal or higher rank. No source procedure was rewritten.",
+  "copyright": "Copyright 2024 World Wide Web Consortium. W3C liability, trademark and permissive document license rules apply.",
+  "license_url": "https://www.w3.org/copyright/document-license-2023/",
+  "scope": "CSS in to CSS px numeric conversion only, not physical display measurements or device pixels.",
+  "fixture_status": "Offline source fixture; transport, independent production review and live probation are not established by fixture tests."
+}

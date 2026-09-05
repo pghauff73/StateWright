@@ -4,6 +4,7 @@
 #include "statewright/contracts/hash.hpp"
 #include "statewright/egcf/evidence.hpp"
 #include "statewright/egcf/internet_feed.hpp"
+#include "statewright/egcf/grounded_experiment.hpp"
 #include "statewright/saa/failure_algebra.hpp"
 #include "statewright/saa/improvement_scheduling.hpp"
 
@@ -405,13 +406,16 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
   std::ranges::sort(request.trial_groups, {},
                     &InternetScalarTrialGroup::independence_group);
 
+  const auto grounding = validate_grounded_experiment(store_, canonical_candidate, request);
+  if (grounding.enabled) request.independent_review = true;
   const auto candidate_ir =
       saa::canonicalize_mapping(canonical_candidate.proposed_saa_ir);
-  const auto baseline_ir = saa::canonicalize_mapping(request.baseline_saa_ir);
+  const auto baseline_ir = saa::canonicalize_mapping(
+      grounding.new_capability ? grounding.oracle_ir : request.baseline_saa_ir);
   const auto candidate_program =
       supported_scalar_program(canonical_candidate.proposed_saa_ir);
   const auto baseline_program =
-      supported_scalar_program(request.baseline_saa_ir);
+      supported_scalar_program(grounding.new_capability ? grounding.oracle_ir : request.baseline_saa_ir);
   const auto fragment_record =
       store_.get(canonical_candidate.source_fragment_id);
   if (fragment_record.object_type != "internet-source-fragment") {
@@ -464,7 +468,7 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
   qualification.dataset_snapshot_ids = request.dataset_snapshot_ids;
   qualification.context_signature = request.context_signature;
   qualification.canonical_candidate_ir = saa::to_json(candidate_ir);
-  qualification.canonical_baseline_ir = saa::to_json(baseline_ir);
+  qualification.canonical_baseline_ir = grounding.new_capability ? Json::object() : saa::to_json(baseline_ir);
   qualification.identical_frozen_contexts = true;
 
   std::vector<std::string> requirements = benchmark_requirements();
@@ -519,14 +523,23 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
     return result;
   }
 
+  const std::string metric_name = grounding.new_capability ? "correct supported fraction" : "mean absolute error";
   const auto design = saa::make_ab_experiment_design(
       request.baseline_ref, candidate_id, request.context_signature,
-      {{.name = "mean absolute error",
-        .direction = "LOWER_IS_BETTER",
+      {{.name = metric_name,
+        .direction = grounding.new_capability ? "HIGHER_IS_BETTER" : "LOWER_IS_BETTER",
         .minimum_material_effect = request.minimum_material_effect}},
       {"bounded execution", "output within bounds"},
       {"frozen fixture execution"}, request.minimum_trials_per_group, true);
   qualification.experiment_design = saa::to_json(design);
+  if (grounding.enabled) {
+    qualification.experiment_design["grounded_protocol_id"] = request.protocol_id;
+    qualification.experiment_design["protocol_binding_sha256"] = grounding.binding;
+    qualification.experiment_design["review_evidence_ids"] = grounding.review_ids;
+    qualification.experiment_design["adoption_mode"] = grounding.new_capability ? "NEW_CAPABILITY" : "REPLACEMENT";
+    qualification.experiment_design["reference_oracle_ir"] = grounding.oracle_ir;
+    qualification.experiment_design["baseline_scope"] = grounding.new_capability ? "CANONICAL_CATALOG_LOOKUP_ONLY" : "CAPTURED_DEPLOYED_IMPLEMENTATION";
+  }
 
   std::vector<saa::AlgorithmABExperimentResult> experiment_results;
   bool invariants_passed = true;
@@ -537,13 +550,21 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
         mean_absolute_error(baseline_program, group);
     const mpq_class candidate_error =
         mean_absolute_error(candidate_program, group);
-    const bool baseline_bounds =
+    const bool baseline_bounds = grounding.new_capability ||
         outputs_within_bounds(baseline_program, group, request.minimum_output,
                               request.maximum_output);
     const bool candidate_bounds =
         outputs_within_bounds(candidate_program, group, request.minimum_output,
                               request.maximum_output);
     const bool source_correct = candidate_error == 0;
+    mpq_class candidate_metric = candidate_error;
+    const mpq_class baseline_metric = grounding.new_capability ? mpq_class{0} : baseline_error;
+    if (grounding.new_capability) {
+      unsigned long correct = 0;
+      for (std::size_t i = 0; i < group.inputs.size(); ++i)
+        if (execute(candidate_program, group.inputs[i]) == group.expected_outputs[i]) ++correct;
+      candidate_metric = mpq_class(correct, static_cast<unsigned long>(group.inputs.size()));
+    }
     all_outputs_within_bounds =
         all_outputs_within_bounds && baseline_bounds && candidate_bounds;
     all_exact_outputs = all_exact_outputs && source_correct;
@@ -560,6 +581,13 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
     baseline_content["mean_absolute_error"] = rational_text(baseline_error);
     baseline_content["output_within_bounds"] = baseline_bounds;
     baseline_content["variant"] = "baseline";
+    if (grounding.new_capability) {
+      baseline_content.erase("ir_structural_hash");
+      baseline_content.erase("mean_absolute_error");
+      baseline_content["response_status"] = "UNSUPPORTED";
+      baseline_content["output_bounds_applicable"] = false;
+      baseline_content[metric_name] = "0";
+    }
     const std::string baseline_evidence = register_evidence(
         store_, candidate_id, request.recorded_at, request.context_signature,
         group.independence_group, request.baseline_ref,
@@ -571,6 +599,7 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
     candidate_content["output_within_bounds"] = candidate_bounds;
     candidate_content["exact_expected_outputs"] = source_correct;
     candidate_content["variant"] = "candidate";
+    if (grounding.new_capability) candidate_content[metric_name] = rational_text(candidate_metric);
     const std::string candidate_evidence = register_evidence(
         store_, candidate_id, request.recorded_at, request.context_signature,
         group.independence_group, candidate_id, std::move(candidate_content),
@@ -579,13 +608,13 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
     qualification.evidence_ids.push_back(candidate_evidence);
 
     const auto baseline_observation = saa::make_variant_observation(
-        design, request.baseline_ref, {{"mean absolute error", baseline_error}},
+        design, request.baseline_ref, {{metric_name, baseline_metric}},
         {baseline_evidence},
         {{"bounded execution", true},
          {"output within bounds", baseline_bounds}},
         static_cast<int>(group.inputs.size()), true);
     const auto candidate_observation = saa::make_variant_observation(
-        design, candidate_id, {{"mean absolute error", candidate_error}},
+        design, candidate_id, {{metric_name, candidate_metric}},
         {candidate_evidence},
         {{"bounded execution", true},
          {"output within bounds", candidate_bounds}},

@@ -4,6 +4,7 @@
 #include "statewright/contracts/hash.hpp"
 #include "statewright/contracts/typed_id.hpp"
 #include "statewright/egcf/internet_experiment.hpp"
+#include "statewright/egcf/exact_affine_expression.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -89,12 +90,22 @@ struct Translation final {
   std::vector<std::string> invariants;
   contracts::Json termination = contracts::Json::object();
   contracts::Json provenance = contracts::Json::object();
+  contracts::Json units = {{"status", "SOURCE_UNSPECIFIED"}};
   std::vector<std::string> unresolved;
 };
 
 Translation
 translate_algorithm(const sources::InternetSourceFragment &fragment) {
   Translation result;
+  const bool diagnostic_v2 = fragment.metadata.contains("classification_version");
+  if ((fragment.metadata.value("document_extraction_truncated", false) &&
+       fragment.metadata.value("section_completeness", std::string{}) != "COMPLETE") ||
+      fragment.metadata.value("section_completeness", std::string{}) ==
+          "INCOMPLETE") {
+    result.name = "incomplete-source-context";
+    result.unresolved = {"SOURCE_CONTEXT_INCOMPLETE"};
+    return result;
+  }
   if (fragment.metadata.value("mathematical_context_review_required", false)) {
     result.name = "mathematical-source-context";
     result.unresolved = {"MATHEMATICAL_CONTEXT_REVIEW_REQUIRED",
@@ -103,8 +114,80 @@ translate_algorithm(const sources::InternetSourceFragment &fragment) {
                          {"source_fragment_id", fragment.object_id()}};
     return result;
   }
-  const auto first_separator = fragment.text.find(';');
-  result.name = trim(fragment.text.substr(0U, first_separator));
+  if (fragment.metadata.value("context_preservation", std::string{}) ==
+      "whole-section-decoded-text") {
+    result.name = "preserved-source-section";
+    result.unresolved = {"SOURCE_SECTION_SYNTAX_NOT_SUPPORTED"};
+    return result;
+  }
+  if (fragment.metadata.value("candidate_evidence", std::string{}) ==
+      "CSS_ABSOLUTE_LENGTH_SECTION") {
+    result.name = "CSS inches to CSS pixels";
+    // Reviewed W3C CSS Values 3, 22 March 2024, section 5.2. The exact
+    // section includes both the ratio and the physical/device-pixel caveats.
+    // A changed source requires a new reviewed adapter, not heuristic parsing.
+    if (fragment.metadata.value("section_completeness", std::string{}) !=
+            "COMPLETE" ||
+        contracts::sha256_text(fragment.text) !=
+            "cd24adf3f40876a83f6b179f3417317d0124e1dd475fe2abde7880b2785201ec") {
+      result.unresolved = {"SOURCE_SECTION_REVISION_NOT_SUPPORTED"};
+      return result;
+    }
+    const auto input_unit = fragment.metadata.value("css_input_unit", std::string("in"));
+    static const std::map<std::string, std::pair<std::string, std::string>> conversions = {
+        {"in", {"96", "inches"}}, {"cm", {"4800/127", "centimeters"}},
+        {"mm", {"480/127", "millimeters"}}, {"Q", {"120/127", "quarter-millimeters"}},
+        {"pc", {"16", "picas"}}, {"pt", {"4/3", "points"}}};
+    const auto conversion = conversions.find(input_unit);
+    if (conversion == conversions.end()) {
+      result.unresolved = {"CSS_INPUT_UNIT_NOT_SUPPORTED"};
+      return result;
+    }
+    const auto &factor = conversion->second.first;
+    const auto input_name = "css_length_" + input_unit;
+    result.name = "CSS " + conversion->second.second + " to CSS pixels";
+    result.inputs = {input_name};
+    result.outputs = {"css_length_px"};
+    result.saa_ir = {
+        {"name", input_unit == "in" ? "css-inches-to-css-pixels" : "css-" + input_unit + "-to-css-pixels"},
+        {"entry_nodes", {"scale"}},
+        {"inputs", {{{"name", input_name}, {"position", 0}}}},
+        {"nodes", {{{"id", "scale"}, {"primitive", "MULTIPLY"},
+                    {"operands", {{{"constant", factor}}, {{"input", 0}}}}},
+                   {{"id", "offset"}, {"primitive", "ADD"},
+                    {"operands", {{{"node", "scale"}}, {{"constant", "0"}}}}}}},
+        {"outputs", {{{"name", "css_length_px"}, {"position", 0},
+                      {"source", {{"node", "offset"}}}}}}};
+    result.invariants = {input_unit == "in" ? "CSS pixel length equals 96 times CSS inch length" :
+                         "CSS pixel length equals " + factor + " times CSS " + input_unit + " length",
+                         "terminates in two steps"};
+    result.termination = {{"bounded_steps", 2}, {"terminates", true}};
+    result.units = {{"status", "SOURCE_DECLARED"}, {"input", "CSS " + input_unit},
+                    {"output", "CSS px"}};
+    result.provenance = {
+        {"translator_version", input_unit == "in" ? "css-absolute-length-in-px-v1" : "css-absolute-length-to-px-v2"},
+        {"source_fragment_id", fragment.object_id()},
+        {"snapshot_id", fragment.snapshot_id}, {"selector", fragment.selector},
+        {"section_sha256", contracts::sha256_text(fragment.text)},
+        {"reference_url", "https://www.w3.org/TR/2024/CRD-css-values-3-20240322/#absolute-lengths"},
+        {"slope", factor}, {"bias", "0"},
+        {"scope", "Exact numeric CSS unit conversion only; not device pixels, physical screen measurement, or property range validation"}};
+    return result;
+  }
+  std::string field_text = fragment.text;
+  bool projected_fields = false;
+  if (fragment.metadata.value("scalar_expression_syntax", std::string{}) ==
+          "exact-affine-expression-v1" && field_text.find(';') == std::string::npos) {
+    // Accept one title followed by explicit labeled lines. Every line remains
+    // in the parse: conditions and unrecognized statements are not discarded.
+    const auto newline = field_text.find('\n');
+    if (newline != std::string::npos) {
+      for (auto &c : field_text) if (c == '\n') c = ';';
+      projected_fields = true;
+    }
+  }
+  const auto first_separator = field_text.find(';');
+  result.name = trim(field_text.substr(0U, first_separator));
   struct Field {
     std::string value;
     std::size_t start;
@@ -113,19 +196,24 @@ translate_algorithm(const sources::InternetSourceFragment &fragment) {
   std::map<std::string, Field> fields;
   bool valid_fields = first_separator != std::string::npos;
   std::size_t offset =
-      valid_fields ? first_separator + 1U : fragment.text.size();
-  while (offset < fragment.text.size()) {
-    const auto separator = fragment.text.find(';', offset);
+      valid_fields ? first_separator + 1U : field_text.size();
+  while (offset < field_text.size()) {
+    const auto separator = field_text.find(';', offset);
     const std::size_t end =
-        separator == std::string::npos ? fragment.text.size() : separator;
-    const std::string field = fragment.text.substr(offset, end - offset);
+        separator == std::string::npos ? field_text.size() : separator;
+    const std::string field = field_text.substr(offset, end - offset);
     const auto colon = field.find(':');
     if (!trim(field).empty()) {
       if (colon == std::string::npos) {
         valid_fields = false;
         break;
       }
-      const std::string label = lower(trim(field.substr(0, colon)));
+      std::string label = lower(trim(field.substr(0, colon)));
+      if (fragment.metadata.value("scalar_expression_syntax", std::string{}) ==
+          "exact-affine-expression-v1") {
+        if (label == "input") label = "inputs";
+        if (label == "output") label = "outputs";
+      }
       if (label != "inputs" && label != "outputs" && label != "procedure" &&
           label != "source code example") {
         valid_fields = false;
@@ -156,6 +244,8 @@ translate_algorithm(const sources::InternetSourceFragment &fragment) {
     const auto &input = result.inputs.front();
     const auto &output = result.outputs.front();
     mpq_class slope{1}, bias{0};
+    bool abbreviated_affine = false;
+    bool parsed_affine = false;
     bool supported = procedure.value == "return the input" ||
                      procedure.value == "return " + input;
     if (!supported && procedure.value.size() <= 256U) {
@@ -180,6 +270,52 @@ translate_algorithm(const sources::InternetSourceFragment &fragment) {
         } catch (const std::exception &) {
           supported = false;
         }
+      }
+    }
+    if (!supported && procedure.value.size() <= 256U) {
+      // Accept only complete scalar scale/offset expressions. Do not infer
+      // missing operands from prose or evaluate downloaded expressions.
+      static const std::regex scale(
+          R"(^return\s+([+-]?[0-9]{1,64}(?:/[0-9]{1,64})?)\s*\*\s*([A-Za-z_][A-Za-z0-9_]{0,63})$)");
+      static const std::regex offset_expression(
+          R"(^return\s+([A-Za-z_][A-Za-z0-9_]{0,63})\s*([+-])\s*([0-9]{1,64}(?:/[0-9]{1,64})?)$)");
+      std::smatch match;
+      try {
+        if (std::regex_match(procedure.value, match, scale) &&
+            match[2] == input) {
+          slope = mpq_class(match[1].str(), 10);
+          bias = 0;
+          abbreviated_affine = true;
+        } else if (std::regex_match(procedure.value, match,
+                                    offset_expression) &&
+                   match[1] == input) {
+          slope = 1;
+          bias = mpq_class(match[3].str(), 10);
+          if (match[2] == "-")
+            bias = -bias;
+          abbreviated_affine = true;
+        }
+        if (abbreviated_affine && slope.get_den() != 0 &&
+            bias.get_den() != 0) {
+          slope.canonicalize();
+          bias.canonicalize();
+          supported = slope != 0;
+        }
+      } catch (const std::exception &) {
+        supported = false;
+      }
+    }
+    // New extraction versions may use exact decimals, parentheses and
+    // constant division. Keep old-fragment translation replay unchanged.
+    if (!supported && fragment.metadata.value("scalar_expression_syntax", std::string{}) ==
+                          "exact-affine-expression-v1" &&
+        procedure.value.starts_with("return ")) {
+      if (const auto expression = parse_exact_affine_expression(
+              std::string_view(procedure.value).substr(7), input)) {
+        slope = expression->slope;
+        bias = expression->bias;
+        supported = true;
+        parsed_affine = true;
       }
     }
     if (supported) {
@@ -209,7 +345,10 @@ translate_algorithm(const sources::InternetSourceFragment &fragment) {
                              "terminates in two steps"};
         result.termination = {{"bounded_steps", 2}, {"terminates", true}};
       }
-      result.provenance = {{"translator_version", "exact-scalar-procedure-v2"},
+      result.provenance = {{"translator_version",
+                            (parsed_affine || projected_fields) ? "exact-scalar-procedure-v4" :
+                            abbreviated_affine ? "exact-scalar-procedure-v3"
+                                               : "exact-scalar-procedure-v2"},
                            {"source_fragment_id", fragment.object_id()},
                            {"snapshot_id", fragment.snapshot_id},
                            {"selector", fragment.selector},
@@ -218,19 +357,27 @@ translate_algorithm(const sources::InternetSourceFragment &fragment) {
                            {"procedure", procedure.value},
                            {"slope", slope.get_str()},
                            {"bias", bias.get_str()}};
+      if (projected_fields)
+        result.provenance["field_text_projection"] = "newline-to-semicolon-byte-preserving-v1";
     }
   }
   if (result.name.empty()) {
     result.unresolved.push_back("MISSING_ALGORITHM_NAME");
   }
   if (result.inputs.empty()) {
-    result.unresolved.push_back("MISSING_SEMANTIC_INPUTS");
+    result.unresolved.push_back(diagnostic_v2
+        ? "SOURCE_INPUT_DECLARATION_NOT_PARSED" : "MISSING_SEMANTIC_INPUTS");
   }
   if (result.outputs.empty()) {
-    result.unresolved.push_back("MISSING_SEMANTIC_OUTPUTS");
+    result.unresolved.push_back(diagnostic_v2
+        ? "SOURCE_OUTPUT_DECLARATION_NOT_PARSED" : "MISSING_SEMANTIC_OUTPUTS");
   }
   if (result.saa_ir.empty()) {
-    result.unresolved.push_back("UNSUPPORTED_SOURCE_TO_SAA_IR_TRANSLATION");
+    if (diagnostic_v2 && !fields.contains("procedure"))
+      result.unresolved.push_back("SOURCE_PROCEDURE_NOT_PARSED");
+    result.unresolved.push_back(diagnostic_v2
+        ? "UNSUPPORTED_PROCEDURE_SYNTAX_OR_FAMILY"
+        : "UNSUPPORTED_SOURCE_TO_SAA_IR_TRANSLATION");
   }
   return result;
 }
@@ -259,6 +406,10 @@ void verify_internet_candidate_translation(
       candidate.semantic_outputs != translation.outputs ||
       candidate.claimed_invariants != translation.invariants ||
       candidate.termination_properties != translation.termination ||
+      ((translation.provenance.value("translator_version", std::string{}) ==
+           "css-absolute-length-in-px-v1" ||
+        translation.provenance.value("translator_version", std::string{}) ==
+           "css-absolute-length-to-px-v2") && candidate.units != translation.units) ||
       candidate.applicability.value("translation", contracts::Json::object()) !=
           translation.provenance) {
     feed_error(
@@ -374,6 +525,10 @@ InternetFeedResult InternetFeedCoordinator::process(
     }
   }
 
+  // Failure records are not changed by candidate/retrieval registration below.
+  // Load and normalize this snapshot lazily once per batch, not per fragment.
+  std::vector<std::pair<std::string, std::string>> failure_documents;
+  bool failure_documents_loaded = false;
   for (const auto &fragment : extraction.fragments) {
     const auto algorithm_item =
         algorithm_item_by_fragment.find(fragment.object_id());
@@ -390,9 +545,10 @@ InternetFeedResult InternetFeedCoordinator::process(
     if (prior_retrieval != prior_retrievals.end()) {
       retrieval = prior_retrieval->second;
     } else {
+      const auto terms = lexical_terms(fragment.text);
       CanonicalAlgorithmQuery query;
       query.semantic_meanings = translation.inputs;
-      query.lexical_terms = lexical_terms(fragment.text);
+      query.lexical_terms = terms;
       query.input_count = static_cast<int>(translation.inputs.size());
       query.output_count = static_cast<int>(translation.outputs.size());
       query.limit = 20U;
@@ -431,14 +587,19 @@ InternetFeedResult InternetFeedCoordinator::process(
           "REASONING_EQUIVALENCE:NOT_APPLICABLE_TO_MATHEMATICAL_CANDIDATE");
       retrieval.exclusions.push_back(
           "TRANSFER_ADAPTATION:REQUIRES_QUALIFIED_BASELINE");
-      const auto terms = lexical_terms(fragment.text);
-      for (const auto &failure : store_.list("failure")) {
-        const std::string payload =
-            lower(contracts::canonical_json(failure.payload));
+      if (!terms.empty() && !failure_documents_loaded) {
+        for (const auto &failure : store_.list("failure")) {
+          failure_documents.emplace_back(
+              failure.object_id,
+              lower(contracts::canonical_json(failure.payload)));
+        }
+        failure_documents_loaded = true;
+      }
+      for (const auto &[failure_id, payload] : failure_documents) {
         if (std::ranges::any_of(terms, [&](const auto &term) {
               return payload.find(term) != std::string::npos;
             })) {
-          retrieval.failure_match_ids.push_back(failure.object_id);
+          retrieval.failure_match_ids.push_back(failure_id);
         }
       }
       retrieval.search_complete = true;
@@ -472,7 +633,7 @@ InternetFeedResult InternetFeedCoordinator::process(
     candidate.proposed_saa_ir = translation.saa_ir;
     candidate.semantic_inputs = translation.inputs;
     candidate.semantic_outputs = translation.outputs;
-    candidate.units = {{"status", "SOURCE_UNSPECIFIED"}};
+    candidate.units = translation.units;
     candidate.applicability = {
         {"source_group",
          store_.get(fragment.snapshot_id).payload.at("source_group")},

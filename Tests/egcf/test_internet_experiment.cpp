@@ -2,6 +2,10 @@
 #include "statewright/egcf/internet_experiment.hpp"
 #include "statewright/egcf/internet_feed.hpp"
 #include "statewright/egcf/internet_probation.hpp"
+#include "statewright/egcf/grounded_experiment.hpp"
+#include "statewright/egcf/exact_affine_expression.hpp"
+#include <array>
+#include <fstream>
 
 #include "statewright/common/error.hpp"
 #include "statewright/contracts/hash.hpp"
@@ -75,7 +79,8 @@ StagedCandidate stage_identity_candidate(
         "Identity algorithm; inputs: x; outputs: y; procedure: return the "
         "input; "
         "source code example: system(\"touch /tmp/must-not-exist\")\n",
-    std::string_view expected_status = "VALIDATION_READY") {
+    std::string_view expected_status = "VALIDATION_READY",
+    std::string_view content_type = "text/plain") {
   using namespace statewright;
   egcf::InternetImprovementStore internet(store);
   const auto policy = sources::canonical_source_policy({});
@@ -102,7 +107,7 @@ StagedCandidate stage_identity_candidate(
   response.final_url = watch.canonical_url;
   response.resolved_addresses = {"93.184.216.34"};
   response.http_status = 200;
-  response.headers["content-type"] = "text/plain";
+  response.headers["content-type"] = content_type;
   response.body = bytes(description);
   response.tls_verified = true;
   response.compressed_bytes = response.body.size();
@@ -122,9 +127,13 @@ StagedCandidate stage_identity_candidate(
       std::span<const std::byte>(response.body));
   egcf::InternetFeedCoordinator coordinator(store);
   const auto feed = coordinator.process(assessment, extraction, "identity");
-  REQUIRE(feed.candidates.size() == 1U);
-  REQUIRE(feed.candidates.front().status == expected_status);
-  return {.candidate = feed.candidates.front(),
+  const auto selected = std::ranges::find_if(feed.candidates, [](const auto &candidate) {
+    return candidate.semantic_inputs == std::vector<std::string>{"css_length_in"};
+  });
+  REQUIRE(feed.candidates.size() == (selected == feed.candidates.end() ? 1U : 6U));
+  const auto &candidate = selected == feed.candidates.end() ? feed.candidates.front() : *selected;
+  REQUIRE(candidate.status == expected_status);
+  return {.candidate = candidate,
           .snapshot_id = capture.snapshot_id};
 }
 
@@ -762,5 +771,186 @@ TEST_CASE("internet affine novelty distinguishes related algorithms from exact "
         duplicate.candidate.exact_match_ids ==
         std::vector<std::string>{admission.canonical_admission.canonical_id});
   }
+  std::filesystem::remove_all(root);
+}
+
+TEST_CASE("internet CSS unit conversion uses independent frozen expected outputs") {
+  using namespace statewright;
+  const auto section = core::read_text(std::filesystem::path(__FILE__)
+      .parent_path().parent_path() / "fixtures/css-absolute-lengths-20240322.html");
+  const auto root = temporary_root();
+  {
+    egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+    const auto staged = stage_identity_candidate(store,
+        section + "<h2>Next section</h2>", "VALIDATION_READY", "text/html");
+    auto request = request_for(staged.snapshot_id);
+    request.minimum_output = -1000;
+    request.maximum_output = 1000;
+    // Frozen source-derived cases, not outputs produced by the translator.
+    // Groups are fixture partitions, not claims of independent live review.
+    request.trial_groups[0].inputs = {mpq_class(-1), mpq_class(0), mpq_class(1, 2)};
+    request.trial_groups[0].expected_outputs = {mpq_class(-96), mpq_class(0), mpq_class(48)};
+    request.trial_groups[1].inputs = {mpq_class(1), mpq_class(2)};
+    request.trial_groups[1].expected_outputs = {mpq_class(96), mpq_class(192)};
+    bool correct = true;
+    SECTION("frozen conversion cases") {}
+    SECTION("wrong ratio is rejected") {
+      request.trial_groups[1].expected_outputs[1] = 190;
+      correct = false;
+    }
+    request.context_signature = egcf::internet_experiment_context_signature(
+        request.dataset_snapshot_ids, request.trial_groups);
+    for (auto &group : request.trial_groups) {
+      group.baseline_context_signature = request.context_signature;
+      group.candidate_context_signature = request.context_signature;
+    }
+    const auto result = egcf::InternetExperimentCoordinator(store).qualify(
+        staged.candidate, request);
+    REQUIRE(result.qualification.experiment_qualified == correct);
+    REQUIRE(result.qualification.invariants_passed == correct);
+    REQUIRE_FALSE(result.qualification.downloaded_code_executed);
+    REQUIRE(store.list("algorithm-definition").empty());
+    if (correct) {
+      // Synthetic lifecycle observations test the gates, not live acceptance.
+      egcf::InternetImprovementStore internet(store);
+      const auto policy_id = internet.register_promotion_policy(packaged_promotion_policy());
+      const auto qualified = egcf::AutonomousPromotionController(store).assess(
+          result.updated_candidate, policy_id, "2026-09-02T02:00:00Z");
+      REQUIRE(qualified.assessment.promotion_allowed);
+      egcf::InternetProbationController probation(store);
+      const auto admission = probation.admit(qualified.updated_candidate, {},
+                                              "2026-09-02T02:00:00Z");
+      REQUIRE(admission.updated_candidate.status == "PROBATIONARY_CANONICAL");
+      auto candidate = admission.updated_candidate;
+      for (int index = 0; index < 4; ++index) {
+        candidate = probation.observe(candidate, probation_observation(
+            admission.plan, result.qualification.evidence_ids, index, index % 2))
+                        .updated_candidate;
+      }
+      REQUIRE(candidate.status == "CANONICAL");
+      const auto regression = probation_observation(admission.plan,
+          result.qualification.evidence_ids, 4, 1, false, true);
+      REQUIRE(probation.observe(candidate, regression).updated_candidate.status == "DEMOTED");
+    }
+  }
+  std::filesystem::remove_all(root);
+}
+
+TEST_CASE("internet v5 affine parser accepts exact arithmetic and rejects nonlinear syntax") {
+  using statewright::egcf::parse_exact_affine_expression;
+  const auto value = parse_exact_affine_expression("(x - 32) * 5 / 9", "x");
+  REQUIRE(value);
+  REQUIRE(value->slope == mpq_class(5, 9));
+  REQUIRE(value->bias == mpq_class(-160, 9));
+  REQUIRE(parse_exact_affine_expression("x + 273.15", "x")->bias == mpq_class(5463, 20));
+  for (const auto expression : {"x*x", "1/x", "x/0", "system(x)", "x if x > 0", "other + x"})
+    REQUIRE_FALSE(parse_exact_affine_expression(expression, "x"));
+}
+
+TEST_CASE("internet grounded protocol requires signed independent evidence and records coverage separately") {
+  using namespace statewright;
+  const auto root = temporary_root();
+  egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+  const auto staged = stage_identity_candidate(store);
+  auto request = request_for(staged.snapshot_id);
+  const auto search = egcf::exact_capability_search(store, staged.candidate);
+  REQUIRE(search.at("candidates").empty());
+  const auto make_evidence = [&](contracts::Json content) {
+    return egcf::register_grounded_evidence(store, staged.candidate, std::move(content),
+        "unit-test-only", "unit-test-only", "fixture", request.recorded_at);
+  };
+  request.baseline_ref = make_evidence({{"kind", "CANONICAL_CATALOG_UNSUPPORTED_BASELINE_V1"},
+      {"candidate_id", staged.candidate.object_id()}, {"workspace", root.string()}, {"search", search}});
+  request.baseline_saa_ir = contracts::Json::object();
+  request.benchmark_policy.minimum_track_scores = request.benchmark_track_scores;
+  request.benchmark_policy.minimum_independence_groups = 2;
+  egcf::InternetExperimentProtocol protocol;
+  protocol.protocol_version = std::string(egcf::grounded_experiment_version);
+  protocol.applicable_candidate_statuses = {"VALIDATION_READY"};
+  protocol.baseline_ref = request.baseline_ref;
+  protocol.baseline_saa_ir = request.baseline_saa_ir;
+  protocol.dataset_snapshot_ids = request.dataset_snapshot_ids;
+  for (const auto &group : request.trial_groups) protocol.trial_groups.push_back(egcf::to_json(group));
+  protocol.minimum_material_effect = "1";
+  protocol.minimum_output = "-10";
+  protocol.maximum_output = "10";
+  for (const auto &[name, score] : request.benchmark_track_scores) protocol.benchmark_track_scores[name] = score;
+  protocol.benchmark_policy = saa::to_json(request.benchmark_policy);
+  protocol.integrity_policy = saa::to_json(request.integrity_policy);
+  for (const auto &snapshot : request.integrity_snapshots) protocol.integrity_snapshots.push_back(saa::to_json(snapshot));
+  const auto measured = make_evidence({{"benchmark_track_scores", protocol.benchmark_track_scores},
+                                      {"integrity_snapshots", protocol.integrity_snapshots}});
+  const auto negative = make_evidence({{"kind", "unit-test-negative-control-fixture"}});
+  protocol.valid_from = "2026-09-02T00:00:00Z";
+  protocol.valid_until = "2026-09-03T00:00:00Z";
+  protocol.source_provenance = {{"grounded", {
+      {"adoption_mode", "NEW_CAPABILITY"}, {"author_identity", "fixture-author"},
+      {"candidate_id", staged.candidate.object_id()}, {"source_fragment_id", staged.candidate.source_fragment_id},
+      {"source_body_sha256", store.get(staged.snapshot_id).payload.at("body_sha256")},
+      {"candidate_ir_sha256", contracts::sha256_json(staged.candidate.proposed_saa_ir)},
+      {"baseline_rationale", "CANONICAL_CATALOG_LOOKUP_ONLY"},
+      {"reference_oracle_ir", staged.candidate.proposed_saa_ir},
+      {"measurement_evidence_id", measured},
+      {"claim", {{"inputs", staged.candidate.semantic_inputs}, {"outputs", staged.candidate.semantic_outputs},
+                 {"units", staged.candidate.units}, {"domain", "test rationals"}, {"exclusions", {"production use"}}}},
+      {"review_evidence_ids", contracts::Json::array()}}}};
+  protocol = egcf::canonical_internet_experiment_protocol(std::move(protocol));
+  const auto binding = egcf::experiment_review_binding(protocol);
+  const auto hex = [](const unsigned char *data, std::size_t length) {
+    std::string text;
+    constexpr char digits[] = "0123456789abcdef";
+    for (std::size_t i = 0; i < length; ++i) { text += digits[data[i] >> 4]; text += digits[data[i] & 15]; }
+    return text;
+  };
+  contracts::Json trust = {{"schema_version", 1}, {"allowed_adoption_modes", {"NEW_CAPABILITY", "REPLACEMENT"}},
+                           {"reviewer_public_keys", contracts::Json::object()}};
+  for (int i = 0; i < 2; ++i) {
+    std::array<unsigned char, 32> private_bytes{};
+    private_bytes[0] = static_cast<unsigned char>(i + 1);
+    std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> key(
+        EVP_PKEY_new_raw_private_key(EVP_PKEY_ED25519, nullptr, private_bytes.data(), private_bytes.size()), EVP_PKEY_free);
+    REQUIRE(key);
+    std::array<unsigned char, 32> public_bytes{};
+    std::size_t public_size = public_bytes.size();
+    REQUIRE(EVP_PKEY_get_raw_public_key(key.get(), public_bytes.data(), &public_size) == 1);
+    const std::string reviewer = "fixture-reviewer-" + std::to_string(i);
+    trust["reviewer_public_keys"][reviewer] = hex(public_bytes.data(), public_size);
+    contracts::Json message = {{"reviewer_id", reviewer}, {"protocol_binding_sha256", binding},
+        {"verdict", "APPROVE"}, {"reviewed_at", request.recorded_at},
+        {"independence_group", request.trial_groups[static_cast<std::size_t>(i)].independence_group},
+        {"method", "fixture-method-" + std::to_string(i)}, {"derivation", "synthetic test only"},
+        {"shared_dependencies", {"synthetic fixture"}}, {"negative_control_evidence_ids", {negative}}};
+    std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> context(EVP_MD_CTX_new(), EVP_MD_CTX_free);
+    REQUIRE(EVP_DigestSignInit(context.get(), nullptr, nullptr, nullptr, key.get()) == 1);
+    std::array<unsigned char, 64> signature{};
+    std::size_t signature_size = signature.size();
+    const auto bytes_to_sign = contracts::canonical_json(message);
+    REQUIRE(EVP_DigestSign(context.get(), signature.data(), &signature_size,
+        reinterpret_cast<const unsigned char *>(bytes_to_sign.data()), bytes_to_sign.size()) == 1);
+    contracts::Json envelope = {{"message", message}, {"signature_hex", hex(signature.data(), signature_size)}};
+    egcf::verify_experiment_review(envelope, trust);
+    auto altered = envelope;
+    altered["message"]["verdict"] = "REJECT";
+    REQUIRE_THROWS(egcf::verify_experiment_review(altered, trust));
+    protocol.source_provenance["grounded"]["review_evidence_ids"].push_back(make_evidence(envelope));
+  }
+  protocol = egcf::canonical_internet_experiment_protocol(std::move(protocol));
+  REQUIRE(egcf::experiment_review_binding(protocol) == binding);
+  egcf::InternetImprovementStore internet(store);
+  request.protocol_id = internet.register_experiment_protocol(protocol);
+  REQUIRE_THROWS(egcf::validate_grounded_experiment(store, staged.candidate, request));
+  // Trust anchors here are test-only. No production reviewer keys are created.
+  std::ofstream(root / ".ourd-agent/egcf/experiment-trust.json") << contracts::canonical_json(trust);
+  REQUIRE(egcf::validate_grounded_experiment(store, staged.candidate, request).new_capability);
+  auto changed = request;
+  changed.trial_groups[0].expected_outputs[0] = 100;
+  changed.context_signature = egcf::internet_experiment_context_signature(changed.dataset_snapshot_ids, changed.trial_groups);
+  REQUIRE_THROWS(egcf::validate_grounded_experiment(store, staged.candidate, changed));
+  egcf::InternetExperimentCoordinator coordinator(store);
+  const auto result = coordinator.qualify(staged.candidate, request);
+  REQUIRE(result.qualification.experiment_qualified);
+  REQUIRE(result.qualification.canonical_baseline_ir.empty());
+  REQUIRE(result.qualification.experiment_design.at("adoption_mode") == "NEW_CAPABILITY");
+  REQUIRE(result.qualification.experiment_design.at("baseline_scope") == "CANONICAL_CATALOG_LOOKUP_ONLY");
   std::filesystem::remove_all(root);
 }
