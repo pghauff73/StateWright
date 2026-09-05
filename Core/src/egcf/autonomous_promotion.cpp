@@ -25,15 +25,12 @@ benchmark_gate_from_json(const Json &value) {
     promotion_error("persisted benchmark gate must be an object");
   }
   return {.candidate_ref = value.at("candidate_ref").get<std::string>(),
-          .profile_signature =
-              value.at("profile_signature").get<std::string>(),
-          .policy_signature =
-              value.at("policy_signature").get<std::string>(),
+          .profile_signature = value.at("profile_signature").get<std::string>(),
+          .policy_signature = value.at("policy_signature").get<std::string>(),
           .evidence_requirement_coverage_bp =
               value.at("evidence_requirement_coverage_bp").get<int>(),
           .independence_groups =
-              value.at("independence_groups")
-                  .get<std::vector<std::string>>(),
+              value.at("independence_groups").get<std::vector<std::string>>(),
           .threshold_failures =
               value.at("threshold_failures").get<std::vector<std::string>>(),
           .independent_review = value.at("independent_review").get<bool>(),
@@ -50,27 +47,23 @@ integrity_trajectory_from_json(const Json &value) {
     promotion_error("persisted integrity trajectory must be an object");
   }
   return {.snapshot_signatures =
-              value.at("snapshot_signatures")
-                  .get<std::vector<std::string>>(),
+              value.at("snapshot_signatures").get<std::vector<std::string>>(),
           .latest_generation = value.at("latest_generation").get<int>(),
           .status = value.at("status").get<std::string>(),
           .policy_violations =
-              value.at("policy_violations")
-                  .get<std::vector<std::string>>(),
+              value.at("policy_violations").get<std::vector<std::string>>(),
           .degraded_dimensions =
-              value.at("degraded_dimensions")
-                  .get<std::vector<std::string>>(),
+              value.at("degraded_dimensions").get<std::vector<std::string>>(),
           .improved_dimensions =
-              value.at("improved_dimensions")
-                  .get<std::vector<std::string>>(),
+              value.at("improved_dimensions").get<std::vector<std::string>>(),
           .knowledge_integrity_qualified =
               value.at("knowledge_integrity_qualified").get<bool>(),
           .trajectory_signature =
               value.at("trajectory_signature").get<std::string>()};
 }
 
-[[nodiscard]] std::vector<std::string> candidate_primitives(
-    const InternetAlgorithmCandidate &candidate) {
+[[nodiscard]] std::vector<std::string>
+candidate_primitives(const InternetAlgorithmCandidate &candidate) {
   std::set<std::string> result;
   if (!candidate.proposed_saa_ir.contains("nodes") ||
       !candidate.proposed_saa_ir.at("nodes").is_array()) {
@@ -86,8 +79,8 @@ integrity_trajectory_from_json(const Json &value) {
   return {result.begin(), result.end()};
 }
 
-[[nodiscard]] std::vector<std::string> capability_classes(
-    const std::vector<std::string> &primitives) {
+[[nodiscard]] std::vector<std::string>
+capability_classes(const std::vector<std::string> &primitives) {
   std::vector<std::string> result;
   if (std::ranges::find(primitives, "INVOKE") != primitives.end()) {
     result = {"COMMAND_EXECUTION", "PROCESS_EXECUTION"};
@@ -98,8 +91,7 @@ integrity_trajectory_from_json(const Json &value) {
 [[nodiscard]] std::string string_value(const Json &value,
                                        std::string_view key) {
   if (!value.contains(key) || !value.at(key).is_string()) {
-    promotion_error("persisted promotion input is missing " +
-                    std::string(key));
+    promotion_error("persisted promotion input is missing " + std::string(key));
   }
   return value.at(key).get<std::string>();
 }
@@ -117,17 +109,23 @@ parse_canonical_utc(std::string_view timestamp) {
     promotion_error("promotion timestamp is invalid");
   }
   const std::time_t seconds = timegm(&parts);
-  if (seconds < 0) {
+  char canonical[21]{};
+  if (seconds < 0 ||
+      strftime(canonical, sizeof(canonical), "%Y-%m-%dT%H:%M:%SZ", &parts) !=
+          20U ||
+      value != canonical) {
     promotion_error("promotion timestamp is out of range");
   }
   return std::chrono::system_clock::from_time_t(seconds);
 }
 
-[[nodiscard]] int source_age_seconds(
-    EgcfStore &store, const Json &source_assessment,
-    const Json &qualification, std::string_view expected_snapshot_id) {
-  const auto receipt = store.get(string_value(source_assessment,
-                                               "fetch_receipt_id"));
+[[nodiscard]] int source_age_seconds(EgcfStore &store,
+                                     const Json &source_assessment,
+                                     const Json &qualification,
+                                     std::string_view expected_snapshot_id,
+                                     std::string_view assessed_at) {
+  const auto receipt =
+      store.get(string_value(source_assessment, "fetch_receipt_id"));
   if (receipt.object_type != "internet-fetch-receipt" ||
       string_value(receipt.payload, "snapshot_id") != expected_snapshot_id) {
     promotion_error("promotion source receipt binding is invalid");
@@ -143,7 +141,7 @@ parse_canonical_utc(std::string_view timestamp) {
       qualification.at("evidence_ids").empty()) {
     promotion_error("promotion qualification lacks timestamped evidence");
   }
-  auto evaluated_at = fetched_at;
+  const auto evaluated_at = parse_canonical_utc(assessed_at);
   bool found_evaluation = false;
   for (const auto &evidence_id :
        qualification.at("evidence_ids").get<std::vector<std::string>>()) {
@@ -153,10 +151,10 @@ parse_canonical_utc(std::string_view timestamp) {
     }
     const auto created_at =
         parse_canonical_utc(string_value(evidence.payload, "created_at"));
-    if (!found_evaluation || created_at > evaluated_at) {
-      evaluated_at = created_at;
-      found_evaluation = true;
+    if (created_at > evaluated_at) {
+      promotion_error("promotion assessment precedes experiment evidence");
     }
+    found_evaluation = true;
   }
   if (!found_evaluation || evaluated_at < fetched_at) {
     promotion_error("promotion source age is invalid");
@@ -164,26 +162,82 @@ parse_canonical_utc(std::string_view timestamp) {
   const auto age = std::chrono::duration_cast<std::chrono::seconds>(
                        evaluated_at - fetched_at)
                        .count();
-  return age > std::numeric_limits<int>::max()
-             ? std::numeric_limits<int>::max()
-             : static_cast<int>(age);
+  return age > std::numeric_limits<int>::max() ? std::numeric_limits<int>::max()
+                                               : static_cast<int>(age);
 }
 
 } // namespace
+
+InternetSourceFreshness
+internet_source_freshness(EgcfStore &store,
+                          const InternetAlgorithmCandidate &candidate,
+                          std::string_view assessed_at) {
+  const auto current = parse_canonical_utc(assessed_at);
+  const auto original = store.get(candidate.source_policy_assessment_id);
+  if (original.object_type != "internet-policy-assessment" ||
+      string_value(original.payload, "snapshot_id") != candidate.snapshot_id) {
+    promotion_error("candidate source assessment binding is invalid");
+  }
+  const std::string policy_id =
+      string_value(original.payload, "source_policy_id");
+  InternetSourceFreshness result;
+  for (const auto &record : store.list("internet-policy-assessment")) {
+    if (string_value(record.payload, "snapshot_id") != candidate.snapshot_id ||
+        string_value(record.payload, "source_policy_id") != policy_id) {
+      continue;
+    }
+    const auto receipt =
+        store.get(string_value(record.payload, "fetch_receipt_id"));
+    if (receipt.object_type != "internet-fetch-receipt" ||
+        string_value(receipt.payload, "snapshot_id") != candidate.snapshot_id) {
+      promotion_error("source freshness receipt binding is invalid");
+    }
+    const auto lease = store.get(string_value(receipt.payload, "lease_id"));
+    if (lease.object_type != "internet-fetch-lease") {
+      promotion_error("source freshness lease binding is invalid");
+    }
+    const auto checked_at = string_value(lease.payload, "acquired_at");
+    const auto checked = parse_canonical_utc(checked_at);
+    if (checked > current) {
+      promotion_error("source freshness evidence is from the future");
+    }
+    const bool admissible =
+        string_value(record.payload, "status") == "SOURCE_ADMISSIBLE";
+    // An equally recent denial wins over permission. Never hide a newer denial
+    // by selecting an older admissible assessment.
+    if (result.assessment_id.empty() || checked_at > result.checked_at ||
+        (checked_at == result.checked_at && !admissible && result.admissible)) {
+      const auto age =
+          std::chrono::duration_cast<std::chrono::seconds>(current - checked)
+              .count();
+      result = {.assessment_id = record.object_id,
+                .checked_at = checked_at,
+                .age_seconds = age > std::numeric_limits<int>::max()
+                                   ? std::numeric_limits<int>::max()
+                                   : static_cast<int>(age),
+                .admissible = admissible};
+    }
+  }
+  if (result.assessment_id.empty()) {
+    promotion_error("source freshness lacks assessment evidence");
+  }
+  return result;
+}
 
 AutonomousPromotionController::AutonomousPromotionController(EgcfStore &store)
     : store_(store), internet_(store) {}
 
 AutonomousPromotionResult AutonomousPromotionController::assess(
-    const InternetAlgorithmCandidate &candidate, std::string policy_id) {
+    const InternetAlgorithmCandidate &candidate, std::string policy_id,
+    std::string assessed_at) {
   const auto canonical_candidate =
       canonical_internet_algorithm_candidate(candidate);
   const std::string candidate_id = canonical_candidate.object_id();
   const auto stored_candidate = store_.get(candidate_id);
   if (stored_candidate.object_type != "internet-algorithm-candidate" ||
       canonical_candidate.status != "EXPERIMENT_QUALIFIED") {
-    promotion_error(
-        "autonomous promotion requires a registered EXPERIMENT_QUALIFIED candidate");
+    promotion_error("autonomous promotion requires a registered "
+                    "EXPERIMENT_QUALIFIED candidate");
   }
   const auto stored_policy = store_.get(policy_id);
   if (stored_policy.object_type != "internet-promotion-policy") {
@@ -192,7 +246,8 @@ AutonomousPromotionResult AutonomousPromotionController::assess(
   const auto policy =
       saa::autonomous_promotion_policy_from_json(stored_policy.payload);
   if (canonical_candidate.experiment_qualification_ids.size() != 1U) {
-    promotion_error("candidate must bind exactly one active experiment qualification");
+    promotion_error(
+        "candidate must bind exactly one active experiment qualification");
   }
   const std::string qualification_id =
       canonical_candidate.experiment_qualification_ids.front();
@@ -203,8 +258,9 @@ AutonomousPromotionResult AutonomousPromotionController::assess(
           "EXPERIMENT_QUALIFIED") {
     promotion_error("candidate experiment qualification is not eligible");
   }
-  const auto source_assessment =
-      store_.get(canonical_candidate.source_policy_assessment_id);
+  const auto freshness =
+      internet_source_freshness(store_, canonical_candidate, assessed_at);
+  const auto source_assessment = store_.get(freshness.assessment_id);
   if (source_assessment.object_type != "internet-policy-assessment" ||
       string_value(source_assessment.payload, "snapshot_id") !=
           canonical_candidate.snapshot_id) {
@@ -222,6 +278,8 @@ AutonomousPromotionResult AutonomousPromotionController::assess(
     snapshot_integrity_passed = false;
   }
   std::set<std::string> source_groups;
+  const auto source_receipts = store_.list("internet-fetch-receipt");
+  const auto registrations = store_.list("internet-watch-registration");
   for (const auto &snapshot_id :
        qualification.payload.at("dataset_snapshot_ids")
            .get<std::vector<std::string>>()) {
@@ -229,7 +287,30 @@ AutonomousPromotionResult AutonomousPromotionController::assess(
     if (snapshot.object_type != "internet-source-snapshot") {
       promotion_error("experiment qualification dataset is invalid");
     }
-    source_groups.insert(string_value(snapshot.payload, "source_group"));
+    std::string independence_group;
+    for (const auto &receipt : source_receipts) {
+      if (receipt.payload.value("snapshot_id", std::string{}) != snapshot_id)
+        continue;
+      const auto job =
+          store_.get(receipt.payload.at("job_id").get<std::string>());
+      const auto watch_id = job.payload.at("watch_id").get<std::string>();
+      for (const auto &registration : registrations) {
+        if (registration.payload.value("watch_id", std::string{}) != watch_id)
+          continue;
+        const auto group = registration.payload.value(
+            "evidence_independence_group", std::string{});
+        if (group.empty())
+          continue;
+        if (!independence_group.empty() && independence_group != group) {
+          promotion_error(
+              "snapshot has conflicting publisher independence evidence");
+        }
+        independence_group = group;
+      }
+    }
+    source_groups.insert(independence_group.empty()
+                             ? string_value(snapshot.payload, "source_group")
+                             : independence_group);
   }
   const auto primitives = candidate_primitives(canonical_candidate);
   const auto benchmark =
@@ -237,8 +318,7 @@ AutonomousPromotionResult AutonomousPromotionController::assess(
   const auto integrity = integrity_trajectory_from_json(
       qualification.payload.at("integrity_trajectory"));
   const auto &aggregate = qualification.payload.at("repeated_aggregate");
-  if (!aggregate.is_object() ||
-      !aggregate.contains("independence_groups")) {
+  if (!aggregate.is_object() || !aggregate.contains("independence_groups")) {
     promotion_error("experiment aggregate is incomplete");
   }
   const std::string domain = string_value(
@@ -258,26 +338,23 @@ AutonomousPromotionResult AutonomousPromotionController::assess(
   inputs.candidate_domain = domain;
   inputs.candidate_primitives = primitives;
   inputs.candidate_capability_classes = capability_classes(primitives);
-  inputs.source_policy_assessment_ref =
-      canonical_candidate.source_policy_assessment_id;
+  inputs.source_policy_assessment_ref = freshness.assessment_id;
   inputs.snapshot_ref = canonical_candidate.snapshot_id;
   inputs.retrieval_receipt_ref = canonical_candidate.retrieval_receipt_id;
   inputs.experiment_qualification_ref = qualification_id;
   inputs.source_policy_passed =
-      string_value(source_assessment.payload, "status") ==
-      "SOURCE_ADMISSIBLE";
+      string_value(source_assessment.payload, "status") == "SOURCE_ADMISSIBLE";
   inputs.snapshot_integrity_passed = snapshot_integrity_passed;
   inputs.independent_source_groups = static_cast<int>(source_groups.size());
-  inputs.semantic_strength = semantic_verified
-                                 ? "DETERMINISTIC_SOURCE_BOUND"
-                                 : "UNVERIFIED";
+  inputs.semantic_strength =
+      semantic_verified ? "DETERMINISTIC_SOURCE_BOUND" : "UNVERIFIED";
   inputs.mathematical_strength = mathematical_strength;
   inputs.existing_knowledge_search_complete =
       retrieval.payload.at("search_complete").get<bool>();
   inputs.experiment_qualified =
       qualification.payload.at("experiment_qualified").get<bool>();
-  inputs.independent_experiment_groups = static_cast<int>(
-      aggregate.at("independence_groups").size());
+  inputs.independent_experiment_groups =
+      static_cast<int>(aggregate.at("independence_groups").size());
   inputs.benchmark_gate = benchmark;
   inputs.integrity_trajectory = integrity;
   inputs.invariants_passed =
@@ -286,19 +363,19 @@ AutonomousPromotionResult AutonomousPromotionController::assess(
   inputs.successful_falsifiers = 0;
   inputs.source_age_seconds = source_age_seconds(
       store_, source_assessment.payload, qualification.payload,
-      canonical_candidate.snapshot_id);
+      canonical_candidate.snapshot_id, assessed_at);
   inputs.probation_plan_valid = policy.probation_window_count > 0 &&
                                 policy.minimum_probation_observations > 0 &&
                                 policy.minimum_probation_uses > 0 &&
                                 policy.maximum_canary_share_bp > 0;
-  inputs.demotion_path_valid =
-      !policy.automatic_demotion_predicates.empty();
+  inputs.demotion_path_valid = !policy.automatic_demotion_predicates.empty();
 
   const auto assessment =
       saa::evaluate_autonomous_promotion(policy, std::move(inputs));
-  const std::string assessment_id =
-      internet_.register_promotion_assessment(policy_id, assessment);
+  const std::string assessment_id = internet_.register_promotion_assessment(
+      policy_id, assessment, assessed_at, freshness.checked_at);
   auto updated_candidate = canonical_candidate;
+  updated_candidate.source_policy_assessment_id = freshness.assessment_id;
   updated_candidate.status = assessment.resulting_state;
   updated_candidate.promotion_assessment_ids.push_back(assessment_id);
   updated_candidate =
@@ -308,13 +385,13 @@ AutonomousPromotionResult AutonomousPromotionController::assess(
           candidate_id, updated_candidate,
           assessment.promotion_allowed ? "autonomous promotion policy passed"
                                        : "autonomous promotion policy blocked");
-  AutonomousPromotionResult result{
-      .assessment = assessment,
-      .updated_candidate = std::move(updated_candidate),
-      .policy_id = std::move(policy_id),
-      .assessment_id = assessment_id,
-      .updated_candidate_id = updated_candidate_id,
-      .result_signature = {}};
+  AutonomousPromotionResult result{.assessment = assessment,
+                                   .updated_candidate =
+                                       std::move(updated_candidate),
+                                   .policy_id = std::move(policy_id),
+                                   .assessment_id = assessment_id,
+                                   .updated_candidate_id = updated_candidate_id,
+                                   .result_signature = {}};
   auto material = to_json(result);
   material.erase("result_signature");
   result.result_signature = contracts::sha256_json(material);

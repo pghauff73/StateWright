@@ -30,6 +30,7 @@ struct InternetSourceAssessmentResult final {
 struct InternetSourceExtractionResult final {
   sources::InternetExtractionResult extraction;
   std::string extraction_receipt_id;
+  contracts::Json discovery_watch_proposals = contracts::Json::array();
 };
 
 class InternetSourceCoordinator final {
@@ -37,16 +38,15 @@ public:
   explicit InternetSourceCoordinator(EgcfStore &store);
 
   [[nodiscard]] InternetFetchExecutionResult execute_fetch(
-      std::string job_id, std::string lease_id,
-      std::string current_timestamp, sources::HttpFetchProvider &provider,
-      std::string prior_snapshot_id = {});
-  [[nodiscard]] InternetSourceAssessmentResult assess(
-      std::string snapshot_id, std::string fetch_receipt_id,
-      std::string source_policy_id, bool robots_allowed,
-      std::string license_classification);
-  [[nodiscard]] InternetSourceExtractionResult extract(
-      std::string snapshot_id,
-      const sources::InternetExtractionLimits &limits = {});
+      std::string job_id, std::string lease_id, std::string current_timestamp,
+      sources::HttpFetchProvider &provider, std::string prior_snapshot_id = {});
+  [[nodiscard]] InternetSourceAssessmentResult
+  assess(std::string snapshot_id, std::string fetch_receipt_id,
+         std::string source_policy_id, bool robots_allowed,
+         std::string license_classification);
+  [[nodiscard]] InternetSourceExtractionResult
+  extract(std::string snapshot_id,
+          const sources::InternetExtractionLimits &limits = {});
 
 private:
   EgcfStore &store_;

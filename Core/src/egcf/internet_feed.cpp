@@ -3,10 +3,12 @@
 #include "statewright/common/error.hpp"
 #include "statewright/contracts/hash.hpp"
 #include "statewright/contracts/typed_id.hpp"
+#include "statewright/egcf/internet_experiment.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <map>
+#include <regex>
 #include <set>
 #include <string_view>
 #include <utility>
@@ -26,44 +28,13 @@ std::string lower(std::string value) {
 }
 
 std::string trim(std::string value) {
-  while (!value.empty() &&
-         std::isspace(static_cast<unsigned char>(value.front())) != 0) {
-    value.erase(value.begin());
-  }
-  while (!value.empty() &&
-         std::isspace(static_cast<unsigned char>(value.back())) != 0) {
-    value.pop_back();
-  }
-  return value;
-}
-
-std::vector<std::string> parse_list(std::string_view text,
-                                    std::string_view label) {
-  const std::string normalized = lower(std::string(text));
-  const std::string marker = lower(std::string(label)) + ":";
-  const auto start = normalized.find(marker);
-  if (start == std::string::npos) {
+  const auto whitespace = [](unsigned char c) { return std::isspace(c) != 0; };
+  const auto first = std::find_if_not(value.begin(), value.end(), whitespace);
+  if (first == value.end())
     return {};
-  }
-  const std::size_t value_start = start + marker.size();
-  const auto end = text.find_first_of(";\n", value_start);
-  std::string value(text.substr(value_start, end - value_start));
-  std::vector<std::string> result;
-  std::size_t offset = 0U;
-  while (offset <= value.size()) {
-    const auto separator = value.find(',', offset);
-    std::string item = trim(value.substr(offset, separator - offset));
-    if (!item.empty()) {
-      result.push_back(std::move(item));
-    }
-    if (separator == std::string::npos) {
-      break;
-    }
-    offset = separator + 1U;
-  }
-  std::ranges::sort(result);
-  result.erase(std::unique(result.begin(), result.end()), result.end());
-  return result;
+  const auto last =
+      std::find_if_not(value.rbegin(), value.rend(), whitespace).base();
+  return {first, last};
 }
 
 std::vector<std::string> lexical_terms(std::string_view text) {
@@ -117,32 +88,136 @@ struct Translation final {
   contracts::Json saa_ir = contracts::Json::object();
   std::vector<std::string> invariants;
   contracts::Json termination = contracts::Json::object();
+  contracts::Json provenance = contracts::Json::object();
   std::vector<std::string> unresolved;
 };
 
-Translation translate_algorithm(const sources::InternetSourceFragment &fragment) {
+Translation
+translate_algorithm(const sources::InternetSourceFragment &fragment) {
   Translation result;
-  result.name = trim(fragment.text.substr(0U, fragment.text.find('\n')));
-  if (result.name.size() > 120U) {
-    result.name.resize(120U);
+  if (fragment.metadata.value("mathematical_context_review_required", false)) {
+    result.name = "mathematical-source-context";
+    result.unresolved = {"MATHEMATICAL_CONTEXT_REVIEW_REQUIRED",
+                         "DOMAIN_BRANCH_AND_ERROR_BOUNDS_NOT_QUALIFIED"};
+    result.provenance = {{"status", "UNSUPPORTED_MATHEMATICAL_SOURCE"},
+                         {"source_fragment_id", fragment.object_id()}};
+    return result;
   }
-  result.inputs = parse_list(fragment.text, "inputs");
-  result.outputs = parse_list(fragment.text, "outputs");
-  const std::string normalized = lower(fragment.text);
-  const bool identity = normalized.find("identity") != std::string::npos ||
-                        normalized.find("return the input") != std::string::npos ||
-                        normalized.find("returns the input") != std::string::npos;
-  if (identity) {
-    if (result.inputs.empty()) {
-      result.inputs = {"x"};
+  const auto first_separator = fragment.text.find(';');
+  result.name = trim(fragment.text.substr(0U, first_separator));
+  struct Field {
+    std::string value;
+    std::size_t start;
+    std::size_t end;
+  };
+  std::map<std::string, Field> fields;
+  bool valid_fields = first_separator != std::string::npos;
+  std::size_t offset =
+      valid_fields ? first_separator + 1U : fragment.text.size();
+  while (offset < fragment.text.size()) {
+    const auto separator = fragment.text.find(';', offset);
+    const std::size_t end =
+        separator == std::string::npos ? fragment.text.size() : separator;
+    const std::string field = fragment.text.substr(offset, end - offset);
+    const auto colon = field.find(':');
+    if (!trim(field).empty()) {
+      if (colon == std::string::npos) {
+        valid_fields = false;
+        break;
+      }
+      const std::string label = lower(trim(field.substr(0, colon)));
+      if (label != "inputs" && label != "outputs" && label != "procedure" &&
+          label != "source code example") {
+        valid_fields = false;
+        break;
+      }
+      if (!fields
+               .emplace(label, Field{trim(field.substr(colon + 1U)),
+                                     offset + colon + 1U, end})
+               .second) {
+        valid_fields = false;
+        break;
+      }
     }
-    if (result.outputs.empty()) {
-      result.outputs = {"y"};
+    offset = end + 1U;
+  }
+  static const std::regex identifier("[A-Za-z_][A-Za-z0-9_]{0,63}");
+  for (const auto &label : {"inputs", "outputs"}) {
+    if (const auto found = fields.find(label);
+        found != fields.end() &&
+        std::regex_match(found->second.value, identifier)) {
+      (std::string_view(label) == "inputs" ? result.inputs : result.outputs)
+          .push_back(found->second.value);
     }
-    if (result.inputs.size() == 1U && result.outputs.size() == 1U) {
-      result.saa_ir = identity_ir(result.inputs.front(), result.outputs.front());
-      result.invariants = {"output equals input", "terminates in one step"};
-      result.termination = {{"bounded_steps", 1}, {"terminates", true}};
+  }
+  if (valid_fields && result.inputs.size() == 1U &&
+      result.outputs.size() == 1U && fields.contains("procedure")) {
+    const auto &procedure = fields.at("procedure");
+    const auto &input = result.inputs.front();
+    const auto &output = result.outputs.front();
+    mpq_class slope{1}, bias{0};
+    bool supported = procedure.value == "return the input" ||
+                     procedure.value == "return " + input;
+    if (!supported && procedure.value.size() <= 256U) {
+      static const std::regex affine(
+          R"(^return\s+([+-]?[0-9]{1,64}(?:/[0-9]{1,64})?)\s*\*\s*([A-Za-z_][A-Za-z0-9_]{0,63})\s*([+-])\s*([0-9]{1,64}(?:/[0-9]{1,64})?)$)");
+      std::smatch match;
+      if (std::regex_match(procedure.value, match, affine) &&
+          match[2] == input) {
+        try {
+          slope = mpq_class(match[1].str());
+          bias = mpq_class(match[4].str());
+          // GMP canonicalization is undefined for a zero denominator.
+          supported = slope.get_den() != 0 && bias.get_den() != 0;
+          if (supported) {
+            slope.canonicalize();
+            bias.canonicalize();
+            if (match[3] == "-") {
+              bias = -bias;
+            }
+            supported = slope != 0;
+          }
+        } catch (const std::exception &) {
+          supported = false;
+        }
+      }
+    }
+    if (supported) {
+      if (slope == 1 && bias == 0) {
+        result.saa_ir = identity_ir(input, output);
+        result.invariants = {"output equals input", "terminates in one step"};
+        result.termination = {{"bounded_steps", 1}, {"terminates", true}};
+      } else {
+        result.saa_ir = {
+            {"name", "internet-affine-candidate"},
+            {"entry_nodes", {"scale"}},
+            {"inputs", {{{"name", input}, {"position", 0}}}},
+            {"nodes",
+             {{{"id", "scale"},
+               {"primitive", "MULTIPLY"},
+               {"operands", {{{"constant", slope.get_str()}}, {{"input", 0}}}}},
+              {{"id", "offset"},
+               {"primitive", "ADD"},
+               {"operands",
+                {{{"node", "scale"}}, {{"constant", bias.get_str()}}}}}}},
+            {"outputs",
+             {{{"name", output},
+               {"position", 0},
+               {"source", {{"node", "offset"}}}}}}};
+        result.invariants = {"output equals " + slope.get_str() +
+                                 " * input + " + bias.get_str(),
+                             "terminates in two steps"};
+        result.termination = {{"bounded_steps", 2}, {"terminates", true}};
+      }
+      result.provenance = {{"translator_version", "exact-scalar-procedure-v2"},
+                           {"source_fragment_id", fragment.object_id()},
+                           {"snapshot_id", fragment.snapshot_id},
+                           {"selector", fragment.selector},
+                           {"procedure_start", procedure.start},
+                           {"procedure_end", procedure.end},
+                           {"procedure", procedure.value},
+                           {"slope", slope.get_str()},
+                           {"bias", bias.get_str()}};
     }
   }
   if (result.name.empty()) {
@@ -172,6 +247,25 @@ std::vector<std::string> candidate_ids(const contracts::Json &candidates) {
 
 } // namespace
 
+void verify_internet_candidate_translation(
+    const InternetAlgorithmCandidate &candidate,
+    const sources::InternetSourceFragment &fragment) {
+  const auto translation = translate_algorithm(fragment);
+  if (candidate.source_fragment_id != fragment.object_id() ||
+      candidate.snapshot_id != fragment.snapshot_id ||
+      !translation.unresolved.empty() ||
+      candidate.proposed_saa_ir != translation.saa_ir ||
+      candidate.semantic_inputs != translation.inputs ||
+      candidate.semantic_outputs != translation.outputs ||
+      candidate.claimed_invariants != translation.invariants ||
+      candidate.termination_properties != translation.termination ||
+      candidate.applicability.value("translation", contracts::Json::object()) !=
+          translation.provenance) {
+    feed_error(
+        "candidate does not faithfully match its explicit source procedure");
+  }
+}
+
 InternetFeedCoordinator::InternetFeedCoordinator(EgcfStore &store)
     : store_(store), internet_(store), brain_feed_(store),
       canonical_algorithms_(store) {}
@@ -199,14 +293,14 @@ InternetFeedResult InternetFeedCoordinator::process(
     const auto parts = contracts::parse_typed_id(fragment.object_id());
     const std::string suffix = parts.digest.substr(0U, 16U);
     const std::string source_item_id = "internet-source-" + suffix;
-    items.push_back(make_brain_feed_item(
-        source_item_id, "SOURCE_DOCUMENT",
-        {{"content", fragment.text},
-         {"fragment_id", fragment.object_id()},
-         {"fragment_kind", fragment.fragment_kind},
-         {"selector", fragment.selector},
-         {"snapshot_id", fragment.snapshot_id}},
-        {}, {}, fragment.selector));
+    items.push_back(
+        make_brain_feed_item(source_item_id, "SOURCE_DOCUMENT",
+                             {{"content", fragment.text},
+                              {"fragment_id", fragment.object_id()},
+                              {"fragment_kind", fragment.fragment_kind},
+                              {"selector", fragment.selector},
+                              {"snapshot_id", fragment.snapshot_id}},
+                             {}, {}, fragment.selector));
     if (fragment.fragment_kind != "ALGORITHM_DESCRIPTION") {
       continue;
     }
@@ -228,16 +322,61 @@ InternetFeedResult InternetFeedCoordinator::process(
   const auto snapshot_parts =
       contracts::parse_typed_id(extraction.receipt.snapshot_id);
   InternetFeedResult result;
-  result.brain_feed_batch = brain_feed_.feed(
-      "internet-" + snapshot_parts.digest.substr(0U, 16U),
-      snapshot_parts.digest, std::move(source_label), std::move(items), strict);
+  // Reuse the original durable dispositions. Refeeding an already staged item
+  // marks it duplicate and would change novelty after a crash/restart.
+  bool batch_found = false;
+  for (const auto &batch : brain_feed_.batches()) {
+    if (batch.source_signature != snapshot_parts.digest ||
+        batch.dispositions.size() != items.size()) {
+      continue;
+    }
+    const bool matches = std::ranges::all_of(items, [&](const auto &item) {
+      return std::ranges::any_of(batch.dispositions, [&](const auto &entry) {
+        return entry.item_id == item.item_id &&
+               entry.item_signature == item.item_signature;
+      });
+    });
+    if (matches) {
+      result.brain_feed_batch = batch;
+      batch_found = true;
+      break;
+    }
+  }
+  if (!batch_found) {
+    result.brain_feed_batch =
+        brain_feed_.feed("internet-" + snapshot_parts.digest.substr(0U, 16U),
+                         snapshot_parts.digest, std::move(source_label),
+                         std::move(items), strict);
+  }
   std::map<std::string, BrainFeedDisposition> dispositions;
   for (const auto &disposition : result.brain_feed_batch.dispositions) {
     dispositions.emplace(disposition.item_id, disposition);
   }
+  std::map<std::string, InternetKnowledgeSearchReceipt> prior_retrievals;
+  for (const auto &record : internet_.list("internet-retrieval-receipt")) {
+    auto retrieval =
+        internet_knowledge_search_receipt_from_json(record.payload);
+    if (retrieval.brain_feed_batch_id == result.brain_feed_batch.object_id() &&
+        retrieval.snapshot_id == extraction.receipt.snapshot_id) {
+      prior_retrievals.emplace(retrieval.source_fragment_id,
+                               std::move(retrieval));
+    }
+  }
+  std::map<std::string, InternetAlgorithmCandidate> prior_candidates;
+  for (const auto &record : internet_.list("internet-algorithm-candidate")) {
+    auto candidate = internet_algorithm_candidate_from_json(record.payload);
+    if (candidate.snapshot_id == extraction.receipt.snapshot_id &&
+        candidate.reasoning_analysis_ids.empty() &&
+        candidate.experiment_qualification_ids.empty() &&
+        candidate.promotion_assessment_ids.empty()) {
+      prior_candidates.emplace(candidate.retrieval_receipt_id,
+                               std::move(candidate));
+    }
+  }
 
   for (const auto &fragment : extraction.fragments) {
-    const auto algorithm_item = algorithm_item_by_fragment.find(fragment.object_id());
+    const auto algorithm_item =
+        algorithm_item_by_fragment.find(fragment.object_id());
     if (algorithm_item == algorithm_item_by_fragment.end()) {
       continue;
     }
@@ -246,65 +385,98 @@ InternetFeedResult InternetFeedCoordinator::process(
       feed_error("brain feed omitted internet algorithm disposition");
     }
     const auto &translation = translations.at(fragment.object_id());
-    CanonicalAlgorithmQuery query;
-    query.semantic_meanings = translation.inputs;
-    query.lexical_terms = lexical_terms(fragment.text);
-    query.input_count = static_cast<int>(translation.inputs.size());
-    query.output_count = static_cast<int>(translation.outputs.size());
-    query.limit = 20U;
-    const auto search = canonical_algorithms_.search(std::move(query));
-
+    const auto prior_retrieval = prior_retrievals.find(fragment.object_id());
     InternetKnowledgeSearchReceipt retrieval;
-    retrieval.snapshot_id = fragment.snapshot_id;
-    retrieval.source_fragment_id = fragment.object_id();
-    retrieval.brain_feed_batch_id = result.brain_feed_batch.object_id();
-    retrieval.canonical_search = to_json(search);
-    retrieval.related_match_ids = candidate_ids(search.candidates);
-    for (const auto &entry : search.excluded) {
-      retrieval.exclusions.push_back(
-          entry.at("canonical_id").get<std::string>() + ":" +
-          contracts::canonical_json(entry.at("reasons")));
-    }
-    retrieval.exclusions.push_back(
-        "EXACT_ID_SEARCH:NO_SOURCE_CANONICAL_ID_CLAIM");
-    retrieval.exclusions.push_back(
-        "MATHEMATICAL_EQUIVALENCE:REQUIRES_QUALIFIED_REPRESENTATIVE_FORM");
-    retrieval.exclusions.push_back(
-        "REASONING_EQUIVALENCE:NOT_APPLICABLE_TO_MATHEMATICAL_CANDIDATE");
-    retrieval.exclusions.push_back(
-        "TRANSFER_ADAPTATION:REQUIRES_QUALIFIED_BASELINE");
-    const auto terms = lexical_terms(fragment.text);
-    for (const auto &failure : store_.list("failure")) {
-      const std::string payload = lower(contracts::canonical_json(failure.payload));
-      if (std::ranges::any_of(terms, [&](const auto &term) {
-            return payload.find(term) != std::string::npos;
-          })) {
-        retrieval.failure_match_ids.push_back(failure.object_id);
-      }
-    }
-    retrieval.search_complete = true;
-    if (disposition->second.duplicate()) {
-      retrieval.novelty_status = "DUPLICATE";
-    } else if (search.selected_canonical_id) {
-      retrieval.novelty_status = "RELATED_EXISTING";
-    } else if (!translation.unresolved.empty()) {
-      retrieval.novelty_status = "QUARANTINED";
+    if (prior_retrieval != prior_retrievals.end()) {
+      retrieval = prior_retrieval->second;
     } else {
-      retrieval.novelty_status = "NOVEL_CANDIDATE";
+      CanonicalAlgorithmQuery query;
+      query.semantic_meanings = translation.inputs;
+      query.lexical_terms = lexical_terms(fragment.text);
+      query.input_count = static_cast<int>(translation.inputs.size());
+      query.output_count = static_cast<int>(translation.outputs.size());
+      query.limit = 20U;
+      const auto search = canonical_algorithms_.search(std::move(query));
+
+      retrieval.snapshot_id = fragment.snapshot_id;
+      retrieval.source_fragment_id = fragment.object_id();
+      retrieval.brain_feed_batch_id = result.brain_feed_batch.object_id();
+      retrieval.canonical_search = to_json(search);
+      retrieval.source_policy_assessment_id = assessment.object_id();
+      retrieval.related_match_ids = candidate_ids(search.candidates);
+      if (translation.unresolved.empty()) {
+        CanonicalAlgorithmQuery exact_query;
+        exact_query.source_structural_hash =
+            saa::canonicalize_mapping(translation.saa_ir).structural_hash;
+        exact_query.semantic_meanings = {internet_exact_scalar_meaning(
+            internet_exact_scalar_program(translation.saa_ir),
+            translation.inputs.front(), translation.outputs.front())};
+        exact_query.input_count = 1;
+        exact_query.output_count = 1;
+        exact_query.limit = 20U;
+        const auto exact = canonical_algorithms_.search(std::move(exact_query));
+        retrieval.exact_match_ids = candidate_ids(exact.candidates);
+        retrieval.canonical_search["exact_structural_search"] = to_json(exact);
+      }
+      for (const auto &entry : search.excluded) {
+        retrieval.exclusions.push_back(
+            entry.at("canonical_id").get<std::string>() + ":" +
+            contracts::canonical_json(entry.at("reasons")));
+      }
+      retrieval.exclusions.push_back(
+          "EXACT_ID_SEARCH:NO_SOURCE_CANONICAL_ID_CLAIM");
+      retrieval.exclusions.push_back(
+          "MATHEMATICAL_EQUIVALENCE:REQUIRES_QUALIFIED_REPRESENTATIVE_FORM");
+      retrieval.exclusions.push_back(
+          "REASONING_EQUIVALENCE:NOT_APPLICABLE_TO_MATHEMATICAL_CANDIDATE");
+      retrieval.exclusions.push_back(
+          "TRANSFER_ADAPTATION:REQUIRES_QUALIFIED_BASELINE");
+      const auto terms = lexical_terms(fragment.text);
+      for (const auto &failure : store_.list("failure")) {
+        const std::string payload =
+            lower(contracts::canonical_json(failure.payload));
+        if (std::ranges::any_of(terms, [&](const auto &term) {
+              return payload.find(term) != std::string::npos;
+            })) {
+          retrieval.failure_match_ids.push_back(failure.object_id);
+        }
+      }
+      retrieval.search_complete = true;
+      if (disposition->second.duplicate() ||
+          !retrieval.exact_match_ids.empty()) {
+        retrieval.novelty_status = "DUPLICATE";
+      } else if (!translation.unresolved.empty()) {
+        retrieval.novelty_status = "QUARANTINED";
+      } else {
+        retrieval.novelty_status = "NOVEL_CANDIDATE";
+      }
+      retrieval = canonical_knowledge_search_receipt(std::move(retrieval));
     }
-    retrieval = canonical_knowledge_search_receipt(std::move(retrieval));
     const std::string retrieval_id =
         internet_.register_retrieval_receipt(retrieval);
+
+    if (const auto prior_candidate = prior_candidates.find(retrieval_id);
+        prior_candidate != prior_candidates.end()) {
+      result.retrieval_receipts.push_back(std::move(retrieval));
+      result.candidates.push_back(prior_candidate->second);
+      continue;
+    }
 
     InternetAlgorithmCandidate candidate;
     candidate.source_fragment_id = fragment.object_id();
     candidate.snapshot_id = fragment.snapshot_id;
-    candidate.source_policy_assessment_id = assessment.object_id();
+    candidate.source_policy_assessment_id =
+        retrieval.source_policy_assessment_id.empty()
+            ? assessment.object_id()
+            : retrieval.source_policy_assessment_id;
     candidate.proposed_saa_ir = translation.saa_ir;
     candidate.semantic_inputs = translation.inputs;
     candidate.semantic_outputs = translation.outputs;
     candidate.units = {{"status", "SOURCE_UNSPECIFIED"}};
-    candidate.applicability = {{"source_group", "internet"}};
+    candidate.applicability = {
+        {"source_group",
+         store_.get(fragment.snapshot_id).payload.at("source_group")},
+        {"translation", translation.provenance}};
     candidate.claimed_invariants = translation.invariants;
     candidate.termination_properties = translation.termination;
     candidate.retrieval_receipt_id = retrieval_id;
@@ -328,6 +500,94 @@ InternetFeedResult InternetFeedCoordinator::process(
   material.erase("result_signature");
   result.result_signature = contracts::sha256_json(material);
   return result;
+}
+
+std::optional<std::vector<std::string>> internet_feed_completion_outputs(
+    const sources::InternetExtractionReceipt &extraction,
+    const std::vector<StoredObject> &records) {
+  if (extraction.fragment_ids.empty()) {
+    return std::vector<std::string>{};
+  }
+  const auto snapshot = contracts::parse_typed_id(extraction.snapshot_id);
+  std::map<std::string, StoredObject> by_id;
+  std::vector<BrainFeedBatchReceipt> batches;
+  std::vector<InternetAlgorithmCandidate> candidates;
+  for (const auto &record : records) {
+    by_id.emplace(record.object_id, record);
+    if (record.object_type == "brain-feed-batch") {
+      const auto batch = brain_feed_batch_from_json(record.payload);
+      if (batch.source_signature == snapshot.digest) {
+        batches.push_back(batch);
+      }
+    } else if (record.object_type == "internet-algorithm-candidate") {
+      const auto candidate =
+          internet_algorithm_candidate_from_json(record.payload);
+      if (candidate.snapshot_id == extraction.snapshot_id &&
+          candidate.reasoning_analysis_ids.empty() &&
+          candidate.experiment_qualification_ids.empty() &&
+          candidate.promotion_assessment_ids.empty()) {
+        candidates.push_back(candidate);
+      }
+    }
+  }
+  for (const auto &batch : batches) {
+    std::vector<std::string> outputs = {batch.object_id()};
+    bool complete = true;
+    for (const auto &fragment_id : extraction.fragment_ids) {
+      const auto stored = by_id.find(fragment_id);
+      if (stored == by_id.end() ||
+          stored->second.object_type != "internet-source-fragment") {
+        complete = false;
+        break;
+      }
+      const auto fragment =
+          sources::internet_source_fragment_from_json(stored->second.payload);
+      const auto source_item =
+          "internet-source-" +
+          contracts::parse_typed_id(fragment_id).digest.substr(0U, 16U);
+      if (!std::ranges::any_of(batch.dispositions, [&](const auto &entry) {
+            return entry.item_id == source_item &&
+                   entry.kind == "SOURCE_DOCUMENT";
+          })) {
+        complete = false;
+        break;
+      }
+      if (fragment.fragment_kind != "ALGORITHM_DESCRIPTION") {
+        continue;
+      }
+      bool candidate_found = false;
+      for (const auto &candidate : candidates) {
+        if (candidate.source_fragment_id != fragment_id) {
+          continue;
+        }
+        const auto receipt = by_id.find(candidate.retrieval_receipt_id);
+        if (receipt == by_id.end() ||
+            receipt->second.object_type != "internet-retrieval-receipt") {
+          continue;
+        }
+        const auto retrieval = internet_knowledge_search_receipt_from_json(
+            receipt->second.payload);
+        if (retrieval.source_fragment_id == fragment_id &&
+            retrieval.snapshot_id == extraction.snapshot_id &&
+            retrieval.brain_feed_batch_id == batch.object_id() &&
+            retrieval.search_complete) {
+          outputs.push_back(receipt->first);
+          outputs.push_back(candidate.object_id());
+          candidate_found = true;
+          break;
+        }
+      }
+      if (!candidate_found) {
+        complete = false;
+        break;
+      }
+    }
+    if (complete) {
+      std::ranges::sort(outputs);
+      return outputs;
+    }
+  }
+  return std::nullopt;
 }
 
 contracts::Json to_json(const InternetFeedResult &value) {

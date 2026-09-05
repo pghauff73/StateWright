@@ -9,13 +9,14 @@
 #include "statewright/core/file_io.hpp"
 #include "statewright/core/operational_hypotheses.hpp"
 #include "statewright/core/workspace.hpp"
-#include "statewright/egcf/brain_feed.hpp"
 #include "statewright/egcf/autonomous_promotion.hpp"
+#include "statewright/egcf/brain_feed.hpp"
 #include "statewright/egcf/engine.hpp"
 #include "statewright/egcf/internet_experiment.hpp"
 #include "statewright/egcf/internet_feed.hpp"
 #include "statewright/egcf/internet_improvement_orchestrator.hpp"
 #include "statewright/egcf/internet_improvement_store.hpp"
+#include "statewright/egcf/internet_metrics.hpp"
 #include "statewright/egcf/internet_probation.hpp"
 #include "statewright/egcf/internet_reasoning.hpp"
 #include "statewright/egcf/internet_source_coordinator.hpp"
@@ -37,8 +38,8 @@
 
 #include <algorithm>
 #include <array>
-#include <ctime>
 #include <cstdlib>
+#include <ctime>
 #include <filesystem>
 #include <gmpxx.h>
 #include <iostream>
@@ -108,10 +109,13 @@ void usage(std::ostream &output) {
       << "  statewright version [--json]\n"
       << "  statewright <operation> <request-json-or-@file>\n"
       << "\nOperations:\n"
-      << "  inspect reason hypothesis algorithm retrieve explain command compile\n"
+      << "  inspect reason hypothesis algorithm retrieve explain command "
+         "compile\n"
       << "  simulate approve execute verify rollback replay ledger-verify\n"
-      << "  projection-rebuild benchmark qualification brain-feed repository-feed\n"
-      << "  internet-watch internet-watchlist internet-poll internet-fetch internet-source\n"
+      << "  projection-rebuild benchmark qualification brain-feed "
+         "repository-feed\n"
+      << "  internet-watch internet-watchlist internet-poll internet-fetch "
+         "internet-source\n"
       << "  internet-extract internet-candidate internet-improvement\n"
       << "  internet-promotion-policy internet-probation internet-integrity\n"
       << "\nLegacy operations:\n"
@@ -121,7 +125,7 @@ void usage(std::ostream &output) {
 }
 
 [[nodiscard]] std::vector<std::string> strings(const Json &value,
-                                                std::string_view key) {
+                                               std::string_view key) {
   const auto iterator = value.find(std::string(key));
   if (iterator == value.end() || iterator->is_null()) {
     return {};
@@ -133,8 +137,7 @@ void usage(std::ostream &output) {
   return iterator->get<std::vector<std::string>>();
 }
 
-[[nodiscard]] core::HypothesisProposal operational_proposal(
-    const Json &value) {
+[[nodiscard]] core::HypothesisProposal operational_proposal(const Json &value) {
   return {.proposition = value.value("proposition", ""),
           .model_prior_bp = value.value("model_prior_bp", 5'000),
           .assumptions = strings(value, "assumptions"),
@@ -142,8 +145,8 @@ void usage(std::ostream &output) {
           .falsifiers = strings(value, "falsifiers")};
 }
 
-[[nodiscard]] reasoning::HypothesisProposal reasoning_proposal(
-    const Json &value) {
+[[nodiscard]] reasoning::HypothesisProposal
+reasoning_proposal(const Json &value) {
   std::optional<int> posterior;
   if (value.contains("posterior_bp") && !value.at("posterior_bp").is_null()) {
     posterior = value.at("posterior_bp").get<int>();
@@ -222,8 +225,8 @@ void usage(std::ostream &output) {
 
 [[nodiscard]] bool contains_path(const std::filesystem::path &root,
                                  const std::filesystem::path &path) {
-  const auto mismatch = std::mismatch(root.begin(), root.end(), path.begin(),
-                                      path.end());
+  const auto mismatch =
+      std::mismatch(root.begin(), root.end(), path.begin(), path.end());
   return mismatch.first == root.end();
 }
 
@@ -275,9 +278,9 @@ void usage(std::ostream &output) {
   return default_resource_root();
 }
 
-[[nodiscard]] core::AuthorityManifest default_authority(
-    const core::Workspace &workspace,
-    const std::filesystem::path &resources) {
+[[nodiscard]] core::AuthorityManifest
+default_authority(const core::Workspace &workspace,
+                  const std::filesystem::path &resources) {
   egcf::CommandRegistry registry(resources);
   std::set<std::string> capabilities;
   for (const auto &definition : registry.definitions()) {
@@ -303,9 +306,9 @@ void usage(std::ostream &output) {
   return core::finalize_authority(std::move(authority));
 }
 
-[[nodiscard]] core::AuthorityManifest request_authority(
-    const Json &request, const core::Workspace &workspace,
-    const std::filesystem::path &resources) {
+[[nodiscard]] core::AuthorityManifest
+request_authority(const Json &request, const core::Workspace &workspace,
+                  const std::filesystem::path &resources) {
   const auto found = request.find("authority");
   if (found == request.end() || found->is_null()) {
     return default_authority(workspace, resources);
@@ -353,7 +356,8 @@ private:
   egcf::EgcfEngine engine_;
 };
 
-[[nodiscard]] Json stored_objects(const std::vector<egcf::StoredObject> &items) {
+[[nodiscard]] Json
+stored_objects(const std::vector<egcf::StoredObject> &items) {
   Json result = Json::array();
   for (const auto &item : items) {
     result.push_back(egcf::to_json(item));
@@ -367,8 +371,8 @@ private:
           {"payload", record.payload}};
 }
 
-[[nodiscard]] sources::InternetExtractionResult extraction_from_store(
-    egcf::EgcfStore &store, std::string_view receipt_id) {
+[[nodiscard]] sources::InternetExtractionResult
+extraction_from_store(egcf::EgcfStore &store, std::string_view receipt_id) {
   const auto stored = store.get(receipt_id);
   if (stored.object_type != "internet-extraction-receipt") {
     throw common::Error(
@@ -411,8 +415,8 @@ private:
                           " must be an integer or exact rational string");
 }
 
-[[nodiscard]] std::vector<mpq_class> exact_rationals(
-    const Json &value, std::string_view label) {
+[[nodiscard]] std::vector<mpq_class> exact_rationals(const Json &value,
+                                                     std::string_view label) {
   if (!value.is_array()) {
     throw common::Error(common::ErrorCode::invalid_argument,
                         std::string(label) + " must be an array");
@@ -425,8 +429,8 @@ private:
   return result;
 }
 
-[[nodiscard]] std::vector<std::pair<std::string, int>> benchmark_scores(
-    const Json &request) {
+[[nodiscard]] std::vector<std::pair<std::string, int>>
+benchmark_scores(const Json &request) {
   const auto &value = request.at("benchmark_track_scores");
   if (!value.is_object()) {
     throw common::Error(common::ErrorCode::invalid_argument,
@@ -446,8 +450,7 @@ private:
   }
   const auto &value = request.at("benchmark_policy");
   if (value.contains("minimum_track_scores")) {
-    for (const auto &[name, score] :
-         value.at("minimum_track_scores").items()) {
+    for (const auto &[name, score] : value.at("minimum_track_scores").items()) {
       result.minimum_track_scores.emplace_back(name, score.get<int>());
     }
   }
@@ -456,8 +459,8 @@ private:
   return result;
 }
 
-[[nodiscard]] saa::KnowledgeIntegritySnapshot integrity_snapshot(
-    const Json &value) {
+[[nodiscard]] saa::KnowledgeIntegritySnapshot
+integrity_snapshot(const Json &value) {
   return saa::make_integrity_snapshot(
       value.at("generation").get<int>(),
       value.at("canonical_knowledge_count").get<int>(),
@@ -472,8 +475,8 @@ private:
       value.value("equivalent_failure_retries", 0));
 }
 
-[[nodiscard]] saa::KnowledgeIntegrityPolicy integrity_policy(
-    const Json &request) {
+[[nodiscard]] saa::KnowledgeIntegrityPolicy
+integrity_policy(const Json &request) {
   saa::KnowledgeIntegrityPolicy result;
   if (!request.contains("integrity_policy")) {
     return result;
@@ -485,19 +488,19 @@ private:
       "max_semantic_drift_rate_bp", result.max_semantic_drift_rate_bp);
   result.max_false_admission_rate_bp = value.value(
       "max_false_admission_rate_bp", result.max_false_admission_rate_bp);
-  result.max_corrected_error_recurrence_rate_bp = value.value(
-      "max_corrected_error_recurrence_rate_bp",
-      result.max_corrected_error_recurrence_rate_bp);
+  result.max_corrected_error_recurrence_rate_bp =
+      value.value("max_corrected_error_recurrence_rate_bp",
+                  result.max_corrected_error_recurrence_rate_bp);
   result.min_retrieval_precision_bp = value.value(
       "min_retrieval_precision_bp", result.min_retrieval_precision_bp);
-  result.min_equivalent_failure_avoidance_bp = value.value(
-      "min_equivalent_failure_avoidance_bp",
-      result.min_equivalent_failure_avoidance_bp);
+  result.min_equivalent_failure_avoidance_bp =
+      value.value("min_equivalent_failure_avoidance_bp",
+                  result.min_equivalent_failure_avoidance_bp);
   return result;
 }
 
-[[nodiscard]] egcf::InternetExperimentRequest experiment_request(
-    const Json &request) {
+[[nodiscard]] egcf::InternetExperimentRequest
+experiment_request(const Json &request) {
   egcf::InternetExperimentRequest result;
   result.baseline_ref = request.at("baseline_ref").get<std::string>();
   result.baseline_saa_ir = request.at("baseline_saa_ir");
@@ -512,8 +515,8 @@ private:
         value.value("candidate_context_signature", std::string{});
     group.deterministic_seed = value.at("deterministic_seed").get<int>();
     group.inputs = exact_rationals(value.at("inputs"), "trial inputs");
-    group.expected_outputs = exact_rationals(
-        value.at("expected_outputs"), "trial expected_outputs");
+    group.expected_outputs =
+        exact_rationals(value.at("expected_outputs"), "trial expected_outputs");
     result.trial_groups.push_back(std::move(group));
   }
   result.context_signature = request.value("context_signature", std::string{});
@@ -529,9 +532,9 @@ private:
       group.candidate_context_signature = result.context_signature;
     }
   }
-  result.minimum_material_effect = exact_rational(
-      request.value("minimum_material_effect", Json(0)),
-      "minimum_material_effect");
+  result.minimum_material_effect =
+      exact_rational(request.value("minimum_material_effect", Json(0)),
+                     "minimum_material_effect");
   result.minimum_output = exact_rational(
       request.value("minimum_output", Json(-1000000)), "minimum_output");
   result.maximum_output = exact_rational(
@@ -555,18 +558,19 @@ private:
   return result;
 }
 
-[[nodiscard]] egcf::InternetAlgorithmCandidate candidate_from_store(
-    egcf::EgcfStore &store, std::string_view candidate_id) {
+[[nodiscard]] egcf::InternetAlgorithmCandidate
+candidate_from_store(egcf::EgcfStore &store, std::string_view candidate_id) {
   const auto record = store.get(candidate_id);
   if (record.object_type != "internet-algorithm-candidate") {
-    throw common::Error(common::ErrorCode::invalid_argument,
-                        "candidate_id does not reference an internet candidate");
+    throw common::Error(
+        common::ErrorCode::invalid_argument,
+        "candidate_id does not reference an internet candidate");
   }
   return egcf::internet_algorithm_candidate_from_json(record.payload);
 }
 
-[[nodiscard]] saa::ProbationRegressionSignals regression_signals(
-    const Json &request) {
+[[nodiscard]] saa::ProbationRegressionSignals
+regression_signals(const Json &request) {
   const auto signals = request.value("regression_signals", Json::object());
   return {.semantic_contradiction =
               signals.value("semantic_contradiction", false),
@@ -583,8 +587,7 @@ private:
 
 [[nodiscard]] egcf::InternetProbationObservationRequest
 probation_observation_request(const Json &request) {
-  return {.query_signature =
-              request.at("query_signature").get<std::string>(),
+  return {.query_signature = request.at("query_signature").get<std::string>(),
           .context_signature =
               request.at("context_signature").get<std::string>(),
           .observed_at = request.at("observed_at").get<std::string>(),
@@ -595,8 +598,7 @@ probation_observation_request(const Json &request) {
           .benchmark_passed = request.at("benchmark_passed").get<bool>(),
           .integrity_passed = request.at("integrity_passed").get<bool>(),
           .source_valid = request.at("source_valid").get<bool>(),
-          .reproduction_passed =
-              request.at("reproduction_passed").get<bool>(),
+          .reproduction_passed = request.at("reproduction_passed").get<bool>(),
           .evidence_ids = strings(request, "evidence_ids"),
           .regression_signals = regression_signals(request)};
 }
@@ -606,24 +608,22 @@ internet_improvement_run_request(const Json &request) {
   egcf::InternetImprovementRunRequest result;
   result.current_timestamp = request.value(
       "current_timestamp",
-      request.value("recorded_at",
-                    request.value("observed_at",
-                                  std::string("1970-01-01T00:00:00Z"))));
+      request.value(
+          "recorded_at",
+          request.value("observed_at", std::string("1970-01-01T00:00:00Z"))));
   result.cycle_key = request.value("cycle_key", result.current_timestamp);
   result.worker_id = request.value("worker_id", std::string{});
-  result.action_lease_expires_at = request.value(
-      "action_lease_expires_at",
-      request.value("lease_expires_at", std::string{}));
+  result.action_lease_expires_at =
+      request.value("action_lease_expires_at",
+                    request.value("lease_expires_at", std::string{}));
   if (result.action_lease_expires_at.empty()) {
     result.action_lease_expires_at =
         timestamp_after(result.current_timestamp, 60);
   }
-  result.fetch_lease_expires_at = request.value(
-      "fetch_lease_expires_at", result.action_lease_expires_at);
-  result.prior_snapshot_id =
-      request.value("prior_snapshot_id", std::string{});
-  result.source_label =
-      request.value("source_label", result.source_label);
+  result.fetch_lease_expires_at =
+      request.value("fetch_lease_expires_at", result.action_lease_expires_at);
+  result.prior_snapshot_id = request.value("prior_snapshot_id", std::string{});
+  result.source_label = request.value("source_label", result.source_label);
   result.strict_feed = request.value("strict", result.strict_feed);
   result.policy = egcf::internet_director_policy_from_json(
       request.value("policy", Json::object()));
@@ -640,8 +640,8 @@ internet_improvement_run_request(const Json &request) {
         request.at("candidate_id").get<std::string>();
   }
   if (result.policy.action_deadline.empty()) {
-    result.policy.action_deadline = request.value(
-        "action_deadline", result.current_timestamp);
+    result.policy.action_deadline =
+        request.value("action_deadline", result.current_timestamp);
   }
   result.policy =
       egcf::canonical_internet_director_policy(std::move(result.policy));
@@ -650,14 +650,14 @@ internet_improvement_run_request(const Json &request) {
 
 [[nodiscard]] egcf::InternetExperimentProtocol
 internet_experiment_protocol(const Json &request) {
-  const auto &value = request.contains("protocol") ? request.at("protocol")
-                                                    : request;
+  const auto &value =
+      request.contains("protocol") ? request.at("protocol") : request;
   egcf::InternetExperimentProtocol protocol;
   protocol.protocol_version =
       value.value("protocol_version", std::string("v1"));
-  protocol.applicable_candidate_statuses = value.value(
-      "applicable_candidate_statuses",
-      std::vector<std::string>{"VALIDATION_READY"});
+  protocol.applicable_candidate_statuses =
+      value.value("applicable_candidate_statuses",
+                  std::vector<std::string>{"VALIDATION_READY"});
   protocol.applicable_primitives =
       value.value("applicable_primitives", std::vector<std::string>{});
   protocol.applicable_domains =
@@ -667,8 +667,8 @@ internet_experiment_protocol(const Json &request) {
   protocol.dataset_snapshot_ids =
       value.at("dataset_snapshot_ids").get<std::vector<std::string>>();
   protocol.trial_groups = value.at("trial_groups");
-  protocol.minimum_material_effect = value.value(
-      "minimum_material_effect", protocol.minimum_material_effect);
+  protocol.minimum_material_effect =
+      value.value("minimum_material_effect", protocol.minimum_material_effect);
   protocol.minimum_output =
       value.value("minimum_output", protocol.minimum_output);
   protocol.maximum_output =
@@ -683,19 +683,16 @@ internet_experiment_protocol(const Json &request) {
       value.value("maximum_total_trials", protocol.maximum_total_trials);
   protocol.benchmark_track_scores =
       value.value("benchmark_track_scores", Json::object());
-  protocol.benchmark_policy =
-      value.value("benchmark_policy", Json::object());
+  protocol.benchmark_policy = value.value("benchmark_policy", Json::object());
   protocol.integrity_snapshots =
       value.value("integrity_snapshots", Json::array());
-  protocol.integrity_policy =
-      value.value("integrity_policy", Json::object());
+  protocol.integrity_policy = value.value("integrity_policy", Json::object());
   protocol.independent_review = value.value("independent_review", true);
   protocol.valid_from = value.at("valid_from").get<std::string>();
   protocol.valid_until = value.value("valid_until", std::string{});
   protocol.supersedes_protocol_id =
       value.value("supersedes_protocol_id", std::string{});
-  protocol.source_provenance =
-      value.value("source_provenance", Json::object());
+  protocol.source_provenance = value.value("source_provenance", Json::object());
   return egcf::canonical_internet_experiment_protocol(std::move(protocol));
 }
 
@@ -704,17 +701,13 @@ internet_source_assessment_input(const Json &request) {
   const auto &value = request.contains("input") ? request.at("input") : request;
   egcf::InternetSourceAssessmentInput input;
   input.snapshot_id = value.at("snapshot_id").get<std::string>();
-  input.fetch_receipt_id =
-      value.at("fetch_receipt_id").get<std::string>();
-  input.source_policy_id =
-      value.at("source_policy_id").get<std::string>();
+  input.fetch_receipt_id = value.at("fetch_receipt_id").get<std::string>();
+  input.source_policy_id = value.at("source_policy_id").get<std::string>();
   input.robots_allowed = value.at("robots_allowed").get<bool>();
   input.license_classification =
       value.at("license_classification").get<std::string>();
-  input.evidence_ids =
-      value.at("evidence_ids").get<std::vector<std::string>>();
-  input.producer_identity =
-      value.at("producer_identity").get<std::string>();
+  input.evidence_ids = value.at("evidence_ids").get<std::vector<std::string>>();
+  input.producer_identity = value.at("producer_identity").get<std::string>();
   input.provenance = value.value("provenance", Json::object());
   return egcf::canonical_internet_source_assessment_input(std::move(input));
 }
@@ -726,8 +719,7 @@ internet_probation_observation_input(const Json &request) {
   input.candidate_id = value.at("candidate_id").get<std::string>();
   input.admission_id = value.at("admission_id").get<std::string>();
   input.query_signature = value.at("query_signature").get<std::string>();
-  input.context_signature =
-      value.at("context_signature").get<std::string>();
+  input.context_signature = value.at("context_signature").get<std::string>();
   input.observed_at = value.at("observed_at").get<std::string>();
   input.window_index = value.at("window_index").get<int>();
   input.candidate_correct = value.at("candidate_correct").get<bool>();
@@ -736,17 +728,12 @@ internet_probation_observation_input(const Json &request) {
   input.benchmark_passed = value.at("benchmark_passed").get<bool>();
   input.integrity_passed = value.at("integrity_passed").get<bool>();
   input.source_valid = value.at("source_valid").get<bool>();
-  input.reproduction_passed =
-      value.at("reproduction_passed").get<bool>();
-  input.evidence_ids =
-      value.at("evidence_ids").get<std::vector<std::string>>();
-  input.regression_signals =
-      value.value("regression_signals", Json::object());
-  input.producer_identity =
-      value.at("producer_identity").get<std::string>();
+  input.reproduction_passed = value.at("reproduction_passed").get<bool>();
+  input.evidence_ids = value.at("evidence_ids").get<std::vector<std::string>>();
+  input.regression_signals = value.value("regression_signals", Json::object());
+  input.producer_identity = value.at("producer_identity").get<std::string>();
   input.provenance = value.value("provenance", Json::object());
-  return egcf::canonical_internet_probation_observation_input(
-      std::move(input));
+  return egcf::canonical_internet_probation_observation_input(std::move(input));
 }
 
 [[nodiscard]] Json execute_internet_watch(const Json &request) {
@@ -761,9 +748,11 @@ internet_probation_observation_input(const Json &request) {
     return record_json(store.get(request.at("watch_id").get<std::string>()));
   }
   sources::InternetWatch watch;
+  std::optional<sources::InternetWatch> previous_watch;
   if (action == "enable" || action == "disable" || action == "supersede") {
     const std::string old_id = request.at("watch_id").get<std::string>();
     watch = sources::internet_watch_from_json(store.get(old_id).payload);
+    previous_watch = watch;
     watch.supersedes_watch_id = old_id;
     watch.schedule_generation += 1;
     if (action == "enable") {
@@ -779,8 +768,7 @@ internet_probation_observation_input(const Json &request) {
     watch.source_policy_id = internet.register_source_policy(
         sources::source_policy_from_json(request.at("source_policy")));
   } else if (request.contains("source_policy_id")) {
-    watch.source_policy_id =
-        request.at("source_policy_id").get<std::string>();
+    watch.source_policy_id = request.at("source_policy_id").get<std::string>();
   }
   if (request.contains("canonical_url")) {
     watch.canonical_url = request.at("canonical_url").get<std::string>();
@@ -797,24 +785,56 @@ internet_probation_observation_input(const Json &request) {
                                     .accepted_mime_types;
   }
   watch.enabled = request.value("enabled", watch.enabled);
-  watch.polling_interval_seconds = request.value(
-      "polling_interval_seconds", watch.polling_interval_seconds);
+  watch.polling_interval_seconds =
+      request.value("polling_interval_seconds", watch.polling_interval_seconds);
   watch.deterministic_jitter_seconds = request.value(
       "deterministic_jitter_seconds", watch.deterministic_jitter_seconds);
   watch.maximum_redirects =
       request.value("maximum_redirects", watch.maximum_redirects);
-  watch.maximum_response_bytes = request.value(
-      "maximum_response_bytes", watch.maximum_response_bytes);
+  watch.maximum_response_bytes =
+      request.value("maximum_response_bytes", watch.maximum_response_bytes);
   watch.maximum_decompressed_bytes = request.value(
       "maximum_decompressed_bytes", watch.maximum_decompressed_bytes);
-  watch.request_timeout_seconds = request.value(
-      "request_timeout_seconds", watch.request_timeout_seconds);
+  watch.request_timeout_seconds =
+      request.value("request_timeout_seconds", watch.request_timeout_seconds);
   watch.schedule_generation =
       request.value("schedule_generation", watch.schedule_generation);
   watch.watch_signature.clear();
   watch = sources::canonical_watch(std::move(watch));
+  // Prepare provenance before mutating the active generation so a rejected
+  // enable/source change cannot leave an enabled watch behind.
+  std::vector<Json> registrations;
+  if (previous_watch) {
+    const auto prior_registrations =
+        internet.list("internet-watch-registration");
+    const bool has_eligible_registration = std::any_of(
+        prior_registrations.begin(), prior_registrations.end(),
+        [&](const auto &item) {
+          return item.payload.at("watch_id") == previous_watch->object_id() &&
+                 item.payload.at("license_status") == "verified" &&
+                 item.payload.at("eligibility_status") != "QUARANTINED";
+        });
+    for (const auto &registration : prior_registrations) {
+      if (registration.payload.at("watch_id") == previous_watch->object_id() &&
+          (!has_eligible_registration ||
+           (registration.payload.at("license_status") == "verified" &&
+            registration.payload.at("eligibility_status") != "QUARANTINED"))) {
+        registrations.push_back(sources::supersede_watchlist_registration(
+            registration.payload, *previous_watch, watch,
+            registration.object_id));
+      }
+    }
+  }
   const std::string watch_id = internet.register_watch(watch);
-  return {{"watch", sources::to_json(watch)}, {"watch_id", watch_id}};
+  Json registration_ids = Json::array();
+  for (const auto &registration : registrations) {
+    registration_ids.push_back(store.register_record(
+        {.object_type = "internet-watch-registration", .payload = registration},
+        "internet_watch_registration_registered"));
+  }
+  return {{"watch", sources::to_json(watch)},
+          {"watch_id", watch_id},
+          {"registration_ids", std::move(registration_ids)}};
 }
 
 [[nodiscard]] Json json_file(const std::filesystem::path &path) {
@@ -836,17 +856,17 @@ internet_probation_observation_input(const Json &request) {
   return json_file(request.at("manifest_path").get<std::string>());
 }
 
-[[nodiscard]] Json watchlist_source_registry(
-    const Json &request, const std::filesystem::path &resources) {
+[[nodiscard]] Json
+watchlist_source_registry(const Json &request,
+                          const std::filesystem::path &resources) {
   if (request.contains("source_registry")) {
     return request.at("source_registry");
   }
-  const auto path = request.contains("source_registry_path")
-                        ? std::filesystem::path(
-                              request.at("source_registry_path")
-                                  .get<std::string>())
-                        : resources /
-                              "watchlists/internet/source-groups-v1.json";
+  const auto path =
+      request.contains("source_registry_path")
+          ? std::filesystem::path(
+                request.at("source_registry_path").get<std::string>())
+          : resources / "watchlists/internet/source-groups-v1.json";
   return json_file(path);
 }
 
@@ -860,8 +880,9 @@ void validate_watchlist_schema(const Json &manifest,
   schemas.validate_json_value(schema, manifest, "$watchlist");
 }
 
-[[nodiscard]] std::filesystem::path watchlist_resource_path(
-    const std::filesystem::path &resources, std::string reference) {
+[[nodiscard]] std::filesystem::path
+watchlist_resource_path(const std::filesystem::path &resources,
+                        std::string reference) {
   std::filesystem::path relative(std::move(reference));
   if (!relative.empty() && *relative.begin() == "resources") {
     relative = relative.lexically_relative("resources");
@@ -876,34 +897,37 @@ void validate_watchlist_schema(const Json &manifest,
 
 void write_watchlist_output(const Json &request, const Json &value) {
   if (request.contains("output_path")) {
-    core::atomic_write_text(
-        request.at("output_path").get<std::string>(),
-        contracts::canonical_json(value) + "\n");
+    core::atomic_write_text(request.at("output_path").get<std::string>(),
+                            contracts::canonical_json(value) + "\n");
   }
 }
 
 void validate_preflight_report(const Json &report, const Json &manifest,
-                               const Json &request) {
+                               const Json &registry, const Json &request) {
   if (!report.is_object() || report.value("schema_version", 0) != 1 ||
       report.value("manifest_sha256", std::string{}) !=
           contracts::sha256_json(manifest) ||
+      report.value("source_registry_sha256", std::string{}) !=
+          contracts::sha256_json(registry) ||
       !report.contains("results") || !report.at("results").is_array()) {
-    throw common::Error(common::ErrorCode::invalid_argument,
-                        "preflight report does not match the watchlist");
+    throw common::Error(
+        common::ErrorCode::invalid_argument,
+        "preflight report does not match the watchlist and source registry");
   }
   Json signed_material = report;
   const std::string signature =
       signed_material.value("report_signature", std::string{});
   signed_material.erase("report_signature");
   signed_material.erase("report_id");
-  if (signature.empty() || contracts::sha256_json(signed_material) != signature) {
+  if (signature.empty() ||
+      contracts::sha256_json(signed_material) != signature) {
     throw common::Error(common::ErrorCode::invalid_argument,
                         "preflight report signature is invalid");
   }
   const std::time_t checked =
       timestamp_value(report.at("checked_at").get<std::string>());
-  const std::time_t current = timestamp_value(
-      request.at("current_timestamp").get<std::string>());
+  const std::time_t current =
+      timestamp_value(request.at("current_timestamp").get<std::string>());
   const auto age = static_cast<long long>(current - checked);
   if (age < 0 || age > request.value("maximum_preflight_age_seconds", 86'400)) {
     throw common::Error(common::ErrorCode::policy_denied,
@@ -911,8 +935,9 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   }
 }
 
-[[nodiscard]] const Json *preflight_result(const Json &report,
-                                           const Json &entry) {
+[[nodiscard]] const Json *
+preflight_result(const Json &report, const Json &entry,
+                 const sources::InternetSourcePolicy &policy) {
   if (!report.is_object()) {
     return nullptr;
   }
@@ -932,35 +957,10 @@ void validate_preflight_report(const Json &report, const Json &manifest,
                           "preflight entry hash does not match manifest");
     }
     if (candidate.value("eligible", false)) {
-      const bool robots_required =
-          entry.at("robots").at("required").get<bool>();
-      const std::string content_type =
-          candidate.value("content_type", std::string{});
-      const auto accepted_mime_types =
-          entry.at("accepted_mime_types").get<std::vector<std::string>>();
-      const int http_status = candidate.value("http_status", 0);
-      if (candidate.value("status", std::string{}) !=
-              "PREFLIGHT_ELIGIBLE" ||
-          !candidate.contains("blocking_reasons") ||
-          !candidate.at("blocking_reasons").is_array() ||
-          !candidate.at("blocking_reasons").empty() ||
-          candidate.value("canonical_url", std::string{}) !=
-              entry.at("canonical_url").get<std::string>() ||
-          candidate.value("final_url", std::string{}) !=
-              entry.at("canonical_url").get<std::string>() ||
-          http_status < 200 || http_status >= 300 || http_status == 204 ||
-          !candidate.value("tls_verified", false) ||
-          candidate.value("provider_identity", std::string{}).empty() ||
-          !candidate.contains("resolved_addresses") ||
-          !candidate.at("resolved_addresses").is_array() ||
-          candidate.at("resolved_addresses").empty() ||
-          std::find(accepted_mime_types.begin(), accepted_mime_types.end(),
-                    content_type) == accepted_mime_types.end() ||
-          (robots_required &&
-           (!candidate.value("robots_policy_evaluated", false) ||
-            !candidate.value("robots_allowed", false)))) {
+      if (!sources::watchlist_preflight_eligible(entry, candidate, policy)) {
         throw common::Error(common::ErrorCode::policy_denied,
-                            "eligible preflight result lacks required evidence");
+                            "eligible preflight result lacks current license, "
+                            "policy, or transport evidence");
       }
     }
     result = &candidate;
@@ -993,7 +993,8 @@ void validate_preflight_report(const Json &report, const Json &manifest,
 
   const auto policy_path = watchlist_resource_path(
       resources, manifest.at("source_policy_ref").get<std::string>());
-  const auto base_policy = sources::source_policy_from_json(json_file(policy_path));
+  const auto base_policy =
+      sources::source_policy_from_json(json_file(policy_path));
   if (action == "preflight") {
     sources::CurlHttpFetchProvider provider;
     const auto report = sources::preflight_watchlist_manifest(
@@ -1011,11 +1012,10 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   if (request.contains("preflight_report")) {
     report = request.at("preflight_report");
   } else if (request.contains("preflight_report_path")) {
-    report = json_file(
-        request.at("preflight_report_path").get<std::string>());
+    report = json_file(request.at("preflight_report_path").get<std::string>());
   }
   if (!report.is_null()) {
-    validate_preflight_report(report, manifest, request);
+    validate_preflight_report(report, manifest, registry, request);
   }
 
   const bool dry_run = request.value("dry_run", false);
@@ -1033,55 +1033,59 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   Json registrations = Json::array();
   Json skipped = Json::array();
   for (const auto &entry : manifest.at("watches")) {
-    const std::string entry_group =
-        entry.at("source_group").get<std::string>();
+    const std::string entry_group = entry.at("source_group").get<std::string>();
     if (!selected_groups.empty() &&
-        std::find(selected_groups.begin(), selected_groups.end(), entry_group) ==
-            selected_groups.end()) {
+        std::find(selected_groups.begin(), selected_groups.end(),
+                  entry_group) == selected_groups.end()) {
       skipped.push_back({{"entry_name", entry.at("name")},
                          {"reason", "source-group-filtered"}});
       continue;
     }
-    const Json *result = preflight_result(report, entry);
+    const auto policy = sources::watchlist_source_policy(entry, base_policy);
+    const Json *result = preflight_result(report, entry, policy);
     const bool eligible = result != nullptr && result->value("eligible", false);
     if (!eligible && eligible_only) {
       skipped.push_back(
           {{"entry_name", entry.at("name")},
-           {"reason", result == nullptr ? "missing-preflight-result"
-                                        : result->value(
-                                              "status",
-                                              std::string("QUARANTINED"))}});
+           {"reason",
+            result == nullptr
+                ? "missing-preflight-result"
+                : result->value("status", std::string("QUARANTINED"))}});
       continue;
     }
 
-    const auto policy = sources::watchlist_source_policy(entry, base_policy);
     const std::string policy_id =
         dry_run ? policy.object_id() : internet->register_source_policy(policy);
-    const auto watch = sources::watchlist_watch(
-        entry, policy_id, eligible, enable_eligible);
+    const auto watch =
+        sources::watchlist_watch(entry, policy_id, eligible, enable_eligible);
     const std::string watch_id =
         dry_run ? watch.object_id() : internet->register_watch(watch);
-    const std::string status =
-        !eligible ? "QUARANTINED"
-                  : watch.enabled ? "REGISTERED_ENABLED"
-                                  : "REGISTERED_DISABLED";
+    const std::string status = !eligible       ? "QUARANTINED"
+                               : watch.enabled ? "REGISTERED_ENABLED"
+                                               : "REGISTERED_DISABLED";
+    std::string independence_group = entry_group;
+    for (const auto &group : registry.at("source_groups")) {
+      if (group.at("source_group") == entry_group) {
+        independence_group =
+            group.value("evidence_independence_group", entry_group);
+        break;
+      }
+    }
     const auto registration = sources::make_watchlist_registration(
-        manifest, entry, watch_id, policy_id, report_hash, status);
+        manifest, entry, watch_id, policy_id, report_hash, status,
+        independence_group);
     const egcf::EgcfRecord registration_record = {
-        .object_type = "internet-watch-registration",
-        .payload = registration};
+        .object_type = "internet-watch-registration", .payload = registration};
     const std::string registration_id =
         dry_run
             ? registration_record.object_id()
-            : store->register_record(
-                  registration_record,
-                  "internet_watch_registration_registered");
-    registrations.push_back(
-        {{"eligibility_status", status},
-         {"entry_name", entry.at("name")},
-         {"registration_id", registration_id},
-         {"source_policy_id", policy_id},
-         {"watch_id", watch_id}});
+            : store->register_record(registration_record,
+                                     "internet_watch_registration_registered");
+    registrations.push_back({{"eligibility_status", status},
+                             {"entry_name", entry.at("name")},
+                             {"registration_id", registration_id},
+                             {"source_policy_id", policy_id},
+                             {"watch_id", watch_id}});
   }
   return {{"dry_run", dry_run},
           {"manifest_sha256", contracts::sha256_json(manifest)},
@@ -1142,8 +1146,8 @@ void validate_preflight_report(const Json &report, const Json &manifest,
         "per_source_group_concurrency", limits.per_source_group_concurrency);
     limits.global_response_byte_budget = request.value(
         "global_response_byte_budget", limits.global_response_byte_budget);
-    limits.global_cpu_unit_budget = request.value(
-        "global_cpu_unit_budget", limits.global_cpu_unit_budget);
+    limits.global_cpu_unit_budget =
+        request.value("global_cpu_unit_budget", limits.global_cpu_unit_budget);
     limits.maximum_clock_jump_seconds = request.value(
         "maximum_clock_jump_seconds", limits.maximum_clock_jump_seconds);
     return sources::to_json(sources::select_due_fetch_jobs(
@@ -1159,8 +1163,8 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   egcf::InternetImprovementStore internet(store);
   const auto action = request.value("action", std::string("list"));
   if (action == "list") {
-    return {{"receipts",
-             stored_objects(internet.list("internet-fetch-receipt"))}};
+    return {
+        {"receipts", stored_objects(internet.list("internet-fetch-receipt"))}};
   }
   if (action != "execute") {
     throw common::Error(common::ErrorCode::invalid_argument,
@@ -1211,6 +1215,44 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   egcf::EgcfStore store(request_root(request), resource_root(request));
   egcf::InternetImprovementStore internet(store);
   const auto action = request.value("action", std::string("execute"));
+  if (action == "proposals") {
+    const auto limit = request.value("limit", 100U);
+    if (limit == 0U || limit > 1000U) {
+      throw common::Error(common::ErrorCode::invalid_argument,
+                          "proposal limit must be between 1 and 1000");
+    }
+    std::map<std::string, Json> proposals;
+    bool truncated = false;
+    for (const auto &record : internet.list("internet-source-fragment")) {
+      const auto &metadata = record.payload.at("metadata");
+      if (!metadata.contains("discovery_watch_proposal"))
+        continue;
+      auto proposal = metadata.at("discovery_watch_proposal");
+      const auto doi = proposal.value("doi", std::string{});
+      const auto key =
+          doi.empty() ? proposal.at("canonical_url").get<std::string>() : doi;
+      if (!proposals.contains(key) && proposals.size() >= limit) {
+        truncated = true;
+        continue;
+      }
+      if (!proposals.contains(key)) {
+        proposal["source_fragment_ids"] = Json::array();
+        proposal["blocking_reasons"] = {"SOURCE_GROUP_ASSIGNMENT_REQUIRED",
+                                        "LICENSE_REVIEW_REQUIRED",
+                                        "PREFLIGHT_REQUIRED"};
+        proposals.emplace(key, std::move(proposal));
+      }
+      auto &origins = proposals.at(key).at("source_fragment_ids");
+      if (origins.size() < 100U)
+        origins.push_back(record.object_id);
+    }
+    Json output = Json::array();
+    for (auto &[key, proposal] : proposals) {
+      static_cast<void>(key);
+      output.push_back(std::move(proposal));
+    }
+    return {{"proposals", std::move(output)}, {"truncated", truncated}};
+  }
   if (action == "list") {
     return {{"extractions",
              stored_objects(internet.list("internet-extraction-receipt"))}};
@@ -1238,7 +1280,8 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   egcf::InternetImprovementStore internet(store);
   const auto action = request.value("action", std::string("list"));
   if (action == "get") {
-    return record_json(store.get(request.at("candidate_id").get<std::string>()));
+    return record_json(
+        store.get(request.at("candidate_id").get<std::string>()));
   }
   if (action == "explain") {
     const auto candidate = candidate_from_store(
@@ -1287,17 +1330,17 @@ void validate_preflight_report(const Json &report, const Json &manifest,
     } else {
       policy_json = request.at("policy");
     }
-    const auto policy =
-        saa::autonomous_promotion_policy_from_json(policy_json);
+    const auto policy = saa::autonomous_promotion_policy_from_json(policy_json);
     return {{"policy", saa::to_json(policy)},
             {"policy_id", internet.register_promotion_policy(policy)}};
   }
   if (action == "assess") {
     egcf::AutonomousPromotionController controller(store);
     return egcf::to_json(controller.assess(
-        candidate_from_store(
-            store, request.at("candidate_id").get<std::string>()),
-        request.at("policy_id").get<std::string>()));
+        candidate_from_store(store,
+                             request.at("candidate_id").get<std::string>()),
+        request.at("policy_id").get<std::string>(),
+        request.at("current_timestamp").get<std::string>()));
   }
   throw common::Error(common::ErrorCode::invalid_argument,
                       "unsupported internet-promotion-policy action");
@@ -1323,7 +1366,8 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   if (action == "admit") {
     return egcf::to_json(probation.admit(
         candidate,
-        request.value("previous_preferred_canonical_ref", std::string{})));
+        request.value("previous_preferred_canonical_ref", std::string{}),
+        request.at("current_timestamp").get<std::string>()));
   }
   if (action == "select") {
     return egcf::to_json(probation.select(
@@ -1352,24 +1396,26 @@ void validate_preflight_report(const Json &report, const Json &manifest,
                         "unsupported internet-integrity action");
   }
   internet.verify_integrity();
-  return {{"action", action},
-          {"candidate_count",
-           internet.list("internet-algorithm-candidate").size()},
-          {"event_head", store.event_head()},
-          {"ok", true},
-          {"probation_observation_count",
-           internet.list("internet-probation-observation").size()},
-          {"snapshot_count",
-           internet.list("internet-source-snapshot").size()}};
+  return {
+      {"action", action},
+      {"candidate_count", internet.list("internet-algorithm-candidate").size()},
+      {"event_head", store.event_head()},
+      {"ok", true},
+      {"probation_observation_count",
+       internet.list("internet-probation-observation").size()},
+      {"snapshot_count", internet.list("internet-source-snapshot").size()}};
 }
 
 [[nodiscard]] Json execute_internet_improvement(const Json &request) {
-  const std::string action =
-      request.value("action", std::string("status"));
+  const std::string action = request.value("action", std::string("status"));
+  if (action == "metrics") {
+    egcf::EgcfStore store(request_root(request), resource_root(request));
+    return egcf::internet_improvement_metrics(store);
+  }
   if (action == "feed") {
     egcf::EgcfStore store(request_root(request), resource_root(request));
-    const auto assessment_record = store.get(
-        request.at("policy_assessment_id").get<std::string>());
+    const auto assessment_record =
+        store.get(request.at("policy_assessment_id").get<std::string>());
     if (assessment_record.object_type != "internet-policy-assessment") {
       throw common::Error(common::ErrorCode::invalid_argument,
                           "policy_assessment_id has wrong type");
@@ -1410,8 +1456,8 @@ void validate_preflight_report(const Json &report, const Json &manifest,
     egcf::EgcfStore store(request_root(request), resource_root(request));
     egcf::InternetExperimentCoordinator coordinator(store);
     return egcf::to_json(coordinator.qualify(
-        candidate_from_store(
-            store, request.at("candidate_id").get<std::string>()),
+        candidate_from_store(store,
+                             request.at("candidate_id").get<std::string>()),
         experiment_request(request)));
   }
   if (action == "policy-assess") {
@@ -1440,12 +1486,12 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   if (action == "probation-observation-input-register") {
     const auto input = internet_probation_observation_input(request);
     return {{"input", egcf::to_json(input)},
-            {"input_id",
-             internet.register_probation_observation_input(input)}};
+            {"input_id", internet.register_probation_observation_input(input)}};
   }
   if (action == "plan") {
     egcf::InternetImprovementOrchestrator orchestrator(store);
-    const auto plan = orchestrator.plan(internet_improvement_run_request(request));
+    const auto plan =
+        orchestrator.plan(internet_improvement_run_request(request));
     Json result = {{"plan", egcf::to_json(plan)}};
     if (request.value("register", false)) {
       result["plan_id"] = internet.register_improvement_plan(plan);
@@ -1454,14 +1500,12 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   }
   if (action == "run-once" || action == "advance" || action == "resume") {
     if (action == "advance" && request.contains("baseline_ref") &&
-        request.contains("trial_groups") &&
-        request.contains("valid_from")) {
+        request.contains("trial_groups") && request.contains("valid_from")) {
       static_cast<void>(internet.register_experiment_protocol(
           internet_experiment_protocol(request)));
     }
     sources::CurlHttpFetchProvider fetch_provider;
-    egcf::InternetImprovementOrchestrator orchestrator(
-        store, &fetch_provider);
+    egcf::InternetImprovementOrchestrator orchestrator(store, &fetch_provider);
     auto run_request = internet_improvement_run_request(request);
     if (action == "advance") {
       run_request.policy.maximum_actions = 1;
@@ -1473,16 +1517,15 @@ void validate_preflight_report(const Json &report, const Json &manifest,
     }
     return egcf::to_json(
         action == "resume"
-            ? orchestrator.resume(
-                  request.at("run_id").get<std::string>(), run_request)
+            ? orchestrator.resume(request.at("run_id").get<std::string>(),
+                                  run_request)
             : orchestrator.run_once(run_request));
   }
   if (action == "run-status") {
     egcf::InternetImprovementOrchestrator orchestrator(store);
-    return orchestrator.run_status(
-        request.value("run_id", std::string{}),
-        request.value("worker_id", std::string{}),
-        request.value("nonterminal_only", false));
+    return orchestrator.run_status(request.value("run_id", std::string{}),
+                                   request.value("worker_id", std::string{}),
+                                   request.value("nonterminal_only", false));
   }
   if (action == "explain-action") {
     egcf::InternetImprovementOrchestrator orchestrator(store);
@@ -1494,20 +1537,16 @@ void validate_preflight_report(const Json &report, const Json &manifest,
                         "unsupported internet-improvement action");
   }
   return {{"action_leases",
-           stored_objects(
-               internet.list("internet-improvement-action-lease"))},
-          {"action_receipts",
-           stored_objects(
-               internet.list("internet-improvement-action-receipt"))},
+           stored_objects(internet.list("internet-improvement-action-lease"))},
+          {"action_receipts", stored_objects(internet.list(
+                                  "internet-improvement-action-receipt"))},
           {"candidates",
            stored_objects(internet.list("internet-algorithm-candidate"))},
           {"experiment_protocols",
            stored_objects(internet.list("internet-experiment-protocol"))},
           {"experiment_qualifications",
-           stored_objects(
-               internet.list("internet-experiment-qualification"))},
-          {"plans",
-           stored_objects(internet.list("internet-improvement-plan"))},
+           stored_objects(internet.list("internet-experiment-qualification"))},
+          {"plans", stored_objects(internet.list("internet-improvement-plan"))},
           {"promotion_assessments",
            stored_objects(internet.list("internet-promotion-assessment"))},
           {"probation_admissions",
@@ -1557,8 +1596,8 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   if (operation == "inspect") {
     const core::Workspace workspace(request_root(request));
     Json files = Json::array();
-    for (const auto &path : workspace.files(
-             request.value("path", std::string(".")))) {
+    for (const auto &path :
+         workspace.files(request.value("path", std::string(".")))) {
       files.push_back(workspace.relative(path));
     }
     return {{"files", files},
@@ -1603,14 +1642,14 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   }
   if (operation == "retrieve") {
     EngineSession session(request);
-    return {{"objects",
-             stored_objects(session.engine().store().search_text(
-                 request.at("query").get<std::string>(),
-                 request.contains("object_type")
-                     ? std::optional<std::string>(
-                           request.at("object_type").get<std::string>())
-                     : std::nullopt,
-                 request.value("limit", 20U)))}};
+    return {
+        {"objects", stored_objects(session.engine().store().search_text(
+                        request.at("query").get<std::string>(),
+                        request.contains("object_type")
+                            ? std::optional<std::string>(
+                                  request.at("object_type").get<std::string>())
+                            : std::nullopt,
+                        request.value("limit", 20U)))}};
   }
   if (operation == "explain") {
     EngineSession session(request);
@@ -1626,9 +1665,9 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   }
   if (operation == "command") {
     EngineSession session(request);
-    return session.engine().invoke(
-        request.at("command_id").get<std::string>(),
-        request.value("inputs", Json::object()), command_context(request));
+    return session.engine().invoke(request.at("command_id").get<std::string>(),
+                                   request.value("inputs", Json::object()),
+                                   command_context(request));
   }
   if (operation == "compile") {
     EngineSession session(request);
@@ -1640,10 +1679,9 @@ void validate_preflight_report(const Json &report, const Json &manifest,
     if (request.value("create_plan", true)) {
       const auto context = command_context(request);
       const auto plan = session.engine().create_execution_plan(
-          compiled, request.value(
-                        "prepare_mutations",
-                        compiled.capability_level == "C3" && !context.dry_run &&
-                            !context.simulate));
+          compiled, request.value("prepare_mutations",
+                                  compiled.capability_level == "C3" &&
+                                      !context.dry_run && !context.simulate));
       result["execution_plan"] = egcf::to_json(plan);
       result["execution_plan_id"] = plan.object_id();
     }
@@ -1713,8 +1751,8 @@ void validate_preflight_report(const Json &report, const Json &manifest,
             {"rebuilt", true}};
   }
   if (operation == "benchmark") {
-    const auto path = std::filesystem::path(
-        request.at("run_path").get<std::string>());
+    const auto path =
+        std::filesystem::path(request.at("run_path").get<std::string>());
     if (request.contains("checksum_path")) {
       static_cast<void>(reasoning::verify_benchmark_checksum(
           path, request.at("checksum_path").get<std::string>()));
@@ -1726,8 +1764,7 @@ void validate_preflight_report(const Json &report, const Json &manifest,
   if (operation == "qualification") {
     std::vector<reasoning::BenchmarkRun> runs;
     for (const auto &path : request.at("run_paths")) {
-      runs.push_back(reasoning::load_benchmark_run(
-          path.get<std::string>()));
+      runs.push_back(reasoning::load_benchmark_run(path.get<std::string>()));
     }
     return reasoning::to_json(reasoning::qualify_reasoning_runs(runs));
   }
@@ -1742,10 +1779,10 @@ void validate_preflight_report(const Json &report, const Json &manifest,
           item.value("evidence_from", std::vector<std::string>{}),
           item.value("source_path", std::string{})));
     }
-    return egcf::to_json(processor.feed(
-        request.at("batch_id"), request.at("source_signature"),
-        request.value("source_label", std::string{}), std::move(items),
-        request.value("strict", false)));
+    return egcf::to_json(
+        processor.feed(request.at("batch_id"), request.at("source_signature"),
+                       request.value("source_label", std::string{}),
+                       std::move(items), request.value("strict", false)));
   }
   if (operation == "repository-feed") {
     egcf::EgcfStore store(request_root(request), resource_root(request));
@@ -1754,8 +1791,8 @@ void validate_preflight_report(const Json &report, const Json &manifest,
     if (request.value("scan_only", false)) {
       return egcf::to_json(egcf::scan_repository(source));
     }
-    return egcf::to_json(egcf::feed_repository(
-        processor, source, {}, request.value("strict", false)));
+    return egcf::to_json(egcf::feed_repository(processor, source, {},
+                                               request.value("strict", false)));
   }
   throw common::Error(common::ErrorCode::invalid_argument,
                       "unknown StateWright operation: " +
@@ -1770,14 +1807,14 @@ void validate_preflight_report(const Json &report, const Json &manifest,
           {"result", std::move(result)}};
 }
 
-[[nodiscard]] Json error_response(std::string_view operation,
-                                  std::string code, std::string message) {
-  return {{"build", contracts::build_identity()},
-          {"error", {{"code", std::move(code)},
-                     {"message", std::move(message)}}},
-          {"ok", false},
-          {"operation", operation},
-          {"protocol", "statewright.cli.v1"}};
+[[nodiscard]] Json error_response(std::string_view operation, std::string code,
+                                  std::string message) {
+  return {
+      {"build", contracts::build_identity()},
+      {"error", {{"code", std::move(code)}, {"message", std::move(message)}}},
+      {"ok", false},
+      {"operation", operation},
+      {"protocol", "statewright.cli.v1"}};
 }
 
 } // namespace
@@ -1823,8 +1860,8 @@ int run_cli(int argc, char **argv) {
     }
     if (command == "operational-hypothesis" && argc == 3) {
       std::cout << contracts::canonical_json(core::to_json(
-                       core::make_operational_hypothesis(
-                           operational_proposal(contracts::parse_json(argv[2])))))
+                       core::make_operational_hypothesis(operational_proposal(
+                           contracts::parse_json(argv[2])))))
                 << '\n';
       return 0;
     }
@@ -1838,25 +1875,25 @@ int run_cli(int argc, char **argv) {
       const auto maximum =
           argc == 4 ? static_cast<std::uint64_t>(std::stoull(argv[3]))
                     : 10'000U;
-      std::cout << contracts::canonical_json(saa::to_json(
-                       saa::canonicalize_mapping(contracts::parse_json(argv[2]),
-                                                 maximum)))
+      std::cout << contracts::canonical_json(
+                       saa::to_json(saa::canonicalize_mapping(
+                           contracts::parse_json(argv[2]), maximum)))
                 << '\n';
       return 0;
     }
     if (command == "saa-search" && argc == 4) {
-      std::cout << contracts::canonical_json(execute_saa_search(
-                       contracts::parse_json(argv[2]),
-                       contracts::parse_json(argv[3])))
+      std::cout << contracts::canonical_json(
+                       execute_saa_search(contracts::parse_json(argv[2]),
+                                          contracts::parse_json(argv[3])))
                 << '\n';
       return 0;
     }
     if (command == "egcf-command-describe" && (argc == 3 || argc == 4)) {
       const std::filesystem::path resources =
-          argc == 4 ? std::filesystem::path(argv[3])
-                    : default_resource_root();
+          argc == 4 ? std::filesystem::path(argv[3]) : default_resource_root();
       const egcf::CommandRegistry registry(resources);
-      std::cout << contracts::canonical_json(registry.describe(argv[2])) << '\n';
+      std::cout << contracts::canonical_json(registry.describe(argv[2]))
+                << '\n';
       return 0;
     }
     if (argc != 3) {
@@ -1864,14 +1901,15 @@ int run_cli(int argc, char **argv) {
       return 2;
     }
     try {
-      std::cout << contracts::canonical_json(
-                       response(command, execute_operation(
-                                             command, request_json(argv[2]))))
+      std::cout << contracts::canonical_json(response(
+                       command,
+                       execute_operation(command, request_json(argv[2]))))
                 << '\n';
       return 0;
     } catch (const common::Error &error) {
       std::cout << contracts::canonical_json(error_response(
-                       command, std::string(common::error_code_name(error.code())),
+                       command,
+                       std::string(common::error_code_name(error.code())),
                        error.what()))
                 << '\n';
       return 1;

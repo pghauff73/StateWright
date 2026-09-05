@@ -55,17 +55,48 @@ std::string InternetExperimentQualification::object_id() const {
                              to_json(*this));
 }
 
-InternetKnowledgeSearchReceipt canonical_knowledge_search_receipt(
-    InternetKnowledgeSearchReceipt receipt) {
+InternetKnowledgeSearchReceipt
+internet_knowledge_search_receipt_from_json(const contracts::Json &value) {
+  InternetKnowledgeSearchReceipt receipt;
+  receipt.schema_version = value.at("schema_version").get<int>();
+  receipt.snapshot_id = value.at("snapshot_id").get<std::string>();
+  receipt.source_fragment_id =
+      value.at("source_fragment_id").get<std::string>();
+  receipt.brain_feed_batch_id =
+      value.at("brain_feed_batch_id").get<std::string>();
+  receipt.source_policy_assessment_id =
+      value.value("source_policy_assessment_id", std::string{});
+  receipt.canonical_search = value.at("canonical_search");
+  receipt.exact_match_ids =
+      value.at("exact_match_ids").get<std::vector<std::string>>();
+  receipt.equivalent_match_ids =
+      value.at("equivalent_match_ids").get<std::vector<std::string>>();
+  receipt.related_match_ids =
+      value.at("related_match_ids").get<std::vector<std::string>>();
+  receipt.transfer_match_ids =
+      value.at("transfer_match_ids").get<std::vector<std::string>>();
+  receipt.adaptation_match_ids =
+      value.at("adaptation_match_ids").get<std::vector<std::string>>();
+  receipt.failure_match_ids =
+      value.at("failure_match_ids").get<std::vector<std::string>>();
+  receipt.exclusions = value.at("exclusions").get<std::vector<std::string>>();
+  receipt.search_complete = value.at("search_complete").get<bool>();
+  receipt.novelty_status = value.at("novelty_status").get<std::string>();
+  return canonical_knowledge_search_receipt(std::move(receipt));
+}
+
+InternetKnowledgeSearchReceipt
+canonical_knowledge_search_receipt(InternetKnowledgeSearchReceipt receipt) {
   require_nonempty(receipt.snapshot_id, "retrieval snapshot ID");
   require_nonempty(receipt.source_fragment_id, "retrieval fragment ID");
-  require_nonempty(receipt.brain_feed_batch_id, "retrieval brain-feed batch ID");
+  require_nonempty(receipt.brain_feed_batch_id,
+                   "retrieval brain-feed batch ID");
   require_nonempty(receipt.novelty_status, "retrieval novelty status");
   if (!receipt.canonical_search.is_object()) {
     record_error("canonical search receipt must be an object");
   }
   static const std::set<std::string> statuses = {
-      "DUPLICATE", "EQUIVALENT_EXISTING", "RELATED_EXISTING",
+      "DUPLICATE",          "EQUIVALENT_EXISTING",  "RELATED_EXISTING",
       "TRANSFER_CANDIDATE", "ADAPTATION_CANDIDATE", "NOVEL_CANDIDATE",
       "QUARANTINED"};
   if (!statuses.contains(receipt.novelty_status) || !receipt.search_complete) {
@@ -96,12 +127,22 @@ canonical_internet_algorithm_candidate(InternetAlgorithmCandidate candidate) {
       !candidate.termination_properties.is_object()) {
     record_error("internet candidate structured fields must be objects");
   }
-  static const std::set<std::string> statuses = {
-      "DUPLICATE", "EQUIVALENT_EXISTING", "RELATED_EXISTING",
-      "TRANSFER_CANDIDATE", "ADAPTATION_CANDIDATE", "VALIDATION_READY",
-      "EXPERIMENT_QUALIFIED", "EXPERIMENT_FAILED", "POLICY_QUALIFIED",
-      "PROBATIONARY_CANONICAL", "CANONICAL", "DEMOTED",
-      "QUARANTINED", "REJECTED", "RETRACTED", "SUPERSEDED"};
+  static const std::set<std::string> statuses = {"DUPLICATE",
+                                                 "EQUIVALENT_EXISTING",
+                                                 "RELATED_EXISTING",
+                                                 "TRANSFER_CANDIDATE",
+                                                 "ADAPTATION_CANDIDATE",
+                                                 "VALIDATION_READY",
+                                                 "EXPERIMENT_QUALIFIED",
+                                                 "EXPERIMENT_FAILED",
+                                                 "POLICY_QUALIFIED",
+                                                 "PROBATIONARY_CANONICAL",
+                                                 "CANONICAL",
+                                                 "DEMOTED",
+                                                 "QUARANTINED",
+                                                 "REJECTED",
+                                                 "RETRACTED",
+                                                 "SUPERSEDED"};
   if (!statuses.contains(candidate.status)) {
     record_error("internet candidate status is invalid");
   }
@@ -131,17 +172,15 @@ canonical_internet_algorithm_candidate(InternetAlgorithmCandidate candidate) {
 
 InternetAlgorithmCandidate
 internet_algorithm_candidate_from_json(const contracts::Json &value) {
-  const bool legacy_lineage =
-      !value.contains("probation_admission_ids") ||
-      !value.contains("probation_observation_ids") ||
-      !value.contains("promotion_decision_ids") ||
-      !value.contains("demotion_decision_ids") ||
-      !value.contains("canonical_algorithm_ids") ||
-      !value.contains("reasoning_analysis_ids");
+  const bool legacy_lineage = !value.contains("probation_admission_ids") ||
+                              !value.contains("probation_observation_ids") ||
+                              !value.contains("promotion_decision_ids") ||
+                              !value.contains("demotion_decision_ids") ||
+                              !value.contains("canonical_algorithm_ids") ||
+                              !value.contains("reasoning_analysis_ids");
   InternetAlgorithmCandidate candidate{
       .schema_version = value.at("schema_version").get<int>(),
-      .source_fragment_id =
-          value.at("source_fragment_id").get<std::string>(),
+      .source_fragment_id = value.at("source_fragment_id").get<std::string>(),
       .snapshot_id = value.at("snapshot_id").get<std::string>(),
       .source_policy_assessment_id =
           value.at("source_policy_assessment_id").get<std::string>(),
@@ -173,12 +212,10 @@ internet_algorithm_candidate_from_json(const contracts::Json &value) {
           value.at("oiec_sr_falsifier_ids").get<std::vector<std::string>>(),
       .reasoning_analysis_ids =
           value.value("reasoning_analysis_ids", std::vector<std::string>{}),
-      .experiment_qualification_ids =
-          value.at("experiment_qualification_ids")
-              .get<std::vector<std::string>>(),
+      .experiment_qualification_ids = value.at("experiment_qualification_ids")
+                                          .get<std::vector<std::string>>(),
       .promotion_assessment_ids =
-          value.at("promotion_assessment_ids")
-              .get<std::vector<std::string>>(),
+          value.at("promotion_assessment_ids").get<std::vector<std::string>>(),
       .probation_admission_ids =
           value.value("probation_admission_ids", std::vector<std::string>{}),
       .probation_observation_ids =
@@ -190,8 +227,7 @@ internet_algorithm_candidate_from_json(const contracts::Json &value) {
       .canonical_algorithm_ids =
           value.value("canonical_algorithm_ids", std::vector<std::string>{}),
       .unresolved_assumptions =
-          value.at("unresolved_assumptions")
-              .get<std::vector<std::string>>(),
+          value.at("unresolved_assumptions").get<std::vector<std::string>>(),
       .status = value.at("status").get<std::string>(),
       .candidate_signature =
           value.at("candidate_signature").get<std::string>()};
@@ -229,9 +265,9 @@ canonical_internet_reasoning_analysis(InternetReasoningAnalysis analysis) {
       analysis.source_fragment_ids.empty()) {
     record_error("internet reasoning analysis is invalid");
   }
-  static const std::set<std::string> statuses = {
-      "PROVIDER_ADVISORY", "DETERMINISTIC_FALLBACK",
-      "PROVIDER_FAILED_FALLBACK"};
+  static const std::set<std::string> statuses = {"PROVIDER_ADVISORY",
+                                                 "DETERMINISTIC_FALLBACK",
+                                                 "PROVIDER_FAILED_FALLBACK"};
   if (!statuses.contains(analysis.status)) {
     record_error("internet reasoning analysis status is invalid");
   }
@@ -253,8 +289,7 @@ InternetExperimentQualification canonical_internet_experiment_qualification(
                    "experiment qualification baseline ref");
   require_nonempty(qualification.context_signature,
                    "experiment qualification context signature");
-  require_nonempty(qualification.status,
-                   "experiment qualification status");
+  require_nonempty(qualification.status, "experiment qualification status");
   if (qualification.context_signature.size() != 64U ||
       qualification.dataset_snapshot_ids.empty() ||
       !qualification.canonical_candidate_ir.is_object() ||
@@ -271,19 +306,19 @@ InternetExperimentQualification canonical_internet_experiment_qualification(
       qualification.downloaded_code_executed) {
     record_error("internet experiment qualification is invalid");
   }
-  static const std::set<std::string> statuses = {
-      "EXPERIMENT_QUALIFIED", "EXPERIMENT_FAILED"};
+  static const std::set<std::string> statuses = {"EXPERIMENT_QUALIFIED",
+                                                 "EXPERIMENT_FAILED"};
   if (!statuses.contains(qualification.status)) {
     record_error("internet experiment qualification status is invalid");
   }
   const bool qualified = qualification.status == "EXPERIMENT_QUALIFIED";
   if (qualification.experiment_qualified != qualified ||
-      (qualified && (!qualification.identical_frozen_contexts ||
-                     !qualification.invariants_passed ||
-                     qualification.known_failure_retry_blocked ||
-                     !qualification.benchmark_passed ||
-                     !qualification.integrity_passed ||
-                     !qualification.blocking_reasons.empty()))) {
+      (qualified &&
+       (!qualification.identical_frozen_contexts ||
+        !qualification.invariants_passed ||
+        qualification.known_failure_retry_blocked ||
+        !qualification.benchmark_passed || !qualification.integrity_passed ||
+        !qualification.blocking_reasons.empty()))) {
     record_error("internet experiment qualification state is inconsistent");
   }
   canonical_strings(qualification.dataset_snapshot_ids);
@@ -297,21 +332,26 @@ InternetExperimentQualification canonical_internet_experiment_qualification(
 }
 
 contracts::Json to_json(const InternetKnowledgeSearchReceipt &value) {
-  return {{"adaptation_match_ids", value.adaptation_match_ids},
-          {"brain_feed_batch_id", value.brain_feed_batch_id},
-          {"canonical_search", value.canonical_search},
-          {"equivalent_match_ids", value.equivalent_match_ids},
-          {"exact_match_ids", value.exact_match_ids},
-          {"exclusions", value.exclusions},
-          {"failure_match_ids", value.failure_match_ids},
-          {"novelty_status", value.novelty_status},
-          {"related_match_ids", value.related_match_ids},
-          {"schema_version", value.schema_version},
-          {"search_complete", value.search_complete},
-          {"search_signature", value.search_signature},
-          {"snapshot_id", value.snapshot_id},
-          {"source_fragment_id", value.source_fragment_id},
-          {"transfer_match_ids", value.transfer_match_ids}};
+  contracts::Json result = {
+      {"adaptation_match_ids", value.adaptation_match_ids},
+      {"brain_feed_batch_id", value.brain_feed_batch_id},
+      {"canonical_search", value.canonical_search},
+      {"equivalent_match_ids", value.equivalent_match_ids},
+      {"exact_match_ids", value.exact_match_ids},
+      {"exclusions", value.exclusions},
+      {"failure_match_ids", value.failure_match_ids},
+      {"novelty_status", value.novelty_status},
+      {"related_match_ids", value.related_match_ids},
+      {"schema_version", value.schema_version},
+      {"search_complete", value.search_complete},
+      {"search_signature", value.search_signature},
+      {"snapshot_id", value.snapshot_id},
+      {"source_fragment_id", value.source_fragment_id},
+      {"transfer_match_ids", value.transfer_match_ids}};
+  if (!value.source_policy_assessment_id.empty()) {
+    result["source_policy_assessment_id"] = value.source_policy_assessment_id;
+  }
+  return result;
 }
 
 contracts::Json to_json(const InternetAlgorithmCandidate &value) {
@@ -320,8 +360,7 @@ contracts::Json to_json(const InternetAlgorithmCandidate &value) {
           {"claimed_invariants", value.claimed_invariants},
           {"equivalent_match_ids", value.equivalent_match_ids},
           {"exact_match_ids", value.exact_match_ids},
-          {"experiment_qualification_ids",
-           value.experiment_qualification_ids},
+          {"experiment_qualification_ids", value.experiment_qualification_ids},
           {"failure_match_ids", value.failure_match_ids},
           {"canonical_algorithm_ids", value.canonical_algorithm_ids},
           {"demotion_decision_ids", value.demotion_decision_ids},
@@ -340,8 +379,7 @@ contracts::Json to_json(const InternetAlgorithmCandidate &value) {
           {"semantic_outputs", value.semantic_outputs},
           {"snapshot_id", value.snapshot_id},
           {"source_fragment_id", value.source_fragment_id},
-          {"source_policy_assessment_id",
-           value.source_policy_assessment_id},
+          {"source_policy_assessment_id", value.source_policy_assessment_id},
           {"status", value.status},
           {"termination_properties", value.termination_properties},
           {"transfer_match_ids", value.transfer_match_ids},
@@ -390,16 +428,14 @@ contracts::Json to_json(const InternetExperimentQualification &value) {
           {"experiment_runs", value.experiment_runs},
           {"failure_observation_ids", value.failure_observation_ids},
           {"identical_frozen_contexts", value.identical_frozen_contexts},
-          {"improvement_opportunity_ids",
-           value.improvement_opportunity_ids},
+          {"improvement_opportunity_ids", value.improvement_opportunity_ids},
           {"improvement_schedule", value.improvement_schedule},
           {"integrity_passed", value.integrity_passed},
           {"integrity_snapshots", value.integrity_snapshots},
           {"integrity_trajectory", value.integrity_trajectory},
           {"internal_ir_only", value.internal_ir_only},
           {"invariants_passed", value.invariants_passed},
-          {"known_failure_retry_blocked",
-           value.known_failure_retry_blocked},
+          {"known_failure_retry_blocked", value.known_failure_retry_blocked},
           {"qualification_signature", value.qualification_signature},
           {"repeated_aggregate", value.repeated_aggregate},
           {"schema_version", value.schema_version},

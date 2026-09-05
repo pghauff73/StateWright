@@ -63,19 +63,17 @@ void validate_limits(const InternetSchedulerLimits &limits) {
 } // namespace
 
 InternetPollingWindow polling_window(const InternetWatch &watch_value,
-                                      std::string_view current_timestamp) {
+                                     std::string_view current_timestamp) {
   const auto watch = canonical_watch(watch_value);
   const auto current = parse_utc(current_timestamp);
   const auto interval = std::chrono::seconds(watch.polling_interval_seconds);
-  const auto jitter = std::chrono::seconds(
-      watch.deterministic_jitter_seconds % watch.polling_interval_seconds);
-  const auto elapsed =
-      std::chrono::duration_cast<std::chrono::seconds>(
-          current.time_since_epoch());
+  const auto jitter = std::chrono::seconds(watch.deterministic_jitter_seconds %
+                                           watch.polling_interval_seconds);
+  const auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+      current.time_since_epoch());
   const auto shifted = elapsed - jitter;
-  const auto interval_count = shifted.count() >= 0
-                                  ? shifted.count() / interval.count()
-                                  : -1;
+  const auto interval_count =
+      shifted.count() >= 0 ? shifted.count() / interval.count() : -1;
   const auto start = std::chrono::system_clock::time_point(
       std::chrono::seconds(interval_count * interval.count()) + jitter);
   return {.scheduled_interval = format_utc(start),
@@ -147,11 +145,12 @@ order_fetch_jobs(std::vector<InternetFetchJob> jobs) {
   return jobs;
 }
 
-std::vector<InternetFetchJob> schedule_fetch_interval(
-    const std::vector<InternetWatch> &watches,
-    const std::vector<InternetFetchJob> &existing_jobs,
-    std::string scheduled_interval, std::string earliest_start,
-    std::string deadline, int retry_ceiling) {
+std::vector<InternetFetchJob>
+schedule_fetch_interval(const std::vector<InternetWatch> &watches,
+                        const std::vector<InternetFetchJob> &existing_jobs,
+                        std::string scheduled_interval,
+                        std::string earliest_start, std::string deadline,
+                        int retry_ceiling) {
   std::set<std::string> existing;
   for (const auto &job : existing_jobs) {
     existing.insert(canonical_fetch_job(job).object_id());
@@ -201,9 +200,9 @@ latest_fetch_leases(const std::vector<InternetFetchLease> &leases) {
   return latest;
 }
 
-std::vector<InternetFetchLease> recover_expired_fetch_leases(
-    const std::vector<InternetFetchLease> &leases,
-    std::string_view current_timestamp) {
+std::vector<InternetFetchLease>
+recover_expired_fetch_leases(const std::vector<InternetFetchLease> &leases,
+                             std::string_view current_timestamp) {
   static_cast<void>(parse_utc(current_timestamp));
   std::vector<InternetFetchLease> recovered;
   for (const auto &lease : latest_fetch_leases(leases)) {
@@ -214,10 +213,11 @@ std::vector<InternetFetchLease> recover_expired_fetch_leases(
   return recovered;
 }
 
-InternetScheduleSelection select_due_fetch_jobs(
-    std::vector<InternetFetchJob> jobs,
-    const std::vector<InternetFetchLease> &leases,
-    std::string_view current_timestamp, const InternetSchedulerLimits &limits) {
+InternetScheduleSelection
+select_due_fetch_jobs(std::vector<InternetFetchJob> jobs,
+                      const std::vector<InternetFetchLease> &leases,
+                      std::string_view current_timestamp,
+                      const InternetSchedulerLimits &limits) {
   validate_limits(limits);
   static_cast<void>(parse_utc(current_timestamp));
   const auto latest = latest_fetch_leases(leases);
@@ -227,12 +227,20 @@ InternetScheduleSelection select_due_fetch_jobs(
   }
   std::map<std::string, std::size_t> active_by_group;
   std::size_t active_total = 0U;
+  std::size_t active_response_bytes = 0U;
+  std::size_t active_cpu_units = 0U;
   for (const auto &job : jobs) {
     const auto found = latest_by_job.find(job.object_id());
     if (found != latest_by_job.end() &&
         latest_lease_is_current(found->second, current_timestamp)) {
       ++active_total;
       ++active_by_group[job.source_group];
+      active_response_bytes +=
+          std::min(job.allocated_response_bytes,
+                   limits.global_response_byte_budget - active_response_bytes);
+      active_cpu_units +=
+          std::min(job.allocated_cpu_units,
+                   limits.global_cpu_unit_budget - active_cpu_units);
     }
   }
 
@@ -267,13 +275,15 @@ InternetScheduleSelection select_due_fetch_jobs(
       exclude("SOURCE_GROUP_CONCURRENCY_BUDGET");
       continue;
     }
-    if (job.allocated_response_bytes >
-        limits.global_response_byte_budget - result.allocated_response_bytes) {
+    if (job.allocated_response_bytes > limits.global_response_byte_budget -
+                                           active_response_bytes -
+                                           result.allocated_response_bytes) {
       exclude("GLOBAL_RESPONSE_BYTE_BUDGET");
       continue;
     }
-    if (job.allocated_cpu_units >
-        limits.global_cpu_unit_budget - result.allocated_cpu_units) {
+    if (job.allocated_cpu_units > limits.global_cpu_unit_budget -
+                                      active_cpu_units -
+                                      result.allocated_cpu_units) {
       exclude("GLOBAL_CPU_BUDGET");
       continue;
     }
@@ -285,9 +295,10 @@ InternetScheduleSelection select_due_fetch_jobs(
   return result;
 }
 
-InternetScheduleDiagnostic assess_scheduler_clock(
-    std::string previous_wall_time, std::string current_wall_time,
-    const InternetSchedulerLimits &limits) {
+InternetScheduleDiagnostic
+assess_scheduler_clock(std::string previous_wall_time,
+                       std::string current_wall_time,
+                       const InternetSchedulerLimits &limits) {
   validate_limits(limits);
   const auto previous = parse_utc(previous_wall_time);
   const auto current = parse_utc(current_wall_time);
@@ -295,7 +306,8 @@ InternetScheduleDiagnostic assess_scheduler_clock(
   diagnostic.previous_wall_time = std::move(previous_wall_time);
   diagnostic.current_wall_time = std::move(current_wall_time);
   const auto difference =
-      std::chrono::duration_cast<std::chrono::seconds>(current - previous).count();
+      std::chrono::duration_cast<std::chrono::seconds>(current - previous)
+          .count();
   if (difference < 0) {
     diagnostic.status = "CLOCK_ROLLBACK";
     diagnostic.reason = "wall clock moved backwards";

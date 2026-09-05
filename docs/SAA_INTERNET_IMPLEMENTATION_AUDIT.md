@@ -2,6 +2,12 @@
 
 **Audit date:** 2026-09-04
 
+This is historical qualification evidence for the checkpoint described below.
+Subsequent watchlist and pipeline hardening, expanded exact-scalar support, and
+its separately measured validation are documented in
+`SAA_INTERNET_NEXT_STEPS_IMPLEMENTATION.md`. The historical preset results here
+must not be read as fresh qualification of those changes.
+
 **Scope:** `docs/SAA_PERSISTENT_INTERNET_IMPROVEMENT_PLAN.md`, phases I0-I11,
 and
 `docs/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_IMPLEMENTATION_PLAN.md`,

@@ -55,10 +55,9 @@ void InternetImprovementStore::require_type(
 std::string InternetImprovementStore::register_source_policy(
     const sources::InternetSourcePolicy &policy) {
   const auto canonical = sources::canonical_source_policy(policy);
-  return store_.register_record(
-      {.object_type = "internet-source-policy",
-       .payload = sources::to_json(canonical)},
-      "internet_source_policy_registered");
+  return store_.register_record({.object_type = "internet-source-policy",
+                                 .payload = sources::to_json(canonical)},
+                                "internet_source_policy_registered");
 }
 
 std::string
@@ -72,9 +71,9 @@ InternetImprovementStore::register_watch(const sources::InternetWatch &watch) {
       {.object_type = "internet-watch", .payload = sources::to_json(canonical)},
       "internet_watch_registered");
   if (!canonical.supersedes_watch_id.empty()) {
-    static_cast<void>(store_.supersede(
-        canonical.supersedes_watch_id, id, "internet watch superseded",
-        "statewright-autonomous-source-policy"));
+    static_cast<void>(store_.supersede(canonical.supersedes_watch_id, id,
+                                       "internet watch superseded",
+                                       "statewright-autonomous-source-policy"));
   }
   return id;
 }
@@ -88,10 +87,9 @@ std::string InternetImprovementStore::register_fetch_job(
       canonical.expected_watch_generation) {
     internet_store_error("fetch job watch generation is stale");
   }
-  return store_.register_record(
-      {.object_type = "internet-fetch-job",
-       .payload = sources::to_json(canonical)},
-      "internet_fetch_job_registered");
+  return store_.register_record({.object_type = "internet-fetch-job",
+                                 .payload = sources::to_json(canonical)},
+                                "internet_fetch_job_registered");
 }
 
 std::optional<sources::InternetFetchLease>
@@ -117,8 +115,9 @@ InternetImprovementStore::latest_lease(std::string_view job_id) {
   if (latest.size() > 1U) {
     internet_store_error("fetch job has conflicting latest leases");
   }
-  return latest.empty() ? std::nullopt
-                        : std::optional<sources::InternetFetchLease>(latest.front());
+  return latest.empty()
+             ? std::nullopt
+             : std::optional<sources::InternetFetchLease>(latest.front());
 }
 
 std::string InternetImprovementStore::register_fetch_lease(
@@ -145,10 +144,9 @@ std::string InternetImprovementStore::register_fetch_lease(
        canonical.expires_at != latest->expires_at)) {
     internet_store_error("terminal fetch lease must close the current lease");
   }
-  return store_.register_record(
-      {.object_type = "internet-fetch-lease",
-       .payload = sources::to_json(canonical)},
-      "internet_fetch_lease_registered");
+  return store_.register_record({.object_type = "internet-fetch-lease",
+                                 .payload = sources::to_json(canonical)},
+                                "internet_fetch_lease_registered");
 }
 
 InternetCaptureResult InternetImprovementStore::capture_success(
@@ -175,19 +173,20 @@ InternetCaptureResult InternetImprovementStore::capture_success(
        {"source_group", source_group}});
   const auto artifact = store_.get(artifact_record_id);
   const std::string artifact_bytes_id =
-      "artifact-bytes:sha256:" + artifact.payload.at("sha256").get<std::string>();
+      "artifact-bytes:sha256:" +
+      artifact.payload.at("sha256").get<std::string>();
   const auto captured_snapshot = sources::make_source_snapshot(
       response, artifact_bytes_id, std::move(source_group));
-  const std::string snapshot_id = store_.register_record(
-      {.object_type = "internet-source-snapshot",
-       .payload = sources::to_json(captured_snapshot)},
-      "internet_source_snapshot_registered");
+  const std::string snapshot_id =
+      store_.register_record({.object_type = "internet-source-snapshot",
+                              .payload = sources::to_json(captured_snapshot)},
+                             "internet_source_snapshot_registered");
   const auto receipt = sources::make_fetch_receipt(
       std::move(job_id), std::move(lease_id), response, snapshot_id);
-  const std::string receipt_id = store_.register_record(
-      {.object_type = "internet-fetch-receipt",
-       .payload = sources::to_json(receipt)},
-      "internet_fetch_receipt_registered");
+  const std::string receipt_id =
+      store_.register_record({.object_type = "internet-fetch-receipt",
+                              .payload = sources::to_json(receipt)},
+                             "internet_fetch_receipt_registered");
   return {.artifact_record_id = artifact_record_id,
           .artifact_bytes_id = artifact_bytes_id,
           .snapshot_id = snapshot_id,
@@ -209,10 +208,9 @@ std::string InternetImprovementStore::capture_not_modified(
   }
   const auto receipt = sources::make_not_modified_fetch_receipt(
       std::move(job_id), std::move(lease_id), response, std::move(snapshot_id));
-  return store_.register_record(
-      {.object_type = "internet-fetch-receipt",
-       .payload = sources::to_json(receipt)},
-      "internet_fetch_not_modified_registered");
+  return store_.register_record({.object_type = "internet-fetch-receipt",
+                                 .payload = sources::to_json(receipt)},
+                                "internet_fetch_not_modified_registered");
 }
 
 std::string InternetImprovementStore::capture_failure(
@@ -229,10 +227,9 @@ std::string InternetImprovementStore::capture_failure(
   const auto receipt = sources::make_failed_fetch_receipt(
       std::move(job_id), std::move(lease_id), std::move(requested_url),
       std::move(provider_identity), std::move(reason));
-  return store_.register_record(
-      {.object_type = "internet-fetch-receipt",
-       .payload = sources::to_json(receipt)},
-      "internet_fetch_failure_registered");
+  return store_.register_record({.object_type = "internet-fetch-receipt",
+                                 .payload = sources::to_json(receipt)},
+                                "internet_fetch_failure_registered");
 }
 
 std::string InternetImprovementStore::register_policy_assessment(
@@ -241,20 +238,18 @@ std::string InternetImprovementStore::register_policy_assessment(
   require_type(canonical.snapshot_id, "internet-source-snapshot");
   require_type(canonical.fetch_receipt_id, "internet-fetch-receipt");
   require_type(canonical.source_policy_id, "internet-source-policy");
-  return store_.register_record(
-      {.object_type = "internet-policy-assessment",
-       .payload = sources::to_json(canonical)},
-      "internet_policy_assessment_registered");
+  return store_.register_record({.object_type = "internet-policy-assessment",
+                                 .payload = sources::to_json(canonical)},
+                                "internet_policy_assessment_registered");
 }
 
 std::string InternetImprovementStore::register_source_fragment(
     const sources::InternetSourceFragment &fragment) {
   const auto canonical = sources::canonical_source_fragment(fragment);
   require_type(canonical.snapshot_id, "internet-source-snapshot");
-  return store_.register_record(
-      {.object_type = "internet-source-fragment",
-       .payload = sources::to_json(canonical)},
-      "internet_source_fragment_registered");
+  return store_.register_record({.object_type = "internet-source-fragment",
+                                 .payload = sources::to_json(canonical)},
+                                "internet_source_fragment_registered");
 }
 
 std::string InternetImprovementStore::register_extraction_receipt(
@@ -264,10 +259,9 @@ std::string InternetImprovementStore::register_extraction_receipt(
   for (const auto &fragment_id : canonical.fragment_ids) {
     require_type(fragment_id, "internet-source-fragment");
   }
-  return store_.register_record(
-      {.object_type = "internet-extraction-receipt",
-       .payload = sources::to_json(canonical)},
-      "internet_extraction_receipt_registered");
+  return store_.register_record({.object_type = "internet-extraction-receipt",
+                                 .payload = sources::to_json(canonical)},
+                                "internet_extraction_receipt_registered");
 }
 
 std::string InternetImprovementStore::register_extraction(
@@ -281,13 +275,20 @@ std::string InternetImprovementStore::register_extraction(
 std::string InternetImprovementStore::register_retrieval_receipt(
     const InternetKnowledgeSearchReceipt &receipt) {
   const auto canonical = canonical_knowledge_search_receipt(receipt);
+  if (!canonical.source_policy_assessment_id.empty()) {
+    require_type(canonical.source_policy_assessment_id,
+                 "internet-policy-assessment");
+    if (store_.get(canonical.source_policy_assessment_id)
+            .payload.at("snapshot_id") != canonical.snapshot_id) {
+      internet_store_error("retrieval assessment snapshot binding is invalid");
+    }
+  }
   require_type(canonical.snapshot_id, "internet-source-snapshot");
   require_type(canonical.source_fragment_id, "internet-source-fragment");
   require_type(canonical.brain_feed_batch_id, "brain-feed-batch");
-  return store_.register_record(
-      {.object_type = "internet-retrieval-receipt",
-       .payload = to_json(canonical)},
-      "internet_retrieval_receipt_registered");
+  return store_.register_record({.object_type = "internet-retrieval-receipt",
+                                 .payload = to_json(canonical)},
+                                "internet_retrieval_receipt_registered");
 }
 
 std::string InternetImprovementStore::register_algorithm_candidate(
@@ -298,10 +299,9 @@ std::string InternetImprovementStore::register_algorithm_candidate(
   require_type(canonical.source_policy_assessment_id,
                "internet-policy-assessment");
   require_type(canonical.retrieval_receipt_id, "internet-retrieval-receipt");
-  return store_.register_record(
-      {.object_type = "internet-algorithm-candidate",
-       .payload = to_json(canonical)},
-      "internet_algorithm_candidate_registered");
+  return store_.register_record({.object_type = "internet-algorithm-candidate",
+                                 .payload = to_json(canonical)},
+                                "internet_algorithm_candidate_registered");
 }
 
 std::string InternetImprovementStore::register_reasoning_analysis(
@@ -314,10 +314,9 @@ std::string InternetImprovementStore::register_reasoning_analysis(
   for (const auto &fragment_id : canonical.source_fragment_ids) {
     require_type(fragment_id, "internet-source-fragment");
   }
-  return store_.register_record(
-      {.object_type = "internet-reasoning-analysis",
-       .payload = to_json(canonical)},
-      "internet_reasoning_analysis_registered");
+  return store_.register_record({.object_type = "internet-reasoning-analysis",
+                                 .payload = to_json(canonical)},
+                                "internet_reasoning_analysis_registered");
 }
 
 std::string InternetImprovementStore::register_experiment_qualification(
@@ -340,43 +339,44 @@ std::string InternetImprovementStore::register_experiment_qualification(
 std::string InternetImprovementStore::register_promotion_policy(
     const saa::AutonomousPromotionPolicy &policy) {
   const auto canonical = saa::canonical_autonomous_promotion_policy(policy);
-  return store_.register_record(
-      {.object_type = "internet-promotion-policy",
-       .payload = saa::to_json(canonical)},
-      "internet_promotion_policy_registered");
+  return store_.register_record({.object_type = "internet-promotion-policy",
+                                 .payload = saa::to_json(canonical)},
+                                "internet_promotion_policy_registered");
 }
 
 std::string InternetImprovementStore::register_promotion_assessment(
-    std::string policy_id,
-    const saa::AutonomousPromotionAssessment &assessment) {
+    std::string policy_id, const saa::AutonomousPromotionAssessment &assessment,
+    std::string assessed_at, std::string source_checked_at) {
   require_type(policy_id, "internet-promotion-policy");
   require_type(assessment.candidate_ref, "internet-algorithm-candidate");
   require_type(assessment.source_policy_assessment_ref,
                "internet-policy-assessment");
   require_type(assessment.snapshot_ref, "internet-source-snapshot");
-  require_type(assessment.retrieval_receipt_ref,
-               "internet-retrieval-receipt");
+  require_type(assessment.retrieval_receipt_ref, "internet-retrieval-receipt");
   require_type(assessment.experiment_qualification_ref,
                "internet-experiment-qualification");
   const auto stored_policy = store_.get(policy_id);
   if (stored_policy.payload.at("policy_signature").get<std::string>() !=
-      assessment.policy_signature || assessment.human_approval_required) {
+          assessment.policy_signature ||
+      assessment.human_approval_required) {
     internet_store_error("promotion assessment policy binding is invalid");
   }
   auto payload = saa::to_json(assessment);
   payload["policy_id"] = std::move(policy_id);
-  return store_.register_record(
-      {.object_type = "internet-promotion-assessment",
-       .payload = std::move(payload)},
-      "internet_promotion_assessment_registered");
+  if (!assessed_at.empty()) {
+    payload["assessed_at"] = std::move(assessed_at);
+    payload["source_checked_at"] = std::move(source_checked_at);
+  }
+  return store_.register_record({.object_type = "internet-promotion-assessment",
+                                 .payload = std::move(payload)},
+                                "internet_promotion_assessment_registered");
 }
 
 std::string InternetImprovementStore::register_probation_admission(
     const saa::ProbationPlan &plan, std::string canonical_algorithm_ref,
     std::string canonical_source_ref, std::string baseline_ref,
     int canonical_store_generation, std::string admission_status) {
-  const auto canonical_plan =
-      saa::probation_plan_from_json(saa::to_json(plan));
+  const auto canonical_plan = saa::probation_plan_from_json(saa::to_json(plan));
   require_type(canonical_plan.policy_ref, "internet-promotion-policy");
   require_type(canonical_plan.promotion_assessment_ref,
                "internet-promotion-assessment");
@@ -390,24 +390,22 @@ std::string InternetImprovementStore::register_probation_admission(
       admission_status != "PROBATIONARY_CANONICAL") {
     internet_store_error("probation admission is invalid");
   }
-  contracts::Json payload =
-      {{"admission_status", admission_status},
-       {"baseline_ref", baseline_ref},
-       {"canonical_algorithm_ref", canonical_algorithm_ref},
-       {"canonical_source_ref", canonical_source_ref},
-       {"canonical_store_generation", canonical_store_generation},
-       {"plan", saa::to_json(canonical_plan)},
-       {"schema_version", 1}};
+  contracts::Json payload = {
+      {"admission_status", admission_status},
+      {"baseline_ref", baseline_ref},
+      {"canonical_algorithm_ref", canonical_algorithm_ref},
+      {"canonical_source_ref", canonical_source_ref},
+      {"canonical_store_generation", canonical_store_generation},
+      {"plan", saa::to_json(canonical_plan)},
+      {"schema_version", 1}};
   payload["admission_signature"] = contracts::sha256_json(payload);
-  return store_.register_record(
-      {.object_type = "internet-probation-admission",
-       .payload = std::move(payload)},
-      "internet_probation_admission_registered");
+  return store_.register_record({.object_type = "internet-probation-admission",
+                                 .payload = std::move(payload)},
+                                "internet_probation_admission_registered");
 }
 
 std::string InternetImprovementStore::register_probation_observation(
-    std::string admission_id,
-    const saa::ProbationObservation &observation) {
+    std::string admission_id, const saa::ProbationObservation &observation) {
   require_type(admission_id, "internet-probation-admission");
   const auto canonical =
       saa::probation_observation_from_json(saa::to_json(observation));
@@ -428,11 +426,10 @@ std::string InternetImprovementStore::register_probation_observation(
 }
 
 std::string InternetImprovementStore::register_promotion_decision(
-    std::string admission_id,
-    const saa::AutomaticPromotionDecision &decision) {
+    std::string admission_id, const saa::AutomaticPromotionDecision &decision) {
   require_type(admission_id, "internet-probation-admission");
-  const auto canonical = saa::automatic_promotion_decision_from_json(
-      saa::to_json(decision));
+  const auto canonical =
+      saa::automatic_promotion_decision_from_json(saa::to_json(decision));
   const auto admission = store_.get(admission_id);
   if (admission.payload.at("plan").at("plan_signature").get<std::string>() !=
           canonical.plan_signature ||
@@ -442,18 +439,16 @@ std::string InternetImprovementStore::register_promotion_decision(
   }
   auto payload = saa::to_json(canonical);
   payload["admission_id"] = std::move(admission_id);
-  return store_.register_record(
-      {.object_type = "internet-promotion-decision",
-       .payload = std::move(payload)},
-      "internet_promotion_decision_registered");
+  return store_.register_record({.object_type = "internet-promotion-decision",
+                                 .payload = std::move(payload)},
+                                "internet_promotion_decision_registered");
 }
 
 std::string InternetImprovementStore::register_demotion_decision(
-    std::string admission_id,
-    const saa::AutomaticDemotionDecision &decision) {
+    std::string admission_id, const saa::AutomaticDemotionDecision &decision) {
   require_type(admission_id, "internet-probation-admission");
-  const auto canonical = saa::automatic_demotion_decision_from_json(
-      saa::to_json(decision));
+  const auto canonical =
+      saa::automatic_demotion_decision_from_json(saa::to_json(decision));
   const auto admission = store_.get(admission_id);
   if (admission.payload.at("plan").at("plan_signature").get<std::string>() !=
           canonical.plan_signature ||
@@ -463,19 +458,17 @@ std::string InternetImprovementStore::register_demotion_decision(
   }
   auto payload = saa::to_json(canonical);
   payload["admission_id"] = std::move(admission_id);
-  return store_.register_record(
-      {.object_type = "internet-demotion-decision",
-       .payload = std::move(payload)},
-      "internet_demotion_decision_registered");
+  return store_.register_record({.object_type = "internet-demotion-decision",
+                                 .payload = std::move(payload)},
+                                "internet_demotion_decision_registered");
 }
 
 std::string InternetImprovementStore::register_improvement_plan(
     const InternetImprovementPlan &plan) {
   const auto canonical = canonical_internet_improvement_plan(plan);
-  return store_.register_record(
-      {.object_type = "internet-improvement-plan",
-       .payload = to_json(canonical)},
-      "internet_improvement_plan_registered");
+  return store_.register_record({.object_type = "internet-improvement-plan",
+                                 .payload = to_json(canonical)},
+                                "internet_improvement_plan_registered");
 }
 
 std::string InternetImprovementStore::register_improvement_run(
@@ -485,10 +478,9 @@ std::string InternetImprovementStore::register_improvement_run(
   if (!canonical.resume_of_run_id.empty()) {
     require_type(canonical.resume_of_run_id, "internet-improvement-run");
   }
-  return store_.register_record(
-      {.object_type = "internet-improvement-run",
-       .payload = to_json(canonical)},
-      "internet_improvement_run_registered");
+  return store_.register_record({.object_type = "internet-improvement-run",
+                                 .payload = to_json(canonical)},
+                                "internet_improvement_run_registered");
 }
 
 std::string InternetImprovementStore::register_improvement_run_event(
@@ -536,7 +528,8 @@ std::string InternetImprovementStore::register_improvement_action_lease(
   require_type(canonical.run_id, "internet-improvement-run");
   const auto latest = latest_action_lease(canonical.action_key);
   if (!latest && !canonical.predecessor_lease_id.empty()) {
-    internet_store_error("first improvement action lease cannot declare a predecessor");
+    internet_store_error(
+        "first improvement action lease cannot declare a predecessor");
   }
   if (!latest && !canonical.active()) {
     internet_store_error("first improvement action lease must be active");
@@ -610,15 +603,15 @@ std::string InternetImprovementStore::register_experiment_protocol(
     require_type(canonical.supersedes_protocol_id,
                  "internet-experiment-protocol");
   }
-  const std::string id = store_.register_record(
-      {.object_type = "internet-experiment-protocol",
-       .payload = to_json(canonical)},
-      "internet_experiment_protocol_registered");
+  const std::string id =
+      store_.register_record({.object_type = "internet-experiment-protocol",
+                              .payload = to_json(canonical)},
+                             "internet_experiment_protocol_registered");
   if (!canonical.supersedes_protocol_id.empty()) {
-    static_cast<void>(store_.supersede(
-        canonical.supersedes_protocol_id, id,
-        "internet experiment protocol superseded",
-        "statewright-internet-improvement-director"));
+    static_cast<void>(
+        store_.supersede(canonical.supersedes_protocol_id, id,
+                         "internet experiment protocol superseded",
+                         "statewright-internet-improvement-director"));
   }
   return id;
 }
@@ -647,8 +640,8 @@ std::string InternetImprovementStore::register_probation_observation_input(
 }
 
 std::string InternetImprovementStore::supersede_algorithm_candidate(
-    std::string old_candidate_id,
-    const InternetAlgorithmCandidate &replacement, std::string reason) {
+    std::string old_candidate_id, const InternetAlgorithmCandidate &replacement,
+    std::string reason) {
   require_type(old_candidate_id, "internet-algorithm-candidate");
   const std::string replacement_id = register_algorithm_candidate(replacement);
   if (replacement_id == old_candidate_id) {
@@ -663,8 +656,8 @@ std::string InternetImprovementStore::supersede_algorithm_candidate(
 std::string InternetImprovementStore::migrate_algorithm_candidate(
     std::string candidate_id) {
   require_type(candidate_id, "internet-algorithm-candidate");
-  const auto candidate = internet_algorithm_candidate_from_json(
-      store_.get(candidate_id).payload);
+  const auto candidate =
+      internet_algorithm_candidate_from_json(store_.get(candidate_id).payload);
   if (candidate.object_id() == candidate_id) {
     return candidate_id;
   }
@@ -676,7 +669,8 @@ std::string InternetImprovementStore::migrate_algorithm_candidate(
 std::vector<StoredObject>
 InternetImprovementStore::list(std::string_view object_type) {
   if (!object_type.starts_with("internet-")) {
-    internet_store_error("internet store list requires an internet object type");
+    internet_store_error(
+        "internet store list requires an internet object type");
   }
   return store_.list(std::string(object_type));
 }
@@ -694,8 +688,8 @@ InternetImprovementStore::active_experiment_protocol_ids() {
   return store_.active_ids("internet-experiment-protocol");
 }
 
-std::vector<std::byte> InternetImprovementStore::snapshot_bytes(
-    std::string_view snapshot_id) const {
+std::vector<std::byte>
+InternetImprovementStore::snapshot_bytes(std::string_view snapshot_id) const {
   require_type(snapshot_id, "internet-source-snapshot");
   const auto snapshot = store_.get(snapshot_id);
   return store_.artifacts().get(

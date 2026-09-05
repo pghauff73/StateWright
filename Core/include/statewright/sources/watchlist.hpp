@@ -13,28 +13,46 @@ namespace statewright::sources {
 inline constexpr std::string_view internet_watchlist_version =
     "statewright-internet-watchlist-v1";
 
-[[nodiscard]] contracts::Json create_watchlist_manifest(
-    const contracts::Json &request, const contracts::Json &source_registry);
+[[nodiscard]] contracts::Json
+create_watchlist_manifest(const contracts::Json &request,
+                          const contracts::Json &source_registry);
 
 void validate_watchlist_manifest(const contracts::Json &manifest,
                                  const contracts::Json &source_registry);
+
+// File-level review evidence is bound to immutable bytes and retained notices.
+[[nodiscard]] bool
+valid_mathematical_source_review(const contracts::Json &review);
 
 [[nodiscard]] contracts::Json preflight_watchlist_manifest(
     const contracts::Json &manifest, const contracts::Json &source_registry,
     const InternetSourcePolicy &base_policy, HttpFetchProvider &provider,
     std::string checked_at);
 
-[[nodiscard]] InternetSourcePolicy watchlist_source_policy(
-    const contracts::Json &entry, InternetSourcePolicy base_policy);
+[[nodiscard]] InternetSourcePolicy
+watchlist_source_policy(const contracts::Json &entry,
+                        InternetSourcePolicy base_policy);
 
 [[nodiscard]] InternetWatch watchlist_watch(const contracts::Json &entry,
                                             std::string source_policy_id,
                                             bool eligible,
                                             bool enable_eligible);
 
+// Recompute eligibility from immutable report evidence and the current policy.
+// A report's eligible flag is a claim, not an authorization to bypass checks.
+[[nodiscard]] bool
+watchlist_preflight_eligible(const contracts::Json &entry,
+                             const contracts::Json &result,
+                             const InternetSourcePolicy &policy);
+
+[[nodiscard]] contracts::Json supersede_watchlist_registration(
+    const contracts::Json &registration, const InternetWatch &previous,
+    const InternetWatch &replacement, std::string predecessor_registration_id);
+
 [[nodiscard]] contracts::Json make_watchlist_registration(
     const contracts::Json &manifest, const contracts::Json &entry,
     std::string watch_id, std::string source_policy_id,
-    std::string preflight_report_sha256, std::string eligibility_status);
+    std::string preflight_report_sha256, std::string eligibility_status,
+    std::string evidence_independence_group = {});
 
 } // namespace statewright::sources

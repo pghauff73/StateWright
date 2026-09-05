@@ -954,6 +954,8 @@
     "internet-promotion-assessment": {
       "additionalProperties": false,
       "properties": {
+        "assessed_at": {"type": "string", "minLength": 1},
+        "source_checked_at": {"type": "string", "minLength": 1},
         "automatic_demotion_predicates": {
           "items": {
             "type": "string"
@@ -1347,6 +1349,7 @@
     "internet-retrieval-receipt": {
       "additionalProperties": false,
       "properties": {
+        "source_policy_assessment_id": {"type": "string", "minLength": 1},
         "adaptation_match_ids": {
           "items": {
             "type": "string"
@@ -1872,6 +1875,10 @@
         },
         "entry_name": {"minLength": 1, "type": "string"},
         "entry_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "extraction_strategy": {"minLength": 1, "type": "string"},
+        "source_review": {"type": "object"},
+        "evidence_independence_group": {"minLength": 1, "type": "string"},
+        "predecessor_registration_id": {"minLength": 1, "type": "string"},
         "license_classification": {"minLength": 1, "type": "string"},
         "license_evidence_urls": {
           "items": {"type": "string"},

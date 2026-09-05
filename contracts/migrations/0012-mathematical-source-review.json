@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "migration_id": "statewright-mathematical-source-review-v1",
+  "extension_contract": "schemas/statewright-v1/internet-improvement-extension.schema.json",
+  "frozen_contract_modified": false,
+  "added_object_types": [],
+  "extended_object_types": ["internet-watch-registration"],
+  "authority_effect": "none",
+  "canonical_algorithm_effect": "none",
+  "compatibility": "Optional source_review preserves old registrations. Mathematical-source-v1 requires file-level registry evidence, immutable revision, content digest and retained license notices. Fetch, preflight and extraction reject mismatches. Whole-file mathematical context remains unqualified and cannot be promoted by the scalar translator. No existing immutable history is rewritten."
+}

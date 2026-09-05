@@ -1,7 +1,9 @@
 #include "statewright/egcf/internet_probation.hpp"
+#include "statewright/egcf/autonomous_promotion.hpp"
 
 #include "statewright/common/error.hpp"
 #include "statewright/contracts/hash.hpp"
+#include "statewright/egcf/internet_experiment.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -36,13 +38,15 @@ using contracts::Json;
   return values.front();
 }
 
-[[nodiscard]] saa::AutonomousPromotionAssessment promotion_assessment(
-    const EgcfRecord &stored) {
+[[nodiscard]] saa::AutonomousPromotionAssessment
+promotion_assessment(const EgcfRecord &stored) {
   if (stored.object_type != "internet-promotion-assessment") {
     probation_error("candidate promotion assessment reference is invalid");
   }
   auto payload = stored.payload;
   payload.erase("policy_id");
+  payload.erase("assessed_at");
+  payload.erase("source_checked_at");
   return saa::autonomous_promotion_assessment_from_json(payload);
 }
 
@@ -66,34 +70,41 @@ struct CanonicalFormBundle final {
   std::vector<saa::SemanticResolution> resolutions;
 };
 
-[[nodiscard]] CanonicalFormBundle build_canonical_form(
-    const InternetAlgorithmCandidate &candidate,
-    const EgcfRecord &qualification) {
+[[nodiscard]] CanonicalFormBundle
+build_canonical_form(const InternetAlgorithmCandidate &candidate,
+                     const EgcfRecord &qualification) {
   if (qualification.object_type != "internet-experiment-qualification" ||
       !qualification.payload.at("experiment_qualified").get<bool>() ||
       !qualification.payload.at("invariants_passed").get<bool>()) {
     probation_error("probation requires a qualified experiment record");
   }
   const auto spec = saa::structure_from_mapping(candidate.proposed_saa_ir);
-  if (spec.inputs.size() != 1U || spec.outputs.size() != 1U ||
-      spec.nodes.size() != 1U || spec.nodes.front().primitive != "IDENTITY" ||
-      spec.nodes.front().operands.size() != 1U ||
-      spec.nodes.front().operands.front().kind != "input" ||
-      spec.nodes.front().operands.front().position != 0) {
-    probation_error(
-        "first-release probationary canonical admission supports exact identity IR only");
+  const auto program = internet_exact_scalar_program(candidate.proposed_saa_ir);
+  if (program.slope == 0) {
+    probation_error("probationary canonical admission requires a nonconstant "
+                    "exact scalar map");
   }
 
   std::vector<mpq_class> inputs;
   std::vector<mpq_class> outputs;
   for (const auto &run : qualification.payload.at("experiment_runs")) {
     const auto &group = run.at("group");
-    if (group.at("inputs").size() != 1U ||
-        group.at("expected_outputs").size() != 1U) {
-      probation_error("probation experiment bounds must be scalar");
+    if (group.at("inputs").empty() ||
+        group.at("inputs").size() != group.at("expected_outputs").size()) {
+      probation_error(
+          "probation experiment scalar trials must have matching outputs");
     }
-    inputs.push_back(rational_value(group.at("inputs").front()));
-    outputs.push_back(rational_value(group.at("expected_outputs").front()));
+    for (std::size_t index = 0; index < group.at("inputs").size(); ++index) {
+      const auto input = rational_value(group.at("inputs").at(index));
+      const auto output =
+          rational_value(group.at("expected_outputs").at(index));
+      if (output != program.slope * input + program.bias) {
+        probation_error("probation experiment expected output differs from "
+                        "exact scalar map");
+      }
+      inputs.push_back(input);
+      outputs.push_back(output);
+    }
   }
   if (inputs.size() < 2U || outputs.size() < 2U) {
     probation_error("probation canonical admission requires repeated bounds");
@@ -115,11 +126,20 @@ struct CanonicalFormBundle final {
       !std::isfinite(output_maximum_double)) {
     probation_error("probation canonical bounds exceed finite range");
   }
+  if (mpq_class(input_minimum_double) != *input_minimum ||
+      mpq_class(input_maximum_double) != *input_maximum ||
+      mpq_class(output_minimum_double) != *output_minimum ||
+      mpq_class(output_maximum_double) != *output_maximum) {
+    probation_error("probation canonical bounds must be exactly representable "
+                    "by normalization");
+  }
   const std::string context_signature =
       qualification.payload.at("context_signature").get<std::string>();
   const saa::ProvenanceItems provenance = {
       {"experiment_qualification_id", qualification.object_id()},
-      {"frozen_context_signature", context_signature}};
+      {"frozen_context_signature", context_signature},
+      {"exact_affine_slope", program.slope.get_str()},
+      {"exact_affine_bias", program.bias.get_str()}};
   saa::BoundMap input_bounds = {
       {0, saa::NumericBound(input_minimum_double, input_maximum_double,
                             "EXACT_BOUND", {}, provenance)}};
@@ -130,21 +150,28 @@ struct CanonicalFormBundle final {
       spec, input_bounds, {}, {}, output_bounds,
       saa::TimeNormalization(1.0, "EXACT_BOUND", {}, provenance));
   const saa::MIMOTransferMatrix transfer{
-      "CONTINUOUS", {{saa::LinearTransferFunction(
-                        "CONTINUOUS", {saa::NumericCoefficient(1)},
-                        {saa::NumericCoefficient(1)})}}};
+      "CONTINUOUS",
+      {{saa::LinearTransferFunction("CONTINUOUS",
+                                    {saa::NumericCoefficient(program.slope)},
+                                    {saa::NumericCoefficient(1)})}}};
   const auto mimo =
       saa::canonicalize_mimo_transfer_matrix(transfer, normalization);
   const auto search = saa::discover_representative_inputs(mimo);
-  saa::SemanticMap input_semantics = {{0, candidate.semantic_inputs.front()}};
+  // Representative dynamics use deviation coordinates and quotient reversible
+  // affine scaling. Bind physical coefficients into semantic identity so two
+  // different scalar transformations cannot share a probation/demotion target.
+  const std::string input_meaning =
+      internet_exact_scalar_meaning(program, candidate.semantic_inputs.front(),
+                                    candidate.semantic_outputs.front());
+  saa::SemanticMap input_semantics = {{0, input_meaning}};
   saa::SemanticMap output_semantics = {{0, candidate.semantic_outputs.front()}};
   auto issues = saa::assess_representative_candidate_semantics(
       mimo, search, input_semantics, output_semantics);
   std::vector<std::string> evidence_ids =
-      qualification.payload.at("evidence_ids")
-          .get<std::vector<std::string>>();
+      qualification.payload.at("evidence_ids").get<std::vector<std::string>>();
   if (evidence_ids.empty()) {
-    probation_error("probation canonical semantics require experiment evidence");
+    probation_error(
+        "probation canonical semantics require experiment evidence");
   }
   std::vector<saa::SemanticCandidateMeaning> candidates;
   std::vector<saa::SemanticResolution> resolutions;
@@ -160,9 +187,7 @@ struct CanonicalFormBundle final {
     const std::string falsifier =
         "representative input changes an excluded output";
     candidates.push_back(saa::make_semantic_candidate(
-        issue, candidate.semantic_inputs.at(
-                   static_cast<std::size_t>(issue.coordinate_index)),
-        expected, excluded, {}, {falsifier}));
+        issue, input_meaning, expected, excluded, {}, {falsifier}));
     resolutions.push_back(saa::evaluate_semantic_candidate(
         issue, candidates.back(), evidence_ids,
         {{falsifier, "SURVIVED", evidence_ids.front()}}, true));
@@ -176,8 +201,8 @@ struct CanonicalFormBundle final {
           .resolutions = std::move(resolutions)};
 }
 
-[[nodiscard]] saa::ProbationPlan plan_from_admission(
-    const EgcfRecord &admission) {
+[[nodiscard]] saa::ProbationPlan
+plan_from_admission(const EgcfRecord &admission) {
   if (admission.object_type != "internet-probation-admission") {
     probation_error("candidate probation admission reference is invalid");
   }
@@ -195,8 +220,8 @@ struct CanonicalFormBundle final {
   return result;
 }
 
-[[nodiscard]] std::string failure_class_for(
-    const std::vector<std::string> &reasons) {
+[[nodiscard]] std::string
+failure_class_for(const std::vector<std::string> &reasons) {
   if (std::ranges::find(reasons, "INVARIANT_FAILURE") != reasons.end()) {
     return "INVARIANT_VIOLATION";
   }
@@ -230,9 +255,10 @@ struct CanonicalFormBundle final {
 InternetProbationController::InternetProbationController(EgcfStore &store)
     : store_(store), internet_(store), canonical_(store), governance_(store) {}
 
-InternetProbationAdmissionResult InternetProbationController::admit(
-    const InternetAlgorithmCandidate &candidate,
-    std::string previous_preferred_canonical_ref) {
+InternetProbationAdmissionResult
+InternetProbationController::admit(const InternetAlgorithmCandidate &candidate,
+                                   std::string previous_preferred_canonical_ref,
+                                   std::string current_timestamp) {
   const auto canonical_candidate =
       canonical_internet_algorithm_candidate(candidate);
   const std::string candidate_id = canonical_candidate.object_id();
@@ -258,9 +284,20 @@ InternetProbationAdmissionResult InternetProbationController::admit(
           assessment.policy_signature) {
     probation_error("probation admission policy binding is invalid");
   }
-  const std::string qualification_id = only_id(
-      canonical_candidate.experiment_qualification_ids,
-      "probation admission experiment");
+  const auto freshness =
+      internet_source_freshness(store_, canonical_candidate, current_timestamp);
+  if (!stored_assessment.payload.contains("assessed_at") ||
+      stored_assessment.payload.at("assessed_at").get<std::string>() >
+          current_timestamp ||
+      !freshness.admissible ||
+      freshness.age_seconds >
+          policy.payload.at("maximum_source_age_seconds").get<int>()) {
+    probation_error(
+        "probation admission requires current source and promotion evidence");
+  }
+  const std::string qualification_id =
+      only_id(canonical_candidate.experiment_qualification_ids,
+              "probation admission experiment");
   const auto qualification = store_.get(qualification_id);
   auto bundle = build_canonical_form(canonical_candidate, qualification);
   const auto canonical_admission = canonical_.admit(
@@ -299,9 +336,9 @@ InternetProbationAdmissionResult InternetProbationController::admit(
   return result;
 }
 
-InternetProbationSelection InternetProbationController::select(
-    const InternetAlgorithmCandidate &candidate,
-    std::string query_signature) {
+InternetProbationSelection
+InternetProbationController::select(const InternetAlgorithmCandidate &candidate,
+                                    std::string query_signature) {
   const auto canonical_candidate =
       canonical_internet_algorithm_candidate(candidate);
   const std::string candidate_id = canonical_candidate.object_id();
@@ -331,19 +368,17 @@ InternetProbationSelection InternetProbationController::select(
   } else {
     explanation = "AUTOMATIC_DEMOTION_RESTORED_PREVIOUS_PREFERENCE";
   }
-  const std::string fallback =
-      plan.previous_preferred_canonical_ref.empty()
-          ? baseline_ref
-          : plan.previous_preferred_canonical_ref;
+  const std::string fallback = plan.previous_preferred_canonical_ref.empty()
+                                   ? baseline_ref
+                                   : plan.previous_preferred_canonical_ref;
   InternetProbationSelection result{
       .admission_id = admission_id,
       .plan_signature = plan.plan_signature,
       .query_signature = query_signature,
       .selected_canonical_ref =
-          candidate_selected
-              ? admission.payload.at("canonical_algorithm_ref")
-                    .get<std::string>()
-              : fallback,
+          candidate_selected ? admission.payload.at("canonical_algorithm_ref")
+                                   .get<std::string>()
+                             : fallback,
       .baseline_ref = baseline_ref,
       .candidate_selected = candidate_selected,
       .explanation = std::move(explanation),
@@ -363,7 +398,8 @@ InternetProbationObservationResult InternetProbationController::observe(
   if (store_.get(candidate_id).object_type != "internet-algorithm-candidate" ||
       (canonical_candidate.status != "PROBATIONARY_CANONICAL" &&
        canonical_candidate.status != "CANONICAL")) {
-    probation_error("probation observation requires an active admitted candidate");
+    probation_error(
+        "probation observation requires an active admitted candidate");
   }
   const std::string admission_id = only_id(
       canonical_candidate.probation_admission_ids, "probation observation");
@@ -371,6 +407,15 @@ InternetProbationObservationResult InternetProbationController::observe(
   const auto plan = plan_from_admission(admission);
   const std::string canonical_algorithm_ref =
       admission.payload.at("canonical_algorithm_ref").get<std::string>();
+  const auto freshness = internet_source_freshness(store_, canonical_candidate,
+                                                   request.observed_at);
+  const auto promotion = store_.get(plan.promotion_assessment_ref);
+  const auto policy =
+      store_.get(promotion.payload.at("policy_id").get<std::string>());
+  request.source_valid =
+      request.source_valid && freshness.admissible &&
+      freshness.age_seconds <=
+          policy.payload.at("maximum_source_age_seconds").get<int>();
   const auto observation = saa::make_probation_observation(
       plan, admission.payload.at("baseline_ref").get<std::string>(),
       std::move(request.query_signature), std::move(request.context_signature),
@@ -431,8 +476,8 @@ InternetProbationObservationResult InternetProbationController::observe(
         plan, assessment, canonical_algorithm_ref,
         plan.previous_preferred_canonical_ref, failure_observation_ref,
         reevaluation_schedule_ref);
-    demotion_decision_id = internet_.register_demotion_decision(
-        admission_id, *demotion_decision);
+    demotion_decision_id =
+        internet_.register_demotion_decision(admission_id, *demotion_decision);
     updated_candidate.status = "DEMOTED";
     updated_candidate.demotion_decision_ids.push_back(demotion_decision_id);
     updated_candidate.failure_match_ids.push_back(failure_observation_ref);
@@ -450,11 +495,9 @@ InternetProbationObservationResult InternetProbationController::observe(
   const std::string updated_candidate_id =
       internet_.supersede_algorithm_candidate(
           candidate_id, updated_candidate,
-          assessment.demotion_required
-              ? "automatic probation demotion"
-              : assessment.promotion_ready
-                    ? "automatic probation promotion"
-                    : "probation observation recorded");
+          assessment.demotion_required ? "automatic probation demotion"
+          : assessment.promotion_ready ? "automatic probation promotion"
+                                       : "probation observation recorded");
   InternetProbationObservationResult result{
       .observation = observation,
       .assessment = assessment,
@@ -512,18 +555,16 @@ contracts::Json to_json(const InternetProbationObservationRequest &value) {
 
 contracts::Json to_json(const InternetProbationObservationResult &value) {
   return {{"assessment", saa::to_json(value.assessment)},
-          {"demotion_decision",
-           value.demotion_decision
-               ? saa::to_json(*value.demotion_decision)
-               : Json(nullptr)},
+          {"demotion_decision", value.demotion_decision
+                                    ? saa::to_json(*value.demotion_decision)
+                                    : Json(nullptr)},
           {"demotion_decision_id", value.demotion_decision_id},
           {"failure_observation_ref", value.failure_observation_ref},
           {"observation", saa::to_json(value.observation)},
           {"observation_id", value.observation_id},
-          {"promotion_decision",
-           value.promotion_decision
-               ? saa::to_json(*value.promotion_decision)
-               : Json(nullptr)},
+          {"promotion_decision", value.promotion_decision
+                                     ? saa::to_json(*value.promotion_decision)
+                                     : Json(nullptr)},
           {"promotion_decision_id", value.promotion_decision_id},
           {"reevaluation_schedule_ref", value.reevaluation_schedule_ref},
           {"result_signature", value.result_signature},

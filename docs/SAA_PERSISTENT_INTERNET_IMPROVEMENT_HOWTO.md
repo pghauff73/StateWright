@@ -120,9 +120,9 @@ commands have `.ok == true`; operation-specific data is under `.result`.
 | `internet-poll` | `schedule`, `select`, `lease`, `list` |
 | `internet-fetch` | `execute`, `list` |
 | `internet-source` | `assess`, `list`, `get` |
-| `internet-extract` | `execute`, `list` |
+| `internet-extract` | `execute`, `list`, `proposals` |
 | `internet-candidate` | `list`, `get`, `explain`, `migrate` |
-| `internet-improvement` | `status`, `plan`, `run-once`, `resume`, `run-status`, `explain-action`, `advance`, `protocol-register`, `source-assessment-input-register`, `probation-observation-input-register`, `feed`, `reason`, `experiment-qualify`, `policy-assess`, `probation-admit`, `probation-select`, `probation-observe` |
+| `internet-improvement` | `status`, `metrics`, `plan`, `run-once`, `resume`, `run-status`, `explain-action`, `advance`, `protocol-register`, `source-assessment-input-register`, `probation-observation-input-register`, `feed`, `reason`, `experiment-qualify`, `policy-assess`, `probation-admit`, `probation-select`, `probation-observe` |
 | `internet-promotion-policy` | `list`, `get`, `register`, `register-default`, `assess` |
 | `internet-probation` | `list`, `admit`, `select`, `observe` |
 | `internet-integrity` | `verify`, `rebuild` |
@@ -545,6 +545,7 @@ promotion_result=$(saa_run internet-improvement "$(jq -cn \
   --arg policy_id "$promotion_policy_id" '{
     workspace: $workspace,
     action: "policy-assess",
+    current_timestamp: "2026-09-03T01:00:01Z",
     candidate_id: $candidate_id,
     policy_id: $policy_id
   }')")
@@ -572,6 +573,7 @@ admission_result=$(saa_run internet-improvement "$(jq -cn \
   --arg previous_ref "$previous_ref" '{
     workspace: $workspace,
     action: "probation-admit",
+    current_timestamp: "2026-09-03T01:00:02Z",
     candidate_id: $candidate_id,
     previous_preferred_canonical_ref: $previous_ref
   }')")
@@ -581,8 +583,12 @@ jq -e '.result.updated_candidate.status == "PROBATIONARY_CANONICAL"' \
   <<<"$admission_result" >/dev/null
 ```
 
-Probationary admission is not full canonical preference. The first release
-admits only exact `IDENTITY` candidates to this state.
+Probationary admission is not full canonical preference. Admission supports
+exact identity and the bounded nonconstant affine family described in
+`SAA_INTERNET_NEXT_STEPS_IMPLEMENTATION.md`. Policy assessment and admission
+require an explicit `current_timestamp` in canonical UTC; the fixture times
+above are for deterministic tests only. Source age is rechecked at admission
+and observation, including fresh assessment evidence from conditional fetches.
 
 ### 5.12 Select Four Deterministic Canary Uses
 
@@ -939,10 +945,12 @@ saa_run internet-probation "$(jq -cn --arg workspace "$SAA_WORKSPACE" \
   '{workspace: $workspace, action: "list"}')" | jq '.result'
 ```
 
-Promotion assessments persist every predicate and `source_age_seconds`. Source
-age is derived from the exact fetch lease acquisition timestamp, or from exact
-experiment evidence creation time when there is no fetch lineage. Missing,
-malformed, future, or stale timestamps fail closed.
+Promotion assessments persist every predicate, `source_age_seconds`, `assessed_at`,
+and `source_checked_at`. Source age is measured at the supplied current timestamp
+against the latest receipt-backed assessment of the same snapshot and policy.
+A conditional HTTP 304 can refresh this evidence without changing the snapshot.
+Missing, malformed, future, or stale timestamps fail closed; experiment time
+does not freeze source age. Admission and probation observations recheck freshness.
 
 ### 6.7 Migrate Legacy Candidate Lineage
 

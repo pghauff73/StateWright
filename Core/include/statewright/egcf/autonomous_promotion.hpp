@@ -10,6 +10,20 @@ namespace statewright::egcf {
 inline constexpr std::string_view autonomous_promotion_controller_version =
     "statewright-autonomous-promotion-controller-v1";
 
+struct InternetSourceFreshness final {
+  std::string assessment_id;
+  std::string checked_at;
+  int age_seconds = 0;
+  bool admissible = false;
+};
+
+// Resolve the latest assessment for the same immutable content and policy.
+// The explicit clock is bound into promotion evidence by the caller.
+[[nodiscard]] InternetSourceFreshness
+internet_source_freshness(EgcfStore &store,
+                          const InternetAlgorithmCandidate &candidate,
+                          std::string_view assessed_at);
+
 struct AutonomousPromotionResult final {
   saa::AutonomousPromotionAssessment assessment;
   InternetAlgorithmCandidate updated_candidate;
@@ -23,8 +37,9 @@ class AutonomousPromotionController final {
 public:
   explicit AutonomousPromotionController(EgcfStore &store);
 
-  [[nodiscard]] AutonomousPromotionResult assess(
-      const InternetAlgorithmCandidate &candidate, std::string policy_id);
+  [[nodiscard]] AutonomousPromotionResult
+  assess(const InternetAlgorithmCandidate &candidate, std::string policy_id,
+         std::string assessed_at);
 
 private:
   EgcfStore &store_;

@@ -37,9 +37,9 @@ bbbdf393b819e7cdeb44a493110a0815364801ff9afab8a57eca43e16f526675  ./schemas/egcf
 d02ceaf9046647dc5be03b62eb9f02ff213e9309b1f14dfd2b16dd87c2bbe1ca  ./schemas/egcf-v1/workflow.schema.json
 6684500a1dd1d5168af83c02d8f67ee9a3356d9b3312be842a246f641e3c9198  ./schemas/providers/llama_cpp_request.schema.json
 d07c5e492e84341bc1cfbd6260e394ad3f73c0d99356f2d944a0e260661bcbcd  ./schemas/providers/llama_cpp_response.schema.json
-e5c54f50c421e8dc276dfe3b285124f7d69a2c52af8a20cc94deac90ca93ec38  ./schemas/statewright-v1/internet-improvement-extension.schema.json
+8b3c974232047138ba0b36a5fb96fca5c3ffb10b95ee980d266fed7bfcf0b53b  ./schemas/statewright-v1/internet-improvement-extension.schema.json
 5894ba000b4a6144502f7d5255b51ae8ab965f4ca1aa9772453c1c6b4127ad69  ./schemas/statewright-v1/objects-extension.schema.json
-3b1c1e8f33a3def1fd72799da0ba01d078cf026b2a62ebddf3bda3dbd3ee42bb  ./schemas/watchlists/saa-internet-watchlist-v1.schema.json
+65b08b65409a873a3208c23068437e5a680346d66888d9f9ce08c08f5001da3a  ./schemas/watchlists/saa-internet-watchlist-v1.schema.json
 5084faaf4cac2ca45ded0202a5a4e7105f8a8f446d5bc71889cce39d9e3808c2  ./watchlists/internet/saa-authoritative-v1.json
-8c6298cf50323ce9998a39116b75acb0654ec75a4da04112733e39cdf17b6262  ./watchlists/internet/source-groups-v1.json
+360c7793e37682303646c0cc89220215ccece874927d7464f258c9367ff04795  ./watchlists/internet/source-groups-v1.json
 2f1fc27d09339ac8be5d40ff8a4b3bc8658065f3369f74029ee56b14e6e4f4d3  ./workflows/v1/parser-regression.json

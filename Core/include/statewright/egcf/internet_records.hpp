@@ -16,6 +16,7 @@ struct InternetKnowledgeSearchReceipt final {
   std::string snapshot_id;
   std::string source_fragment_id;
   std::string brain_feed_batch_id;
+  std::string source_policy_assessment_id;
   contracts::Json canonical_search = contracts::Json::object();
   std::vector<std::string> exact_match_ids;
   std::vector<std::string> equivalent_match_ids;
@@ -125,8 +126,10 @@ struct InternetExperimentQualification final {
   [[nodiscard]] std::string object_id() const;
 };
 
-[[nodiscard]] InternetKnowledgeSearchReceipt canonical_knowledge_search_receipt(
-    InternetKnowledgeSearchReceipt receipt);
+[[nodiscard]] InternetKnowledgeSearchReceipt
+canonical_knowledge_search_receipt(InternetKnowledgeSearchReceipt receipt);
+[[nodiscard]] InternetKnowledgeSearchReceipt
+internet_knowledge_search_receipt_from_json(const contracts::Json &value);
 [[nodiscard]] InternetAlgorithmCandidate
 canonical_internet_algorithm_candidate(InternetAlgorithmCandidate candidate);
 [[nodiscard]] InternetAlgorithmCandidate

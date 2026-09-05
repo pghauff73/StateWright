@@ -4,9 +4,11 @@
 #include "statewright/common/utf8.hpp"
 #include "statewright/contracts/hash.hpp"
 #include "statewright/sources/fetch.hpp"
+#include "statewright/sources/watchlist.hpp"
 
 #include <algorithm>
 #include <cctype>
+#include <map>
 #include <set>
 #include <string_view>
 #include <utility>
@@ -26,23 +28,21 @@ std::string lower(std::string value) {
 }
 
 std::string trim(std::string value) {
-  while (!value.empty() &&
-         std::isspace(static_cast<unsigned char>(value.front())) != 0) {
-    value.erase(value.begin());
-  }
-  while (!value.empty() &&
-         std::isspace(static_cast<unsigned char>(value.back())) != 0) {
-    value.pop_back();
-  }
-  return value;
+  const auto whitespace = [](unsigned char c) { return std::isspace(c) != 0; };
+  const auto first = std::find_if_not(value.begin(), value.end(), whitespace);
+  if (first == value.end())
+    return {};
+  const auto last =
+      std::find_if_not(value.rbegin(), value.rend(), whitespace).base();
+  return {first, last};
 }
 
 std::string text_from_bytes(std::span<const std::byte> bytes) {
   return {reinterpret_cast<const char *>(bytes.data()), bytes.size()};
 }
 
-std::string classify_text(std::string_view text, bool heading,
-                          bool table_row, bool code_block) {
+std::string classify_text(std::string_view text, bool heading, bool table_row,
+                          bool code_block) {
   if (code_block) {
     return "CODE_BLOCK";
   }
@@ -178,81 +178,275 @@ void extract_plain(InternetExtractionResult &result,
   }
 }
 
+std::string decoded_html_text(std::string_view text) {
+  std::string result;
+  for (std::size_t i = 0; i < text.size(); ++i) {
+    if (text[i] == '&') {
+      const auto end = text.find(';', i + 1);
+      if (end != std::string_view::npos && end - i <= 12U) {
+        const auto entity = text.substr(i, end - i + 1U);
+        static const std::map<std::string_view, std::string_view> entities = {
+            {"&amp;", "&"},  {"&lt;", "<"},  {"&gt;", ">"},  {"&quot;", "\""},
+            {"&apos;", "'"}, {"&#39;", "'"}, {"&nbsp;", " "}};
+        if (const auto found = entities.find(entity); found != entities.end()) {
+          result += found->second;
+          i = end;
+          continue;
+        }
+      }
+    }
+    result += text[i];
+  }
+  return result;
+}
+
+// Preserve contiguous block context across inline markup. Raw offsets continue
+// to address the captured bytes; decoded text is a deterministic projection.
 void extract_html(InternetExtractionResult &result,
                   const InternetExtractionLimits &limits,
                   std::string_view snapshot_id, std::string_view text) {
-  std::size_t position = 0U;
-  std::size_t text_index = 0U;
-  std::size_t nesting = 0U;
-  int hidden_depth = 0;
-  std::string current_tag;
-  while (position < text.size() && !result.receipt.truncated) {
-    const auto tag_start = text.find('<', position);
-    const std::size_t segment_end =
-        tag_start == std::string_view::npos ? text.size() : tag_start;
-    if (hidden_depth == 0 && segment_end > position) {
-      const bool heading = current_tag.size() == 2U && current_tag[0] == 'h' &&
-                           current_tag[1] >= '1' && current_tag[1] <= '6';
-      append_fragment(result, limits, snapshot_id,
-                      classify_text(text.substr(position, segment_end - position),
-                                    heading, current_tag == "tr", false),
-                      position, segment_end,
-                      "html:text:" + std::to_string(text_index++),
-                      std::string(text.substr(position, segment_end - position)));
+  std::vector<std::string> stack;
+  const std::string normalized_html = lower(std::string(text));
+  std::string block_tag;
+  std::string block_text;
+  std::size_t block_start = 0U;
+  std::size_t block_depth = 0U;
+  std::size_t sequence = 0U;
+  const auto flush = [&](std::size_t end) {
+    if (block_text.empty())
+      return;
+    const bool heading = block_tag.size() == 2U && block_tag.front() == 'h';
+    std::string kind =
+        classify_text(block_text, heading, block_tag == "tr", false);
+    if (block_tag == "pre" && kind == "TEXT")
+      kind = "CODE_BLOCK";
+    if (block_tag == "math")
+      kind = "MATH_EXPRESSION";
+    contracts::Json metadata = {{"html_tag", block_tag}};
+    if (block_tag == "math") {
+      metadata["raw_mathml"] =
+          std::string(text.substr(block_start, end - block_start));
     }
-    if (tag_start == std::string_view::npos) {
+    append_fragment(result, limits, snapshot_id, kind, block_start, end,
+                    "html:block:" + std::to_string(sequence++), block_text, {},
+                    metadata);
+    block_text.clear();
+  };
+  for (std::size_t position = 0;
+       position < text.size() && !result.receipt.truncated;) {
+    const auto opening = text.find('<', position);
+    const auto end_text =
+        opening == std::string_view::npos ? text.size() : opening;
+    if (end_text > position) {
+      if (block_text.empty() && block_tag.empty())
+        block_start = position;
+      block_text +=
+          decoded_html_text(text.substr(position, end_text - position));
+    }
+    if (opening == std::string_view::npos) {
+      flush(text.size());
       break;
     }
-    const auto tag_end = text.find('>', tag_start + 1U);
-    if (tag_end == std::string_view::npos) {
+    if (text.substr(opening).starts_with("<!--")) {
+      const auto end_comment = text.find("-->", opening + 4U);
+      if (end_comment == std::string_view::npos)
+        break;
+      position = end_comment + 3U;
+      continue;
+    }
+    auto end = opening + 1U;
+    char quote = 0;
+    for (; end < text.size(); ++end) {
+      const char c = text[end];
+      if (quote != 0) {
+        if (c == quote)
+          quote = 0;
+      } else if (c == '\'' || c == '"')
+        quote = c;
+      else if (c == '>')
+        break;
+    }
+    if (end == text.size()) {
       result.receipt.rejected_fragments.push_back("html:MALFORMED_TAG");
       break;
     }
-    std::string tag = lower(trim(std::string(
-        text.substr(tag_start + 1U, tag_end - tag_start - 1U))));
+    std::string tag =
+        lower(trim(std::string(text.substr(opening + 1U, end - opening - 1U))));
     const bool closing = tag.starts_with('/');
-    if (closing) {
+    if (closing)
       tag.erase(tag.begin());
+    const auto separator = tag.find_first_of(" \t\r\n/");
+    const std::string name = tag.substr(0, separator);
+    if (!closing &&
+        (name == "script" || name == "style" || name == "noscript")) {
+      result.receipt.rejected_fragments.push_back("html:" + name +
+                                                  ":NON_EXECUTABLE");
+      const auto hidden_end = normalized_html.find("</" + name, end + 1U);
+      if (hidden_end == std::string::npos)
+        break;
+      const auto final = text.find('>', hidden_end);
+      if (final == std::string_view::npos)
+        break;
+      position = final + 1U;
+      continue;
     }
-    const auto separator = tag.find_first_of(" \t/");
-    const std::string name = tag.substr(0U, separator);
-    const bool self_closing = tag.ends_with('/') || name == "meta" ||
-                              name == "link" || name == "br" || name == "img";
-    if (closing) {
-      if ((name == "script" || name == "style" || name == "noscript") &&
-          hidden_depth > 0) {
-        --hidden_depth;
+    const bool boundary = name == "p" || name == "li" || name == "pre" ||
+                          name == "tr" || name == "math" ||
+                          (name.size() == 2U && name[0] == 'h' &&
+                           name[1] >= '1' && name[1] <= '6');
+    const bool void_tag = tag.ends_with('/') || name == "br" || name == "hr" ||
+                          name == "img" || name == "meta" || name == "link" ||
+                          name == "input" || name == "wbr" ||
+                          name.starts_with('!');
+    if (!closing) {
+      if (boundary && block_tag.empty()) {
+        flush(opening);
+        block_start = opening;
+        block_tag = name;
+        block_depth = stack.size() + 1U;
       }
-      if (nesting > 0U) {
-        --nesting;
-      }
-      current_tag.clear();
-    } else {
-      if (!self_closing) {
-        ++nesting;
-        if (nesting > limits.maximum_nesting_depth) {
+      if (name == "br")
+        block_text += '\n';
+      if (!void_tag) {
+        stack.push_back(name);
+        if (stack.size() > limits.maximum_nesting_depth)
           extraction_error("HTML nesting exceeds extraction policy");
+      }
+    } else {
+      if (name == "td" || name == "th")
+        block_text += '\t';
+      if (!block_tag.empty() && name == block_tag &&
+          stack.size() == block_depth) {
+        flush(end + 1U);
+        block_tag.clear();
+      }
+      const auto found = std::find(stack.rbegin(), stack.rend(), name);
+      if (found != stack.rend())
+        stack.resize(stack.size() -
+                     static_cast<std::size_t>(found - stack.rbegin()) - 1U);
+    }
+    position = end + 1U;
+  }
+  flush(text.size());
+}
+
+std::string doi_url(std::string doi) {
+  doi = lower(trim(std::move(doi)));
+  if (doi.starts_with("https://doi.org/"))
+    doi.erase(0U, 16U);
+  if (!doi.starts_with("10.") || doi.find('/') == std::string::npos)
+    return {};
+  std::string encoded;
+  constexpr std::string_view hex = "0123456789ABCDEF";
+  for (const char character : doi) {
+    const auto c = static_cast<unsigned char>(character);
+    if (std::isalnum(c) != 0 || c == '-' || c == '_' || c == '.' || c == '/' ||
+        c == '~')
+      encoded += static_cast<char>(c);
+    else {
+      encoded += '%';
+      encoded += hex[c >> 4U];
+      encoded += hex[c & 15U];
+    }
+  }
+  return "https://doi.org/" + encoded;
+}
+
+void extract_discovery(InternetExtractionResult &result,
+                       const InternetExtractionLimits &limits,
+                       std::string_view snapshot_id,
+                       const contracts::Json &value, std::size_t input_size,
+                       std::string_view strategy) {
+  const bool crossref = strategy == "crossref-json";
+  const auto &items = crossref ? value.at("message").at("items")
+                               : value.at("resultList").at("result");
+  if (!items.is_array())
+    extraction_error("discovery response must contain an item array");
+  std::set<std::string> identities;
+  std::set<std::string> urls;
+  for (std::size_t index = 0U; index < items.size(); ++index) {
+    if (result.fragments.size() >= limits.maximum_fragments ||
+        index >= std::min<std::size_t>(limits.maximum_fragments, 1024U) * 4U) {
+      result.receipt.truncated = true;
+      result.receipt.diagnostics.push_back("MAXIMUM_DISCOVERY_ITEMS_REACHED");
+      break;
+    }
+    const auto selector =
+        (crossref ? "json:/message/items/" : "json:/resultList/result/") +
+        std::to_string(index);
+    try {
+      const auto &item = items.at(index);
+      std::string doi = item.value(crossref ? "DOI" : "doi", std::string{});
+      std::string url;
+      if (crossref) {
+        url = item.value("URL", std::string{});
+        if (item.contains("link") && item.at("link").is_array()) {
+          for (const auto &link : item.at("link")) {
+            const auto mime = link.value("content-type", std::string{});
+            if (mime == "text/html" || mime == "text/plain") {
+              url = link.at("URL").get<std::string>();
+              break;
+            }
+          }
+        }
+      } else if (item.contains("fullTextUrlList")) {
+        for (const auto &link : item.at("fullTextUrlList").at("fullTextUrl")) {
+          if (lower(link.value("documentStyle", std::string{})) == "html") {
+            url = link.at("url").get<std::string>();
+            break;
+          }
         }
       }
-      if (name == "script" || name == "style" || name == "noscript") {
-        ++hidden_depth;
-        result.receipt.rejected_fragments.push_back("html:" + name +
-                                                    ":NON_EXECUTABLE");
-      }
-      current_tag = name;
+      if (url.empty())
+        url = doi_url(doi);
+      auto policy = InternetSourcePolicy{};
+      const auto parsed = parse_and_validate_url(url, policy);
+      const std::string identity =
+          doi.empty() ? parsed.canonical_url : doi_url(doi);
+      if (identity.empty())
+        extraction_error("invalid discovery DOI");
+      if (!identities.insert(identity).second ||
+          !urls.insert(parsed.canonical_url).second)
+        continue;
+      std::string title;
+      if (crossref && item.contains("title") && item.at("title").is_array() &&
+          !item.at("title").empty())
+        title = item.at("title").front().get<std::string>();
+      else
+        title = item.value("title", std::string{});
+      contracts::Json proposal = {
+          {"canonical_url", parsed.canonical_url},
+          {"doi", lower(doi)},
+          {"enabled", false},
+          {"name",
+           "discovered-" + contracts::sha256_text(identity).substr(0, 20)},
+          {"purpose", "authoritative-evidence"},
+          {"title", title},
+          {"claimed_publisher",
+           item.value(crossref ? "publisher" : "journalTitle", std::string{})},
+          {"license_status", "review-required"},
+          {"robots_status", "pending"},
+          {"source_snapshot_id", snapshot_id},
+          {"source_selector", selector}};
+      append_fragment(result, limits, snapshot_id, "CITATION", 0U, input_size,
+                      selector, title + "\n" + parsed.canonical_url, {},
+                      {{"discovery_watch_proposal", proposal},
+                       {"json_pointer", selector.substr(5U)}});
+    } catch (const std::exception &) {
+      result.receipt.rejected_fragments.push_back(selector +
+                                                  ":INVALID_DISCOVERY_ITEM");
     }
-    position = tag_end + 1U;
   }
 }
 
 } // namespace
 
-InternetPolicyAssessment assess_internet_source(
-    const InternetSourceSnapshot &snapshot_value,
-    const InternetFetchReceipt &fetch_receipt_value,
-    const InternetSourcePolicy &source_policy_value,
-    std::span<const std::byte> bytes, bool robots_allowed,
-    std::string license_classification) {
+InternetPolicyAssessment
+assess_internet_source(const InternetSourceSnapshot &snapshot_value,
+                       const InternetFetchReceipt &fetch_receipt_value,
+                       const InternetSourcePolicy &source_policy_value,
+                       std::span<const std::byte> bytes, bool robots_allowed,
+                       std::string license_classification) {
   const auto snapshot = canonical_source_snapshot(snapshot_value);
   const auto receipt = canonical_fetch_receipt(fetch_receipt_value);
   const auto policy = canonical_source_policy(source_policy_value);
@@ -273,14 +467,15 @@ InternetPolicyAssessment assess_internet_source(
   } catch (const common::Error &) {
     assessment.redirects_valid = false;
   }
-  assessment.robots_allowed = robots_allowed || !policy.require_robots_permission;
+  assessment.robots_allowed =
+      robots_allowed || !policy.require_robots_permission;
   assessment.license_classification = std::move(license_classification);
   const bool known_license = !assessment.license_classification.empty() &&
                              assessment.license_classification != "UNKNOWN";
   assessment.mime_valid =
       std::find(policy.accepted_mime_types.begin(),
-                policy.accepted_mime_types.end(), snapshot.content_type) !=
-      policy.accepted_mime_types.end();
+                policy.accepted_mime_types.end(),
+                snapshot.content_type) != policy.accepted_mime_types.end();
   const std::string text = text_from_bytes(bytes);
   assessment.encoding_valid = common::is_valid_utf8(text);
   assessment.credential_free = true;
@@ -314,7 +509,8 @@ InternetPolicyAssessment assess_internet_source(
 
 InternetExtractionResult extract_internet_snapshot(
     std::string snapshot_id, std::string content_type,
-    std::span<const std::byte> bytes, const InternetExtractionLimits &limits) {
+    std::span<const std::byte> bytes, const InternetExtractionLimits &limits,
+    std::string extraction_strategy, const contracts::Json &source_review) {
   if (snapshot_id.empty() || limits.maximum_input_bytes == 0U ||
       limits.maximum_fragments == 0U || limits.maximum_fragment_bytes == 0U ||
       limits.maximum_nesting_depth == 0U) {
@@ -322,16 +518,67 @@ InternetExtractionResult extract_internet_snapshot(
   }
   InternetExtractionResult result;
   result.receipt.snapshot_id = snapshot_id;
-  result.receipt.extractor_versions = {
-      std::string(internet_extractor_version)};
+  result.receipt.extractor_versions = {std::string(internet_extractor_version)};
+  if (!extraction_strategy.empty())
+    result.receipt.extractor_versions.push_back(
+        std::string(internet_extractor_version) + ":" + extraction_strategy);
   result.receipt.decoded_text_signature = contracts::sha256_bytes(bytes);
-  if (bytes.empty() || bytes.size() > limits.maximum_input_bytes) {
+  static const std::set<std::string> strategies = {"",
+                                                   "plain-text",
+                                                   "html-section",
+                                                   "rfc-document",
+                                                   "w3c-specification",
+                                                   "crossref-json",
+                                                   "mathematical-source-v1",
+                                                   "europe-pmc-json"};
+  if (!strategies.contains(extraction_strategy) ||
+      ((extraction_strategy == "crossref-json" ||
+        extraction_strategy == "europe-pmc-json") &&
+       content_type != "application/json")) {
+    result.receipt.rejected_fragments.push_back(
+        "snapshot:UNSUPPORTED_EXTRACTION_STRATEGY");
+  } else if (bytes.empty() || bytes.size() > limits.maximum_input_bytes) {
     result.receipt.rejected_fragments.push_back("snapshot:INPUT_SIZE_INVALID");
     result.receipt.truncated = bytes.size() > limits.maximum_input_bytes;
   } else {
     const std::string text = text_from_bytes(bytes);
     if (!common::is_valid_utf8(text)) {
       result.receipt.rejected_fragments.push_back("snapshot:INVALID_UTF8");
+    } else if (extraction_strategy == "mathematical-source-v1") {
+      if (content_type != "text/plain" ||
+          !valid_mathematical_source_review(source_review) ||
+          source_review.at("body_sha256") != contracts::sha256_bytes(bytes)) {
+        result.receipt.rejected_fragments.push_back(
+            "snapshot:MATHEMATICAL_SOURCE_REVIEW_OR_HASH_INVALID");
+      } else if (trim(text).empty()) {
+        result.receipt.rejected_fragments.push_back(
+            "snapshot:EMPTY_MATHEMATICAL_SOURCE");
+      } else if (text.size() > limits.maximum_fragment_bytes) {
+        result.receipt.rejected_fragments.push_back(
+            "snapshot:MATHEMATICAL_CONTEXT_TOO_LARGE");
+        result.receipt.truncated = true;
+      } else {
+        // Never split a formula away from its domain, branch conventions,
+        // accuracy discussion or copyright. Includes/imports remain inert text;
+        // external definitions are unresolved, not silently guessed.
+        append_fragment(result, limits, snapshot_id, "ALGORITHM_DESCRIPTION",
+                        0U, bytes.size(), "mathematical-source:whole-file",
+                        text, {},
+                        {{"mathematical_context_review_required", true},
+                         {"context_preservation", "whole-file-verbatim"},
+                         {"assumptions", "PRESERVED_UNINTERPRETED"},
+                         {"branch_conventions", "PRESERVED_UNINTERPRETED"},
+                         {"error_bounds", "PRESERVED_UNINTERPRETED"},
+                         {"external_dependencies", "NOT_EXPANDED_OR_EXECUTED"},
+                         {"source_review", source_review}});
+        // append_fragment normally trims prose. Mathematical source retains all
+        // bytes, including leading whitespace and the final newline.
+        result.fragments.back().text = text;
+        result.fragments.back() =
+            canonical_source_fragment(std::move(result.fragments.back()));
+        result.receipt.diagnostics.push_back(
+            "MATHEMATICAL_CONTEXT_REVIEW_REQUIRED");
+      }
     } else if (content_type == "text/plain") {
       extract_plain(result, limits, snapshot_id, text);
     } else if (content_type == "text/html") {
@@ -340,9 +587,15 @@ InternetExtractionResult extract_internet_snapshot(
       try {
         const auto value = contracts::Json::parse(text);
         static_cast<void>(json_depth(value, 0U, limits.maximum_nesting_depth));
-        const std::string canonical = contracts::canonical_json(value);
-        append_fragment(result, limits, snapshot_id, "METADATA", 0U,
-                        bytes.size(), "json:$", canonical);
+        if (extraction_strategy == "crossref-json" ||
+            extraction_strategy == "europe-pmc-json") {
+          extract_discovery(result, limits, snapshot_id, value, bytes.size(),
+                            extraction_strategy);
+        } else {
+          const std::string canonical = contracts::canonical_json(value);
+          append_fragment(result, limits, snapshot_id, "METADATA", 0U,
+                          bytes.size(), "json:$", canonical);
+        }
       } catch (const std::exception &error) {
         result.receipt.rejected_fragments.push_back(
             "json:INVALID_OR_OVER_LIMIT");

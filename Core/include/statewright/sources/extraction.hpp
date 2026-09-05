@@ -11,7 +11,7 @@
 namespace statewright::sources {
 
 inline constexpr std::string_view internet_extractor_version =
-    "statewright-internet-extractor-v1";
+    "statewright-internet-extractor-v3";
 
 struct InternetExtractionLimits final {
   std::size_t maximum_input_bytes = 8U * 1024U * 1024U;
@@ -25,16 +25,19 @@ struct InternetExtractionResult final {
   InternetExtractionReceipt receipt;
 };
 
-[[nodiscard]] InternetPolicyAssessment assess_internet_source(
-    const InternetSourceSnapshot &snapshot,
-    const InternetFetchReceipt &fetch_receipt,
-    const InternetSourcePolicy &source_policy, std::span<const std::byte> bytes,
-    bool robots_allowed, std::string license_classification);
+[[nodiscard]] InternetPolicyAssessment
+assess_internet_source(const InternetSourceSnapshot &snapshot,
+                       const InternetFetchReceipt &fetch_receipt,
+                       const InternetSourcePolicy &source_policy,
+                       std::span<const std::byte> bytes, bool robots_allowed,
+                       std::string license_classification);
 
 [[nodiscard]] InternetExtractionResult extract_internet_snapshot(
     std::string snapshot_id, std::string content_type,
     std::span<const std::byte> bytes,
-    const InternetExtractionLimits &limits = {});
+    const InternetExtractionLimits &limits = {},
+    std::string extraction_strategy = {},
+    const contracts::Json &source_review = contracts::Json::object());
 
 [[nodiscard]] contracts::Json to_json(const InternetExtractionResult &value);
 

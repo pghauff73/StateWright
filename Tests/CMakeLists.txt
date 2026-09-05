@@ -93,6 +93,7 @@ add_executable(statewright_contract_tests
   egcf/test_internet_orchestration_records.cpp
   egcf/test_internet_reasoning.cpp
   egcf/test_internet_source_coordinator.cpp
+  egcf/test_internet_metrics.cpp
   egcf/test_knowledge_governance_store.cpp
   egcf/test_lifecycle.cpp
   egcf/test_nonlinear_store.cpp
@@ -222,6 +223,29 @@ add_test(NAME statewright_package_smoke
 
 add_test(NAME statewright_release_inputs
   COMMAND "${PROJECT_SOURCE_DIR}/Tools/verify_release_inputs.sh")
+
+add_test(NAME statewright_internet_history_benchmark_smoke
+  COMMAND statewright_internet_history_benchmark 2)
+
+add_test(NAME statewright_internet_stored_history_benchmark_smoke
+  COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/internet_history_benchmark_smoke.sh"
+    "$<TARGET_FILE:statewright_internet_history_benchmark>"
+    "${PROJECT_SOURCE_DIR}/resources")
+
+add_test(NAME statewright_internet_all_lanes_smoke
+  COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/internet_all_lanes_smoke.sh"
+    "$<TARGET_FILE:statewright>" "$<TARGET_FILE:statewright_feed_watchlist_once>"
+    "${PROJECT_SOURCE_DIR}/resources"
+    "${PROJECT_SOURCE_DIR}/Tools/generate_saa_watchlist_100.sh")
+
+set(STATEWRIGHT_MATH_VERIFY_PYTHON "" CACHE FILEPATH
+  "Optional hash-pinned Python environment for mpmath/FLINT pointwise tests")
+if(STATEWRIGHT_MATH_VERIFY_PYTHON)
+  add_test(NAME statewright_mathematical_verification
+    COMMAND "${STATEWRIGHT_MATH_VERIFY_PYTHON}"
+      "${CMAKE_CURRENT_SOURCE_DIR}/test_mathematical_verification.py")
+  set_tests_properties(statewright_mathematical_verification PROPERTIES TIMEOUT 60)
+endif()
 
 set_tests_properties(statewright_package_smoke PROPERTIES COST 100)
 set_tests_properties(statewright_saa_internet_howto_smoke PROPERTIES COST 90)

@@ -262,6 +262,7 @@ add_library(statewright_egcf STATIC
   Core/src/egcf/internet_feed.cpp
   Core/src/egcf/internet_reasoning.cpp
   Core/src/egcf/internet_source_coordinator.cpp
+  Core/src/egcf/internet_metrics.cpp
   Core/src/egcf/knowledge_governance_store.cpp
   Core/src/egcf/lifecycle.cpp
   Core/src/egcf/nonlinear_store.cpp
@@ -308,6 +309,20 @@ target_link_libraries(statewright-internet-supervisor
   PRIVATE StateWright::egcf StateWright::contracts
 )
 statewright_enable_warnings(statewright-internet-supervisor)
+
+add_executable(statewright_internet_history_benchmark
+  Tools/benchmark_internet_history.cpp
+)
+target_link_libraries(statewright_internet_history_benchmark PRIVATE StateWright::egcf)
+statewright_enable_warnings(statewright_internet_history_benchmark)
+
+add_executable(statewright_feed_watchlist_once Tools/feed_internet_watchlist_once.cpp)
+target_link_libraries(statewright_feed_watchlist_once PRIVATE StateWright::egcf)
+statewright_enable_warnings(statewright_feed_watchlist_once)
+
+add_executable(statewright_import_mathematical_acquisitions Tools/import_mathematical_acquisitions.cpp)
+target_link_libraries(statewright_import_mathematical_acquisitions PRIVATE StateWright::egcf)
+statewright_enable_warnings(statewright_import_mathematical_acquisitions)
 
 install(TARGETS statewright statewright-shadow statewright-internet-supervisor
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"

@@ -44,7 +44,7 @@ foreach(required_resource IN ITEMS
     message(FATAL_ERROR "installed internet resource is missing: ${required_resource}")
   endif()
 endforeach()
-if(NOT EXISTS "${prefix}/share/statewright/contracts/migrations/0005-internet-source-freshness-extension.json")
+if(NOT EXISTS "${prefix}/share/statewright/contracts/migrations/0011-internet-watchlist-freshness-recovery.json")
   message(FATAL_ERROR "installed internet migration history is incomplete")
 endif()
 set(installed_howto

@@ -1,0 +1,4 @@
+# Optional offline verification environment; CPython 3.14, Linux x86_64.
+# Wheel hashes pin the bundled FLINT/Arb implementation as well as its wrapper.
+mpmath==1.4.1 --hash=sha256:dc4f0ea2304480d4a9a48a94c1020571558ade522b44a6912efac63a586e140f
+python-flint==0.9.0 --hash=sha256:2736832e42fa5487026fe8431d62e626c083f01fde86c6e45a402e808466778e

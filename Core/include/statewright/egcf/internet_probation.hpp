@@ -69,15 +69,16 @@ class InternetProbationController final {
 public:
   explicit InternetProbationController(EgcfStore &store);
 
-  [[nodiscard]] InternetProbationAdmissionResult admit(
-      const InternetAlgorithmCandidate &candidate,
-      std::string previous_preferred_canonical_ref = {});
-  [[nodiscard]] InternetProbationSelection select(
-      const InternetAlgorithmCandidate &candidate,
-      std::string query_signature);
-  [[nodiscard]] InternetProbationObservationResult observe(
-      const InternetAlgorithmCandidate &candidate,
-      InternetProbationObservationRequest request);
+  [[nodiscard]] InternetProbationAdmissionResult
+  admit(const InternetAlgorithmCandidate &candidate,
+        std::string previous_preferred_canonical_ref,
+        std::string current_timestamp);
+  [[nodiscard]] InternetProbationSelection
+  select(const InternetAlgorithmCandidate &candidate,
+         std::string query_signature);
+  [[nodiscard]] InternetProbationObservationResult
+  observe(const InternetAlgorithmCandidate &candidate,
+          InternetProbationObservationRequest request);
 
 private:
   EgcfStore &store_;

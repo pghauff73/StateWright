@@ -67,6 +67,12 @@ the unchanged EGCF execution-authority boundary.
 
 ## Operational Guides
 
+- `docs/SAA_INTERNET_NEXT_STEPS_IMPLEMENTATION.md` documents watchlist safety,
+  discovery proposals, exact affine qualification, and compatibility changes.
+- `docs/SAA_INTERNET_OBSERVABILITY.md` explains pipeline metrics and the
+  reproducible history-planning benchmark.
+- `docs/SAA_INTERNET_LIVE_PILOT_2026-09-05.md` records the three-source live pilot,
+  cache revalidation, candidate yield, and persisted-history measurements.
 - `docs/SAA_PERSISTENT_INTERNET_IMPROVEMENT_HOWTO.md` provides the source-grounded
   build, fixture, manual lifecycle, inspection, troubleshooting, bounded
   real-internet, integrity, and release-evidence procedures.
@@ -87,6 +93,10 @@ the unchanged EGCF execution-authority boundary.
   and systemd timer deployment.
 
 ## Goal Prompts
+
+The current 100-target watchlist and pinned mathematical replacements are
+documented in [watchlists/README.md](watchlists/README.md) and
+[SAA mathematical sources](docs/SAA_MATHEMATICAL_SOURCES.md).
 
 - `docs/SAA_PERSISTENT_INTERNET_DIRECTOR_ORCHESTRATOR_GOAL_PROMPT.md` is the
   source-grounded coding-agent prompt used to implement and qualify the

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "statewright/egcf/store.hpp"
-#include "statewright/egcf/internet_records.hpp"
 #include "statewright/egcf/internet_orchestration_records.hpp"
+#include "statewright/egcf/internet_records.hpp"
+#include "statewright/egcf/store.hpp"
 #include "statewright/saa/autonomous_promotion_policy.hpp"
 #include "statewright/saa/probation.hpp"
 #include "statewright/sources/extraction.hpp"
@@ -38,73 +38,78 @@ public:
   register_fetch_job(const sources::InternetFetchJob &job);
   [[nodiscard]] std::string
   register_fetch_lease(const sources::InternetFetchLease &lease);
-  [[nodiscard]] InternetCaptureResult capture_success(
-      std::string job_id, std::string lease_id,
-      const sources::FetchResponse &response, std::string source_group);
-  [[nodiscard]] std::string capture_not_modified(
-      std::string job_id, std::string lease_id,
-      const sources::FetchResponse &response, std::string snapshot_id);
-  [[nodiscard]] std::string capture_failure(
-      std::string job_id, std::string lease_id, std::string requested_url,
-      std::string provider_identity, std::string reason);
+  [[nodiscard]] InternetCaptureResult
+  capture_success(std::string job_id, std::string lease_id,
+                  const sources::FetchResponse &response,
+                  std::string source_group);
+  [[nodiscard]] std::string
+  capture_not_modified(std::string job_id, std::string lease_id,
+                       const sources::FetchResponse &response,
+                       std::string snapshot_id);
+  [[nodiscard]] std::string capture_failure(std::string job_id,
+                                            std::string lease_id,
+                                            std::string requested_url,
+                                            std::string provider_identity,
+                                            std::string reason);
   [[nodiscard]] std::string register_policy_assessment(
       const sources::InternetPolicyAssessment &assessment);
-  [[nodiscard]] std::string register_source_fragment(
-      const sources::InternetSourceFragment &fragment);
+  [[nodiscard]] std::string
+  register_source_fragment(const sources::InternetSourceFragment &fragment);
   [[nodiscard]] std::string register_extraction_receipt(
       const sources::InternetExtractionReceipt &receipt);
-  [[nodiscard]] std::string register_extraction(
-      const sources::InternetExtractionResult &extraction);
-  [[nodiscard]] std::string register_retrieval_receipt(
-      const InternetKnowledgeSearchReceipt &receipt);
-  [[nodiscard]] std::string register_algorithm_candidate(
-      const InternetAlgorithmCandidate &candidate);
-  [[nodiscard]] std::string register_reasoning_analysis(
-      const InternetReasoningAnalysis &analysis);
+  [[nodiscard]] std::string
+  register_extraction(const sources::InternetExtractionResult &extraction);
+  [[nodiscard]] std::string
+  register_retrieval_receipt(const InternetKnowledgeSearchReceipt &receipt);
+  [[nodiscard]] std::string
+  register_algorithm_candidate(const InternetAlgorithmCandidate &candidate);
+  [[nodiscard]] std::string
+  register_reasoning_analysis(const InternetReasoningAnalysis &analysis);
   [[nodiscard]] std::string register_experiment_qualification(
       const InternetExperimentQualification &qualification);
-  [[nodiscard]] std::string register_promotion_policy(
-      const saa::AutonomousPromotionPolicy &policy);
+  [[nodiscard]] std::string
+  register_promotion_policy(const saa::AutonomousPromotionPolicy &policy);
   [[nodiscard]] std::string register_promotion_assessment(
       std::string policy_id,
-      const saa::AutonomousPromotionAssessment &assessment);
+      const saa::AutonomousPromotionAssessment &assessment,
+      std::string assessed_at = {}, std::string source_checked_at = {});
   [[nodiscard]] std::string register_probation_admission(
       const saa::ProbationPlan &plan, std::string canonical_algorithm_ref,
       std::string canonical_source_ref, std::string baseline_ref,
       int canonical_store_generation, std::string admission_status);
-  [[nodiscard]] std::string register_probation_observation(
-      std::string admission_id,
-      const saa::ProbationObservation &observation);
-  [[nodiscard]] std::string register_promotion_decision(
-      std::string admission_id,
-      const saa::AutomaticPromotionDecision &decision);
-  [[nodiscard]] std::string register_demotion_decision(
-      std::string admission_id,
-      const saa::AutomaticDemotionDecision &decision);
-  [[nodiscard]] std::string register_improvement_plan(
-      const InternetImprovementPlan &plan);
-  [[nodiscard]] std::string register_improvement_run(
-      const InternetImprovementRun &run);
-  [[nodiscard]] std::string register_improvement_run_event(
-      const InternetImprovementRunEvent &event);
+  [[nodiscard]] std::string
+  register_probation_observation(std::string admission_id,
+                                 const saa::ProbationObservation &observation);
+  [[nodiscard]] std::string
+  register_promotion_decision(std::string admission_id,
+                              const saa::AutomaticPromotionDecision &decision);
+  [[nodiscard]] std::string
+  register_demotion_decision(std::string admission_id,
+                             const saa::AutomaticDemotionDecision &decision);
+  [[nodiscard]] std::string
+  register_improvement_plan(const InternetImprovementPlan &plan);
+  [[nodiscard]] std::string
+  register_improvement_run(const InternetImprovementRun &run);
+  [[nodiscard]] std::string
+  register_improvement_run_event(const InternetImprovementRunEvent &event);
   [[nodiscard]] std::string register_improvement_action_lease(
       const InternetImprovementActionLease &lease);
   [[nodiscard]] std::string register_improvement_action_receipt(
       const InternetImprovementActionReceipt &receipt);
-  [[nodiscard]] std::string register_experiment_protocol(
-      const InternetExperimentProtocol &protocol);
-  [[nodiscard]] std::string register_source_assessment_input(
-      const InternetSourceAssessmentInput &input);
+  [[nodiscard]] std::string
+  register_experiment_protocol(const InternetExperimentProtocol &protocol);
+  [[nodiscard]] std::string
+  register_source_assessment_input(const InternetSourceAssessmentInput &input);
   [[nodiscard]] std::string register_probation_observation_input(
       const InternetProbationObservationInput &input);
-  [[nodiscard]] std::string supersede_algorithm_candidate(
-      std::string old_candidate_id,
-      const InternetAlgorithmCandidate &replacement, std::string reason);
+  [[nodiscard]] std::string
+  supersede_algorithm_candidate(std::string old_candidate_id,
+                                const InternetAlgorithmCandidate &replacement,
+                                std::string reason);
   [[nodiscard]] std::string
   migrate_algorithm_candidate(std::string candidate_id);
 
-  [[nodiscard]] std::vector<StoredObject>
-  list(std::string_view object_type);
+  [[nodiscard]] std::vector<StoredObject> list(std::string_view object_type);
   [[nodiscard]] std::vector<std::string> active_watch_ids();
   [[nodiscard]] std::vector<std::string> active_candidate_ids();
   [[nodiscard]] std::vector<std::string> active_experiment_protocol_ids();

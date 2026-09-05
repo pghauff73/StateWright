@@ -7,10 +7,16 @@
       "controlling_publisher": "Crossref",
       "evidence_independence_group": "crossref",
       "tier": 3,
-      "allowed_hostnames": ["api.crossref.org"],
+      "allowed_hostnames": [
+        "api.crossref.org"
+      ],
       "allowed_templates": [],
-      "allowed_mime_types": ["application/json"],
-      "default_mime_types": ["application/json"],
+      "allowed_mime_types": [
+        "application/json"
+      ],
+      "default_mime_types": [
+        "application/json"
+      ],
       "default_polling_interval_seconds": 86400,
       "default_purpose": "discovery",
       "default_subject": "algorithm-discovery",
@@ -19,7 +25,9 @@
       "license": {
         "classification": "CROSSREF_METADATA_CC0_ABSTRACTS_REVIEW_REQUIRED",
         "status": "review-required",
-        "evidence_urls": ["https://www.crossref.org/documentation/retrieve-metadata/rest-api/rest-api-metadata-license-information/"]
+        "evidence_urls": [
+          "https://www.crossref.org/documentation/retrieve-metadata/rest-api/rest-api-metadata-license-information/"
+        ]
       }
     },
     {
@@ -27,10 +35,16 @@
       "controlling_publisher": "Europe PMC",
       "evidence_independence_group": "europe-pmc",
       "tier": 3,
-      "allowed_hostnames": ["www.ebi.ac.uk"],
+      "allowed_hostnames": [
+        "www.ebi.ac.uk"
+      ],
       "allowed_templates": [],
-      "allowed_mime_types": ["application/json"],
-      "default_mime_types": ["application/json"],
+      "allowed_mime_types": [
+        "application/json"
+      ],
+      "default_mime_types": [
+        "application/json"
+      ],
       "default_polling_interval_seconds": 86400,
       "default_purpose": "discovery",
       "default_subject": "algorithm-discovery",
@@ -39,7 +53,9 @@
       "license": {
         "classification": "PER_ARTICLE_LICENSE_REVIEW_REQUIRED",
         "status": "review-required",
-        "evidence_urls": ["https://europepmc.org/downloads/openaccess"]
+        "evidence_urls": [
+          "https://europepmc.org/downloads/openaccess"
+        ]
       }
     },
     {
@@ -47,10 +63,18 @@
       "controlling_publisher": "National Institute of Standards and Technology",
       "evidence_independence_group": "nist",
       "tier": 2,
-      "allowed_hostnames": ["dlmf.nist.gov"],
-      "allowed_templates": ["nist-dlmf-section"],
-      "allowed_mime_types": ["text/html"],
-      "default_mime_types": ["text/html"],
+      "allowed_hostnames": [
+        "dlmf.nist.gov"
+      ],
+      "allowed_templates": [
+        "nist-dlmf-section"
+      ],
+      "allowed_mime_types": [
+        "text/html"
+      ],
+      "default_mime_types": [
+        "text/html"
+      ],
       "default_polling_interval_seconds": 604800,
       "default_purpose": "authoritative-evidence",
       "default_subject": "numerical-methods",
@@ -59,7 +83,9 @@
       "license": {
         "classification": "NIST_DLMF_REFERENCE_ONLY_REVIEW_REQUIRED",
         "status": "review-required",
-        "evidence_urls": ["https://dlmf.nist.gov/about/copyright"]
+        "evidence_urls": [
+          "https://dlmf.nist.gov/about/copyright"
+        ]
       }
     },
     {
@@ -67,10 +93,20 @@
       "controlling_publisher": "RFC Editor",
       "evidence_independence_group": "ietf-rfc-editor",
       "tier": 1,
-      "allowed_hostnames": ["www.rfc-editor.org"],
-      "allowed_templates": ["rfc-number"],
-      "allowed_mime_types": ["text/html", "text/plain"],
-      "default_mime_types": ["text/html", "text/plain"],
+      "allowed_hostnames": [
+        "www.rfc-editor.org"
+      ],
+      "allowed_templates": [
+        "rfc-number"
+      ],
+      "allowed_mime_types": [
+        "text/html",
+        "text/plain"
+      ],
+      "default_mime_types": [
+        "text/html",
+        "text/plain"
+      ],
       "default_polling_interval_seconds": 2592000,
       "default_purpose": "authoritative-evidence",
       "default_subject": "standards-algorithms",
@@ -79,7 +115,9 @@
       "license": {
         "classification": "IETF_TRUST_LEGAL_PROVISIONS",
         "status": "verified",
-        "evidence_urls": ["https://trustee.ietf.org/documents/trust-legal-provisions/tlp-5/commitments-and-licenses-granted-to-ietf-trust/"]
+        "evidence_urls": [
+          "https://trustee.ietf.org/documents/trust-legal-provisions/tlp-5/commitments-and-licenses-granted-to-ietf-trust/"
+        ]
       }
     },
     {
@@ -87,10 +125,18 @@
       "controlling_publisher": "World Wide Web Consortium",
       "evidence_independence_group": "w3c",
       "tier": 1,
-      "allowed_hostnames": ["www.w3.org"],
-      "allowed_templates": ["w3c-recommendation"],
-      "allowed_mime_types": ["text/html"],
-      "default_mime_types": ["text/html"],
+      "allowed_hostnames": [
+        "www.w3.org"
+      ],
+      "allowed_templates": [
+        "w3c-recommendation"
+      ],
+      "allowed_mime_types": [
+        "text/html"
+      ],
+      "default_mime_types": [
+        "text/html"
+      ],
       "default_polling_interval_seconds": 604800,
       "default_purpose": "authoritative-evidence",
       "default_subject": "deterministic-transformations",
@@ -99,7 +145,119 @@
       "license": {
         "classification": "W3C_DOCUMENT_LICENSE_IMPLEMENTATION_USE",
         "status": "verified",
-        "evidence_urls": ["https://www.w3.org/copyright/document-license-2023/"]
+        "evidence_urls": [
+          "https://www.w3.org/copyright/document-license-2023/"
+        ]
+      }
+    },
+    {
+      "source_group": "fungrim",
+      "controlling_publisher": "Fungrim contributors",
+      "evidence_independence_group": "johansson-mathematical-software",
+      "tier": 2,
+      "allowed_hostnames": [
+        "raw.githubusercontent.com"
+      ],
+      "allowed_templates": [],
+      "allowed_mime_types": [
+        "text/plain"
+      ],
+      "default_mime_types": [
+        "text/plain"
+      ],
+      "default_polling_interval_seconds": 2592000,
+      "default_purpose": "authoritative-evidence",
+      "default_subject": "mathematical-functions-and-numerical-methods",
+      "default_stability": "immutable",
+      "default_extraction_strategy": "mathematical-source-v1",
+      "license": {
+        "classification": "MIT",
+        "status": "verified",
+        "evidence_urls": [
+          "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/LICENSE"
+        ]
+      },
+      "source_review_common": {
+        "status": "approved",
+        "revision": "b7c3ca6e565e1058638cab6ba2bc811090296767",
+        "reviewed_at": "2026-09-05",
+        "reviewer": "assistant-assisted-file-notice-review",
+        "scope": "Only the exact listed UTF-8 source files as inert quoted data with full notices retained; no code execution, image acquisition, include expansion or linked-source ingestion.",
+        "third_party_review": "Inspected each selected file for license overrides and external material. Repository MIT notice applies; mathematical references and ImageSource names remain citations only. Referenced works, images and imported modules are excluded and not licensed by this review.",
+        "license_notices": [
+          {
+            "url": "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/LICENSE",
+            "sha256": "ddb9a5a27f20c40396e39fb252a6ca1e1bfa62ae31ccd832026ce18ed94107a5",
+            "text": "MIT License\n\nCopyright (c) 2019 Fredrik Johansson\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+          }
+        ]
+      },
+      "reviewed_sources": {
+        "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/pygrim/formulas/exp.py": "53a5e4c08f990549332ecdc110f93028f7f4ef1428886eb138906751cc87a21e",
+        "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/pygrim/formulas/log.py": "7fb848edef2fc3f54ad23165c2ca4e1153e41a4cbac162571a90aeb53ba0bcd1",
+        "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/pygrim/formulas/sqrt.py": "26d7ed1ce4001b6283896030dcabd00557d3052912900e1ee980505bffa180b2",
+        "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/pygrim/formulas/sine.py": "16876047e103ae5366ad0890e6c76a6648edc2fa1a40ba8a780c849a25ed51ff",
+        "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/pygrim/formulas/gamma.py": "48ebde62b9aa7903574639743bdfd7ab47320137b835e2d01fc51af37a06c4b6",
+        "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/pygrim/formulas/error_functions.py": "556687bd1eb7a14a61e1c46870e1aefab94199be0f2fe4275e61befe3389cfe3",
+        "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/pygrim/formulas/gaussian_quadrature.py": "85f6648975c18a1edf4b84e37b4f4905b0f26c3202c718ff4fdc00ce03c31f0e",
+        "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/pygrim/formulas/legendre_polynomial.py": "a62cb284b717982ecc04d884fbc7fb7ffe1f09cfe9a86fc149ab2d728919b345",
+        "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/pygrim/formulas/beta_function.py": "f071c9ae16c9d0bf613a17781e20b856345a6c3e68c52a0ea571968132c33136",
+        "https://raw.githubusercontent.com/fredrik-johansson/fungrim/b7c3ca6e565e1058638cab6ba2bc811090296767/pygrim/formulas/chebyshev.py": "8f4b0df5f636d89b0ddcbdf799d68f4197eb60a8d0296b41fac373980253377e"
+      }
+    },
+    {
+      "source_group": "boost-math",
+      "controlling_publisher": "Boost.Math contributors",
+      "evidence_independence_group": "boost-math",
+      "tier": 2,
+      "allowed_hostnames": [
+        "raw.githubusercontent.com"
+      ],
+      "allowed_templates": [],
+      "allowed_mime_types": [
+        "text/plain"
+      ],
+      "default_mime_types": [
+        "text/plain"
+      ],
+      "default_polling_interval_seconds": 2592000,
+      "default_purpose": "reference-implementation",
+      "default_subject": "mathematical-functions-and-numerical-methods",
+      "default_stability": "immutable",
+      "default_extraction_strategy": "mathematical-source-v1",
+      "license": {
+        "classification": "BSL-1.0",
+        "status": "verified",
+        "evidence_urls": [
+          "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/LICENSE"
+        ]
+      },
+      "source_review_common": {
+        "status": "approved",
+        "revision": "5e088ffe2ed0e237b9069e3a7352865283d8f196",
+        "reviewed_at": "2026-09-05",
+        "reviewer": "assistant-assisted-file-notice-review",
+        "scope": "Only the exact listed UTF-8 source files as inert quoted data with full notices retained; no code execution, image acquisition, include expansion or linked-source ingestion.",
+        "third_party_review": "Each selected QuickBook file carries a Boost Software License notice and author copyright, retained verbatim. References, image macros, includes and imported examples are not expanded; third-party linked material is excluded.",
+        "license_notices": [
+          {
+            "url": "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/LICENSE",
+            "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+            "text": "Boost Software License - Version 1.0 - August 17th, 2003\n\nPermission is hereby granted, free of charge, to any person or organization\nobtaining a copy of the software and accompanying documentation covered by\nthis license (the \"Software\") to use, reproduce, display, distribute,\nexecute, and transmit the Software, and to prepare derivative works of the\nSoftware, and to permit third-parties to whom the Software is furnished to\ndo so, all subject to the following:\n\nThe copyright notices in the Software and this entire statement, including\nthe above license grant, this restriction and the following disclaimer,\nmust be included in all copies of the Software, in whole or in part, and\nall derivative works of the Software, unless such copies or derivative\nworks are solely in the form of machine-executable object code generated by\na source language processor.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT\nSHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE\nFOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,\nARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER\nDEALINGS IN THE SOFTWARE.\n"
+          }
+        ]
+      },
+      "reviewed_sources": {
+        "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/doc/background/error.qbk": "ef38152672a03e8bb94842a84863a571c88480d050e46dbf98764bb63bd2b3e0",
+        "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/doc/quadrature/gauss.qbk": "dc8a82f397ce210efced946b34be747a504cef14744d7c8775f3b74a65456738",
+        "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/doc/quadrature/gauss_kronrod.qbk": "290881333733ea04f47d3bec989158662534b681f271ab903df218ea3da64ae3",
+        "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/doc/quadrature/trapezoidal.qbk": "e6082714ace1813e9e2e034d732a612c6c8af573fb202671b246b09e569895c7",
+        "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/doc/roots/roots.qbk": "17011db1c45a579c632137e867d37d9bab68903a5f761ce652a058de6bb242aa",
+        "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/doc/roots/roots_without_derivatives.qbk": "1d61ba3edc8a38f2e34a87a93befdc501d275862ce10112a0458b01a914605b4",
+        "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/doc/interpolators/barycentric_rational_interpolation.qbk": "625602443cc694dcec3f4f2e9e5018f3b60250e3ff8fd11100cee72687ef37f9",
+        "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/doc/interpolators/cardinal_cubic_b_spline.qbk": "dc4de2c5a94aee70ba90389b8839201539026448a5dec596a0543103a59d2645",
+        "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/doc/interpolators/pchip.qbk": "3b4efd979033f03e8e2aa63c1328434d275ec1db5e55d2f5cc9a82a2d094bf9d",
+        "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/doc/interpolators/makima.qbk": "f3789a294878faa1fe94e90630837c4bd3d98a4ce90e836040f8720ad54c447c"
       }
     }
   ]

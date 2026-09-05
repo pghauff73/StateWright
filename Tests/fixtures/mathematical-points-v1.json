@@ -1,0 +1,12 @@
+{
+  "cases": [
+    {"case_id":"exp-zero","function":"exp","input":"0","candidate_value":"1","absolute_error_bound":"1e-40"},
+    {"case_id":"log-one","function":"log","input":"1","candidate_value":"0","absolute_error_bound":"1e-40"},
+    {"case_id":"sqrt-two","function":"sqrt","input":"2","candidate_value":"1.41421356237309504880168872420969807856967187537694807317667973799","absolute_error_bound":"1e-55"},
+    {"case_id":"sin-zero","function":"sin","input":"0","candidate_value":"0","absolute_error_bound":"1e-40"},
+    {"case_id":"cos-zero","function":"cos","input":"0","candidate_value":"1","absolute_error_bound":"1e-40"},
+    {"case_id":"gamma-five","function":"gamma","input":"5","candidate_value":"24","absolute_error_bound":"1e-40"},
+    {"case_id":"erf-zero","function":"erf","input":"0","candidate_value":"0","absolute_error_bound":"1e-40"},
+    {"case_id":"zeta-two","function":"zeta","input":"2","candidate_value":"1.64493406684822643647241516664602518921894990120679843773555822937","absolute_error_bound":"1e-55"}
+  ]
+}

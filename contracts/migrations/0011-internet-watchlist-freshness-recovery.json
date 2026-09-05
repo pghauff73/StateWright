@@ -1,0 +1,16 @@
+{
+  "migration_id": "statewright-internet-watchlist-freshness-recovery-v1",
+  "schema_version": 1,
+  "extension_contract": "schemas/statewright-v1/internet-improvement-extension.schema.json",
+  "frozen_contract_modified": false,
+  "added_object_types": [],
+  "extended_object_types": [
+    "internet-watch-registration",
+    "internet-retrieval-receipt",
+    "internet-promotion-assessment"
+  ],
+  "authority_effect": "none",
+  "canonical_algorithm_effect": "exact_scalar_qualification_and_probation",
+  "human_approval_required": false,
+  "compatibility": "Optional watch-registration extraction_strategy and evidence_independence_group, retrieval source_policy_assessment_id, and promotion assessed_at/source_checked_at preserve existing records. Absent optional signed fields remain omitted. Newly assessed promotions bind current time; old untimestamped assessments cannot newly admit. Preflight reports must be regenerated with registry and source-policy bindings. No immutable history is rewritten."
+}

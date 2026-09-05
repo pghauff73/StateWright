@@ -3,6 +3,7 @@
 #include "statewright/common/error.hpp"
 #include "statewright/contracts/hash.hpp"
 #include "statewright/egcf/evidence.hpp"
+#include "statewright/egcf/internet_feed.hpp"
 #include "statewright/saa/failure_algebra.hpp"
 #include "statewright/saa/improvement_scheduling.hpp"
 
@@ -59,66 +60,118 @@ void require_sha256(std::string_view value, std::string_view label) {
   if (value.is_string()) {
     try {
       mpq_class result(value.get<std::string>());
+      if (result.get_den() == 0) {
+        experiment_error("supported SAA constant has a zero denominator");
+      }
       result.canonicalize();
       return result;
     } catch (const std::exception &) {
       experiment_error("supported SAA constant is not an exact rational");
     }
   }
-  experiment_error("supported SAA constant must be an integer or rational string");
+  experiment_error(
+      "supported SAA constant must be an integer or rational string");
 }
 
-struct ScalarProgram final {
-  std::string primitive;
-  mpq_class constant{0};
-};
-
-[[nodiscard]] ScalarProgram supported_scalar_program(const Json &mapping) {
+[[nodiscard]] InternetExactScalarProgram
+supported_scalar_program(const Json &mapping) {
   const auto spec = saa::structure_from_mapping(mapping);
   saa::validate_structure(spec);
   if (spec.inputs.size() != 1U || spec.outputs.size() != 1U ||
-      !spec.parameters.empty() || !spec.states.empty() ||
-      spec.nodes.size() != 1U || !spec.control_edges.empty() ||
+      !spec.parameters.empty() || !spec.states.empty() || spec.nodes.empty() ||
+      spec.nodes.size() > 2U || !spec.control_edges.empty() ||
+      spec.inputs.front().position != 0 || spec.outputs.front().position != 0 ||
+      !spec.inputs.front().shape.empty() ||
+      !spec.outputs.front().shape.empty() ||
+      spec.inputs.front().data_type != "scalar" ||
+      spec.outputs.front().data_type != "scalar" ||
       spec.outputs.front().source == std::nullopt) {
     experiment_error(
         "internet qualification supports one-input one-output scalar IR only");
   }
-  const auto &node = spec.nodes.front();
   const auto &source = *spec.outputs.front().source;
-  if (source.kind != "node" || source.node_id != node.node_id ||
-      source.output_index != 0 || node.result_count != 1) {
+  if (source.kind != "node" || source.output_index != 0 ||
+      std::ranges::any_of(spec.nodes, [](const auto &item) {
+        return item.result_count != 1 || !item.attributes.empty();
+      })) {
+    experiment_error(
+        "supported scalar IR must use one-result nodes without attributes");
+  }
+  if (spec.nodes.size() == 2U) {
+    const auto scale = std::ranges::find_if(spec.nodes, [](const auto &item) {
+      return item.primitive == "MULTIPLY";
+    });
+    const auto sum = std::ranges::find_if(
+        spec.nodes, [](const auto &item) { return item.primitive == "ADD"; });
+    if (scale == spec.nodes.end() || sum == spec.nodes.end() ||
+        source.node_id != sum->node_id || scale->operands.size() != 2U ||
+        sum->operands.size() != 2U) {
+      experiment_error("supported affine IR requires MULTIPLY followed by ADD");
+    }
+    const auto scale_constant =
+        std::ranges::find_if(scale->operands, [](const auto &item) {
+          return item.kind == "constant";
+        });
+    const auto scale_input =
+        std::ranges::find_if(scale->operands, [](const auto &item) {
+          return item.kind == "input" && item.position == 0;
+        });
+    const auto sum_constant =
+        std::ranges::find_if(sum->operands, [](const auto &item) {
+          return item.kind == "constant";
+        });
+    const auto sum_scale =
+        std::ranges::find_if(sum->operands, [&](const auto &item) {
+          return item.kind == "node" && item.node_id == scale->node_id &&
+                 item.output_index == 0;
+        });
+    if (scale_constant == scale->operands.end() ||
+        scale_input == scale->operands.end() ||
+        sum_constant == sum->operands.end() ||
+        sum_scale == sum->operands.end()) {
+      experiment_error("supported affine IR operands must bind exact a*x+b");
+    }
+    auto slope = rational_from_json(scale_constant->value);
+    if (slope == 0) {
+      experiment_error("affine IR requires a nonzero slope");
+    }
+    return {.slope = std::move(slope),
+            .bias = rational_from_json(sum_constant->value),
+            .bounded_steps = 2};
+  }
+  const auto &node = spec.nodes.front();
+  if (source.node_id != node.node_id) {
     experiment_error("supported scalar IR output must bind its only node");
   }
   if (node.primitive == "IDENTITY") {
-    if (node.operands.size() != 1U ||
-        node.operands.front().kind != "input" ||
+    if (node.operands.size() != 1U || node.operands.front().kind != "input" ||
         node.operands.front().position != 0) {
       experiment_error("supported IDENTITY IR must read input position zero");
     }
-    return {.primitive = "IDENTITY", .constant = 0};
+    return {.slope = 1, .bias = 0, .bounded_steps = 1};
   }
   if (node.primitive == "CONST") {
     if (node.operands.size() != 1U ||
         node.operands.front().kind != "constant") {
       experiment_error("supported CONST IR must contain one exact constant");
     }
-    return {.primitive = "CONST",
-            .constant = rational_from_json(node.operands.front().value)};
+    return {.slope = 0,
+            .bias = rational_from_json(node.operands.front().value),
+            .bounded_steps = 1};
   }
-  experiment_error("internet qualification rejects unsupported executable IR primitive: " +
-                   node.primitive);
+  experiment_error(
+      "internet qualification rejects unsupported executable IR primitive: " +
+      node.primitive);
 }
 
-[[nodiscard]] mpq_class execute(const ScalarProgram &program,
+[[nodiscard]] mpq_class execute(const InternetExactScalarProgram &program,
                                 const mpq_class &input) {
-  if (program.primitive == "IDENTITY") {
-    return input;
-  }
-  return program.constant;
+  return program.slope * input + program.bias;
 }
 
-[[nodiscard]] mpq_class mean_absolute_error(
-    const ScalarProgram &program, const InternetScalarTrialGroup &group) {
+[[nodiscard]] mpq_class
+mean_absolute_error(const InternetExactScalarProgram &program,
+                    const InternetScalarTrialGroup &group) {
   mpq_class total{0};
   for (std::size_t index = 0; index < group.inputs.size(); ++index) {
     mpq_class difference =
@@ -133,9 +186,10 @@ struct ScalarProgram final {
   return total;
 }
 
-[[nodiscard]] bool outputs_within_bounds(
-    const ScalarProgram &program, const InternetScalarTrialGroup &group,
-    const mpq_class &minimum, const mpq_class &maximum) {
+[[nodiscard]] bool
+outputs_within_bounds(const InternetExactScalarProgram &program,
+                      const InternetScalarTrialGroup &group,
+                      const mpq_class &minimum, const mpq_class &maximum) {
   return std::ranges::all_of(group.inputs, [&](const auto &input) {
     const mpq_class output = execute(program, input);
     return output >= minimum && output <= maximum;
@@ -154,11 +208,11 @@ struct ScalarProgram final {
   return result;
 }
 
-[[nodiscard]] std::string register_evidence(
-    EgcfStore &store, std::string subject_id, std::string recorded_at,
-    std::string source_snapshot_hash, std::string independence_group,
-    std::string algorithm_id, Json content,
-    std::vector<std::string> requirement_ids) {
+[[nodiscard]] std::string
+register_evidence(EgcfStore &store, std::string subject_id,
+                  std::string recorded_at, std::string source_snapshot_hash,
+                  std::string independence_group, std::string algorithm_id,
+                  Json content, std::vector<std::string> requirement_ids) {
   EvidenceArtifact artifact{
       .subject_id = std::move(subject_id),
       .claim_ids = {},
@@ -176,7 +230,8 @@ struct ScalarProgram final {
       .created_at = std::move(recorded_at),
       .sha256 = contracts::sha256_json(content),
       .success = true,
-      .limitations = {"single-input scalar IDENTITY and CONST subset only"},
+      .limitations =
+          {"exact scalar IDENTITY, CONST and two-node affine subset only"},
       .independence_group = std::move(independence_group),
       .simulated = false,
       .path = {},
@@ -199,16 +254,15 @@ struct ScalarProgram final {
   return result;
 }
 
-[[nodiscard]] saa::KnowledgeIntegritySnapshot canonical_integrity_snapshot(
-    const saa::KnowledgeIntegritySnapshot &value) {
+[[nodiscard]] saa::KnowledgeIntegritySnapshot
+canonical_integrity_snapshot(const saa::KnowledgeIntegritySnapshot &value) {
   const auto canonical = saa::make_integrity_snapshot(
       value.generation, value.canonical_knowledge_count,
       value.semantic_contradictions, value.semantic_drift_events,
       value.false_canonical_admissions, value.corrected_error_opportunities,
       value.corrected_error_recurrences, value.retrieval_queries,
       value.retrieval_correct_selections,
-      value.equivalent_failure_opportunities,
-      value.equivalent_failure_retries);
+      value.equivalent_failure_opportunities, value.equivalent_failure_retries);
   if (!value.snapshot_signature.empty() &&
       value.snapshot_signature != canonical.snapshot_signature) {
     experiment_error("integrity snapshot signature does not match its counts");
@@ -216,11 +270,11 @@ struct ScalarProgram final {
   return canonical;
 }
 
-[[nodiscard]] Json run_payload(
-    const InternetScalarTrialGroup &group,
-    const saa::AlgorithmVariantObservation &baseline,
-    const saa::AlgorithmVariantObservation &candidate,
-    const saa::AlgorithmABExperimentResult &result) {
+[[nodiscard]] Json
+run_payload(const InternetScalarTrialGroup &group,
+            const saa::AlgorithmVariantObservation &baseline,
+            const saa::AlgorithmVariantObservation &candidate,
+            const saa::AlgorithmABExperimentResult &result) {
   return {{"baseline_observation", saa::to_json(baseline)},
           {"candidate_observation", saa::to_json(candidate)},
           {"group", to_json(group)},
@@ -228,6 +282,21 @@ struct ScalarProgram final {
 }
 
 } // namespace
+
+InternetExactScalarProgram internet_exact_scalar_program(const Json &mapping) {
+  return supported_scalar_program(mapping);
+}
+
+std::string
+internet_exact_scalar_meaning(const InternetExactScalarProgram &program,
+                              std::string input, std::string_view output) {
+  if (program.slope != 1 || program.bias != 0) {
+    input += " [exact affine output " + std::string(output) + " = " +
+             program.slope.get_str() + " * input + " + program.bias.get_str() +
+             "]";
+  }
+  return input;
+}
 
 InternetExperimentCoordinator::InternetExperimentCoordinator(EgcfStore &store)
     : store_(store), internet_(store), governance_(store) {}
@@ -282,12 +351,14 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
       request.dataset_snapshot_ids.end());
   for (const auto &snapshot_id : request.dataset_snapshot_ids) {
     if (store_.get(snapshot_id).object_type != "internet-source-snapshot") {
-      experiment_error("experiment dataset reference is not an internet snapshot");
+      experiment_error(
+          "experiment dataset reference is not an internet snapshot");
     }
   }
   if (request.minimum_experiments < 2 ||
       request.minimum_independence_groups < 2 ||
-      request.maximum_total_trials < 1 || request.maximum_total_trials > 10000 ||
+      request.maximum_total_trials < 1 ||
+      request.maximum_total_trials > 10000 ||
       request.minimum_trials_per_group < 1 ||
       request.minimum_material_effect < 0 ||
       request.minimum_output > request.maximum_output) {
@@ -296,7 +367,8 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
   if (request.trial_groups.size() <
           static_cast<std::size_t>(request.minimum_experiments) ||
       request.trial_groups.size() > saa::max_aggregated_experiments) {
-    experiment_error("internet experiment group count is outside bounded range");
+    experiment_error(
+        "internet experiment group count is outside bounded range");
   }
   std::set<std::string> groups;
   std::size_t total_trials = 0U;
@@ -338,7 +410,31 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
   const auto baseline_ir = saa::canonicalize_mapping(request.baseline_saa_ir);
   const auto candidate_program =
       supported_scalar_program(canonical_candidate.proposed_saa_ir);
-  const auto baseline_program = supported_scalar_program(request.baseline_saa_ir);
+  const auto baseline_program =
+      supported_scalar_program(request.baseline_saa_ir);
+  const auto fragment_record =
+      store_.get(canonical_candidate.source_fragment_id);
+  if (fragment_record.object_type != "internet-source-fragment") {
+    experiment_error("candidate translation source is not a fragment");
+  }
+  verify_internet_candidate_translation(
+      canonical_candidate,
+      sources::internet_source_fragment_from_json(fragment_record.payload));
+  if (candidate_program.bounded_steps == 2) {
+    std::set<mpq_class> seen_inputs;
+    for (const auto &group : request.trial_groups) {
+      if (group.inputs.size() < 2U) {
+        experiment_error("affine qualification requires two distinct trials "
+                         "per independent group");
+      }
+      for (const auto &input : group.inputs) {
+        if (!seen_inputs.insert(input).second) {
+          experiment_error(
+              "affine qualification groups require distinct disjoint inputs");
+        }
+      }
+    }
+  }
   const auto resolver = governance_.evidence_resolver();
 
   std::vector<saa::KnowledgeIntegritySnapshot> integrity_snapshots;
@@ -383,8 +479,7 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
         {"known failure assessment"});
     qualification.evidence_ids = {evidence_id};
     qualification.known_failure_retry_blocked = true;
-    qualification.blocking_reasons = {
-        "KNOWN_EQUIVALENT_FAILURE_RETRY_BLOCKED"};
+    qualification.blocking_reasons = {"KNOWN_EQUIVALENT_FAILURE_RETRY_BLOCKED"};
     const auto opportunity = saa::make_improvement_opportunity(
         resolver, candidate_id + ":known-failure", "FAILURE_PATTERN",
         candidate_ir.structural_hash,
@@ -407,8 +502,8 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
     updated_candidate =
         canonical_internet_algorithm_candidate(std::move(updated_candidate));
     const std::string updated_candidate_id =
-        internet_.supersede_algorithm_candidate(
-            candidate_id, updated_candidate, "internet experiment blocked");
+        internet_.supersede_algorithm_candidate(candidate_id, updated_candidate,
+                                                "internet experiment blocked");
     InternetExperimentResult result{
         .qualification = std::move(qualification),
         .updated_candidate = std::move(updated_candidate),
@@ -435,23 +530,31 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
 
   std::vector<saa::AlgorithmABExperimentResult> experiment_results;
   bool invariants_passed = true;
+  bool all_outputs_within_bounds = true;
+  bool all_exact_outputs = true;
   for (const auto &group : request.trial_groups) {
     const mpq_class baseline_error =
         mean_absolute_error(baseline_program, group);
     const mpq_class candidate_error =
         mean_absolute_error(candidate_program, group);
-    const bool baseline_bounds = outputs_within_bounds(
-        baseline_program, group, request.minimum_output, request.maximum_output);
-    const bool candidate_bounds = outputs_within_bounds(
-        candidate_program, group, request.minimum_output, request.maximum_output);
-    invariants_passed =
-        invariants_passed && baseline_bounds && candidate_bounds;
+    const bool baseline_bounds =
+        outputs_within_bounds(baseline_program, group, request.minimum_output,
+                              request.maximum_output);
+    const bool candidate_bounds =
+        outputs_within_bounds(candidate_program, group, request.minimum_output,
+                              request.maximum_output);
+    const bool source_correct = candidate_error == 0;
+    all_outputs_within_bounds =
+        all_outputs_within_bounds && baseline_bounds && candidate_bounds;
+    all_exact_outputs = all_exact_outputs && source_correct;
+    invariants_passed = invariants_passed && baseline_bounds &&
+                        candidate_bounds && source_correct;
 
-    const Json common_content =
-        {{"context_signature", request.context_signature},
-         {"deterministic_seed", group.deterministic_seed},
-         {"expected_outputs", rational_values(group.expected_outputs)},
-         {"inputs", rational_values(group.inputs)}};
+    const Json common_content = {
+        {"context_signature", request.context_signature},
+        {"deterministic_seed", group.deterministic_seed},
+        {"expected_outputs", rational_values(group.expected_outputs)},
+        {"inputs", rational_values(group.inputs)}};
     Json baseline_content = common_content;
     baseline_content["ir_structural_hash"] = baseline_ir.structural_hash;
     baseline_content["mean_absolute_error"] = rational_text(baseline_error);
@@ -466,6 +569,7 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
     candidate_content["ir_structural_hash"] = candidate_ir.structural_hash;
     candidate_content["mean_absolute_error"] = rational_text(candidate_error);
     candidate_content["output_within_bounds"] = candidate_bounds;
+    candidate_content["exact_expected_outputs"] = source_correct;
     candidate_content["variant"] = "candidate";
     const std::string candidate_evidence = register_evidence(
         store_, candidate_id, request.recorded_at, request.context_signature,
@@ -475,8 +579,8 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
     qualification.evidence_ids.push_back(candidate_evidence);
 
     const auto baseline_observation = saa::make_variant_observation(
-        design, request.baseline_ref,
-        {{"mean absolute error", baseline_error}}, {baseline_evidence},
+        design, request.baseline_ref, {{"mean absolute error", baseline_error}},
+        {baseline_evidence},
         {{"bounded execution", true},
          {"output within bounds", baseline_bounds}},
         static_cast<int>(group.inputs.size()), true);
@@ -508,8 +612,7 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
       request.independent_review);
   qualification.benchmark_profile = saa::to_json(benchmark_profile);
   qualification.benchmark_gate = saa::to_json(benchmark_gate);
-  qualification.benchmark_passed =
-      benchmark_gate.canonical_promotion_eligible;
+  qualification.benchmark_passed = benchmark_gate.canonical_promotion_eligible;
   const std::string benchmark_gate_ref =
       governance_.register_benchmark_gate(benchmark_gate);
 
@@ -532,30 +635,37 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
   if (!invariants_passed) {
     qualification.blocking_reasons.push_back("INVARIANT_GATE_FAILED");
   }
+  if (!all_exact_outputs) {
+    qualification.blocking_reasons.push_back("EXACT_SOURCE_OUTPUT_MISMATCH");
+  }
   if (!qualification.benchmark_passed) {
-    qualification.blocking_reasons.push_back("BENCHMARK:" + benchmark_gate.status);
+    qualification.blocking_reasons.push_back("BENCHMARK:" +
+                                             benchmark_gate.status);
   }
   if (!qualification.integrity_passed) {
     qualification.blocking_reasons.push_back("INTEGRITY:" +
-                                              integrity_trajectory.status);
+                                             integrity_trajectory.status);
   }
 
   std::vector<saa::ImprovementOpportunity> opportunities;
   std::string failure_observation_id;
   if (!qualification.blocking_reasons.empty()) {
     std::vector<std::string> violated;
-    if (!invariants_passed) {
+    if (!all_outputs_within_bounds) {
       violated.push_back("output within bounds");
     }
+    if (!all_exact_outputs) {
+      violated.push_back("exact source outputs");
+    }
     const std::string failure_class =
-        !invariants_passed ? "INVARIANT_VIOLATION"
-                           : "QUALIFICATION_FAILURE";
+        !invariants_passed ? "INVARIANT_VIOLATION" : "QUALIFICATION_FAILURE";
     const auto failure = saa::make_failure_observation(
         "internet-candidate", "internet-experiment", failure_class,
         aggregate.status,
         [&]() {
           auto roles = canonical_candidate.semantic_inputs;
-          roles.insert(roles.end(), canonical_candidate.semantic_outputs.begin(),
+          roles.insert(roles.end(),
+                       canonical_candidate.semantic_outputs.begin(),
                        canonical_candidate.semantic_outputs.end());
           return roles;
         }(),

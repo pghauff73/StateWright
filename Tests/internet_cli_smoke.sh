@@ -239,6 +239,7 @@ promotion=$(run internet-improvement "$(jq -cn \
   --arg policy_id "$promotion_policy_id" '{
     workspace: $workspace,
     action: "policy-assess",
+    current_timestamp: "2026-09-03T01:00:01Z",
     candidate_id: $candidate_id,
     policy_id: $policy_id
   }')")
@@ -254,6 +255,7 @@ admission=$(run internet-improvement "$(jq -cn \
   --arg previous_ref "$previous_ref" '{
     workspace: $workspace,
     action: "probation-admit",
+    current_timestamp: "2026-09-03T01:00:02Z",
     candidate_id: $candidate_id,
     previous_preferred_canonical_ref: $previous_ref
   }')")

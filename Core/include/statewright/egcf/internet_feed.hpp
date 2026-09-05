@@ -4,6 +4,7 @@
 #include "statewright/egcf/canonical_algorithm_store.hpp"
 #include "statewright/egcf/internet_improvement_store.hpp"
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -24,10 +25,10 @@ class InternetFeedCoordinator final {
 public:
   explicit InternetFeedCoordinator(EgcfStore &store);
 
-  [[nodiscard]] InternetFeedResult process(
-      const sources::InternetPolicyAssessment &assessment,
-      const sources::InternetExtractionResult &extraction,
-      std::string source_label, bool strict = false);
+  [[nodiscard]] InternetFeedResult
+  process(const sources::InternetPolicyAssessment &assessment,
+          const sources::InternetExtractionResult &extraction,
+          std::string source_label, bool strict = false);
 
 private:
   EgcfStore &store_;
@@ -37,5 +38,15 @@ private:
 };
 
 [[nodiscard]] contracts::Json to_json(const InternetFeedResult &value);
+void verify_internet_candidate_translation(
+    const InternetAlgorithmCandidate &candidate,
+    const sources::InternetSourceFragment &fragment);
+
+// A retrieval receipt alone is not a completed algorithm fragment. Return the
+// durable batch/retrieval/candidate outputs only when every fragment is fed.
+[[nodiscard]] std::optional<std::vector<std::string>>
+internet_feed_completion_outputs(
+    const sources::InternetExtractionReceipt &extraction,
+    const std::vector<StoredObject> &records);
 
 } // namespace statewright::egcf

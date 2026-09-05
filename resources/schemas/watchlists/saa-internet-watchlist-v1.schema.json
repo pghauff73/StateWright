@@ -78,6 +78,7 @@
         },
         "stability": {"enum": ["living", "stable-section", "dated", "immutable", "api-query"]},
         "extraction_strategy": {"type": "string", "minLength": 1},
+        "source_review": {"type": "object"},
         "enabled": {"type": "boolean"}
       },
       "required": [

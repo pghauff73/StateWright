@@ -2,6 +2,7 @@
 
 #include "statewright/common/error.hpp"
 #include "statewright/contracts/hash.hpp"
+#include "statewright/egcf/internet_feed.hpp"
 #include "statewright/egcf/internet_improvement_store.hpp"
 #include "statewright/egcf/internet_records.hpp"
 #include "statewright/egcf/knowledge_governance_store.hpp"
@@ -34,9 +35,9 @@ void canonical_strings(std::vector<std::string> &values) {
 }
 
 template <typename Value>
-std::map<std::string, Value> parsed_records(
-    const InternetImprovementState &state, std::string_view object_type,
-    Value (*parser)(const Json &)) {
+std::map<std::string, Value>
+parsed_records(const InternetImprovementState &state,
+               std::string_view object_type, Value (*parser)(const Json &)) {
   std::map<std::string, Value> result;
   for (const auto &object : state.internet_records) {
     if (object.object_type == object_type) {
@@ -62,7 +63,8 @@ bool contains(const std::vector<std::string> &values, std::string_view value) {
   return std::ranges::find(values, value) != values.end();
 }
 
-std::set<std::string> primitive_names(const InternetAlgorithmCandidate &candidate) {
+std::set<std::string>
+primitive_names(const InternetAlgorithmCandidate &candidate) {
   std::set<std::string> result;
   if (!candidate.proposed_saa_ir.contains("nodes") ||
       !candidate.proposed_saa_ir.at("nodes").is_array()) {
@@ -132,11 +134,10 @@ InternetDirectedAction make_action(
     InternetDirectedActionKind kind, std::string subject_id,
     std::string subject_type, std::string expected_status,
     int expected_generation, std::vector<std::string> input_ids,
-    std::vector<std::string> policy_ids,
-    std::vector<std::string> protocol_ids, Json parameters, int priority_bp,
-    int cost_bp, int risk_bp, std::size_t response_byte_budget,
-    std::size_t cpu_unit_budget, int retry_ceiling,
-    std::vector<std::string> blocked_reasons = {}) {
+    std::vector<std::string> policy_ids, std::vector<std::string> protocol_ids,
+    Json parameters, int priority_bp, int cost_bp, int risk_bp,
+    std::size_t response_byte_budget, std::size_t cpu_unit_budget,
+    int retry_ceiling, std::vector<std::string> blocked_reasons = {}) {
   const std::string kind_name(internet_directed_action_kind_name(kind));
   if (!policy.enabled_action_kinds.empty() &&
       !contains(policy.enabled_action_kinds, kind_name)) {
@@ -189,6 +190,81 @@ bool action_order(const InternetDirectedAction &left,
 
 } // namespace
 
+sources::InternetScheduleSelection select_eligible_internet_fetch_jobs(
+    const InternetImprovementState &state,
+    const sources::InternetSchedulerLimits &limits) {
+  const auto watches = parsed_records(state, "internet-watch",
+                                      sources::internet_watch_from_json);
+  const auto jobs = parsed_records(state, "internet-fetch-job",
+                                   sources::internet_fetch_job_from_json);
+  const auto receipts =
+      parsed_records(state, "internet-fetch-receipt",
+                     sources::internet_fetch_receipt_from_json);
+  std::set<std::string> completed;
+  for (const auto &[id, receipt] : receipts) {
+    static_cast<void>(id);
+    if (receipt.successful()) {
+      completed.insert(receipt.job_id);
+    }
+  }
+  std::vector<sources::InternetFetchLease> leases;
+  std::map<std::string, int> attempts;
+  for (const auto &record : state.internet_records) {
+    if (record.object_type == "internet-fetch-lease") {
+      auto lease = sources::internet_fetch_lease_from_json(record.payload);
+      if (lease.active()) {
+        ++attempts[lease.job_id];
+      }
+      leases.push_back(std::move(lease));
+    }
+  }
+  std::map<std::string, sources::InternetFetchLease> latest;
+  for (const auto &lease : sources::latest_fetch_leases(leases)) {
+    latest.emplace(lease.job_id, lease);
+  }
+  std::vector<sources::InternetFetchJob> schedulable;
+  std::vector<sources::InternetScheduleExclusion> excluded;
+  const std::set<std::string> active_watches(state.active_watch_ids.begin(),
+                                             state.active_watch_ids.end());
+  for (const auto &[id, job] : jobs) {
+    const auto lease = latest.find(id);
+    // Running work still consumes concurrency even if its watch was disabled.
+    if (lease != latest.end() &&
+        sources::latest_lease_is_current(lease->second, state.planned_at)) {
+      schedulable.push_back(job);
+      continue;
+    }
+    std::string reason;
+    const auto watch = watches.find(job.watch_id);
+    if (completed.contains(id)) {
+      reason = "FETCH_ALREADY_COMPLETED";
+    } else if (watch == watches.end() ||
+               !active_watches.contains(job.watch_id)) {
+      reason = "WATCH_NOT_CURRENT";
+    } else if (!watch->second.enabled) {
+      reason = "WATCH_DISABLED";
+    } else if (watch->second.schedule_generation !=
+                   job.expected_watch_generation ||
+               watch->second.source_group != job.source_group) {
+      reason = "WATCH_GENERATION_MISMATCH";
+    } else if (lease != latest.end() && lease->second.active()) {
+      reason = "LEASE_RECOVERY_REQUIRED";
+    } else if (attempts[id] >= job.retry_ceiling + 1) {
+      reason = "RETRY_CEILING_REACHED";
+    }
+    if (reason.empty()) {
+      schedulable.push_back(job);
+    } else {
+      excluded.push_back({.job_id = id, .reason = std::move(reason)});
+    }
+  }
+  auto result = sources::select_due_fetch_jobs(std::move(schedulable), leases,
+                                               state.planned_at, limits);
+  result.excluded.insert(result.excluded.end(), excluded.begin(),
+                         excluded.end());
+  return result;
+}
+
 InternetDirectorPolicy
 canonical_internet_director_policy(InternetDirectorPolicy policy) {
   if (policy.maximum_actions <= 0 || policy.maximum_provider_calls < 0 ||
@@ -209,10 +285,10 @@ canonical_internet_director_policy(InternetDirectorPolicy policy) {
   return policy;
 }
 
-InternetDirectorPolicy
-internet_director_policy_from_json(const Json &value) {
+InternetDirectorPolicy internet_director_policy_from_json(const Json &value) {
   InternetDirectorPolicy policy;
-  policy.maximum_actions = value.value("maximum_actions", policy.maximum_actions);
+  policy.maximum_actions =
+      value.value("maximum_actions", policy.maximum_actions);
   policy.maximum_provider_calls =
       value.value("maximum_provider_calls", policy.maximum_provider_calls);
   policy.maximum_response_bytes =
@@ -229,44 +305,41 @@ internet_director_policy_from_json(const Json &value) {
       value.value("enable_acquisition", policy.enable_acquisition);
   policy.enable_candidate_advancement = value.value(
       "enable_candidate_advancement", policy.enable_candidate_advancement);
-  policy.candidate_scope_id =
-      value.value("candidate_scope_id", std::string{});
+  policy.candidate_scope_id = value.value("candidate_scope_id", std::string{});
   policy.action_deadline = value.value("action_deadline", std::string{});
   policy.promotion_policy_id =
       value.value("promotion_policy_id", std::string{});
   policy.probation_query_signature =
       value.value("probation_query_signature", std::string{});
-  policy.enabled_action_kinds = value.value(
-      "enabled_action_kinds", std::vector<std::string>{});
+  policy.enabled_action_kinds =
+      value.value("enabled_action_kinds", std::vector<std::string>{});
   if (value.contains("scheduler_limits")) {
     const auto &limits = value.at("scheduler_limits");
     policy.scheduler_limits.global_concurrency = limits.value(
         "global_concurrency", policy.scheduler_limits.global_concurrency);
-    policy.scheduler_limits.per_source_group_concurrency = limits.value(
-        "per_source_group_concurrency",
-        policy.scheduler_limits.per_source_group_concurrency);
-    policy.scheduler_limits.global_response_byte_budget = limits.value(
-        "global_response_byte_budget",
-        policy.scheduler_limits.global_response_byte_budget);
-    policy.scheduler_limits.global_cpu_unit_budget = limits.value(
-        "global_cpu_unit_budget",
-        policy.scheduler_limits.global_cpu_unit_budget);
-    policy.scheduler_limits.maximum_clock_jump_seconds = limits.value(
-        "maximum_clock_jump_seconds",
-        policy.scheduler_limits.maximum_clock_jump_seconds);
+    policy.scheduler_limits.per_source_group_concurrency =
+        limits.value("per_source_group_concurrency",
+                     policy.scheduler_limits.per_source_group_concurrency);
+    policy.scheduler_limits.global_response_byte_budget =
+        limits.value("global_response_byte_budget",
+                     policy.scheduler_limits.global_response_byte_budget);
+    policy.scheduler_limits.global_cpu_unit_budget =
+        limits.value("global_cpu_unit_budget",
+                     policy.scheduler_limits.global_cpu_unit_budget);
+    policy.scheduler_limits.maximum_clock_jump_seconds =
+        limits.value("maximum_clock_jump_seconds",
+                     policy.scheduler_limits.maximum_clock_jump_seconds);
   }
   if (value.contains("improvement_policy")) {
     const auto &improvement = value.at("improvement_policy");
     policy.improvement_policy.max_selected = improvement.value(
         "max_selected", policy.improvement_policy.max_selected);
     policy.improvement_policy.total_cost_budget_bp = improvement.value(
-        "total_cost_budget_bp",
-        policy.improvement_policy.total_cost_budget_bp);
+        "total_cost_budget_bp", policy.improvement_policy.total_cost_budget_bp);
     policy.improvement_policy.maximum_risk_bp = improvement.value(
         "maximum_risk_bp", policy.improvement_policy.maximum_risk_bp);
     policy.improvement_policy.minimum_priority_bp = improvement.value(
-        "minimum_priority_bp",
-        policy.improvement_policy.minimum_priority_bp);
+        "minimum_priority_bp", policy.improvement_policy.minimum_priority_bp);
   }
   return canonical_internet_director_policy(std::move(policy));
 }
@@ -274,8 +347,9 @@ internet_director_policy_from_json(const Json &value) {
 InternetImprovementStateReader::InternetImprovementStateReader(EgcfStore &store)
     : store_(store) {}
 
-InternetImprovementState InternetImprovementStateReader::read(
-    std::string planned_at, std::string cycle_key) {
+InternetImprovementState
+InternetImprovementStateReader::read(std::string planned_at,
+                                     std::string cycle_key) {
   if (planned_at.empty() || cycle_key.empty()) {
     director_error("internet improvement state requires time and cycle key");
   }
@@ -283,7 +357,7 @@ InternetImprovementState InternetImprovementStateReader::read(
   const auto checkpoint = store_.projection_checkpoint();
   InternetImprovementState state{
       .event_head = store_.event_head().empty() ? std::string("GENESIS")
-                                               : store_.event_head(),
+                                                : store_.event_head(),
       .projection_digest = checkpoint.authoritative_digest,
       .planned_at = std::move(planned_at),
       .cycle_key = std::move(cycle_key),
@@ -294,7 +368,8 @@ InternetImprovementState InternetImprovementStateReader::read(
       .active_promotion_policy_ids = {},
       .improvement_opportunities = {}};
   for (const auto &object : store_.list()) {
-    if (object.object_type.starts_with("internet-")) {
+    if (object.object_type.starts_with("internet-") ||
+        object.object_type == "brain-feed-batch") {
       state.internet_records.push_back(object);
     }
   }
@@ -302,8 +377,7 @@ InternetImprovementState InternetImprovementStateReader::read(
   state.active_watch_ids = store_.active_ids("internet-watch");
   state.active_candidate_ids =
       store_.active_ids("internet-algorithm-candidate");
-  state.active_protocol_ids =
-      store_.active_ids("internet-experiment-protocol");
+  state.active_protocol_ids = store_.active_ids("internet-experiment-protocol");
   state.active_promotion_policy_ids =
       store_.active_ids("internet-promotion-policy");
   KnowledgeGovernanceStore governance(store_);
@@ -320,42 +394,40 @@ InternetImprovementPlan InternetImprovementDirector::plan(
     director_error("internet improvement state is incomplete");
   }
   const auto policy = canonical_internet_director_policy(supplied_policy);
-  const auto watches = parsed_records(
-      state, "internet-watch", sources::internet_watch_from_json);
-  const auto jobs = parsed_records(
-      state, "internet-fetch-job", sources::internet_fetch_job_from_json);
-  const auto leases = parsed_records(
-      state, "internet-fetch-lease", sources::internet_fetch_lease_from_json);
-  const auto receipts = parsed_records(
-      state, "internet-fetch-receipt",
-      sources::internet_fetch_receipt_from_json);
-  const auto snapshots = parsed_records(
-      state, "internet-source-snapshot",
-      sources::internet_source_snapshot_from_json);
-  const auto assessments = parsed_records(
-      state, "internet-policy-assessment",
-      sources::internet_policy_assessment_from_json);
-  const auto assessment_inputs = parsed_records(
-      state, "internet-source-assessment-input",
-      internet_source_assessment_input_from_json);
-  const auto extractions = parsed_records(
-      state, "internet-extraction-receipt",
-      sources::internet_extraction_receipt_from_json);
-  const auto retrievals = records_of_type(state, "internet-retrieval-receipt");
-  const auto candidates = parsed_records(
-      state, "internet-algorithm-candidate",
-      internet_algorithm_candidate_from_json);
-  const auto protocols = parsed_records(
-      state, "internet-experiment-protocol",
-      internet_experiment_protocol_from_json);
-  const auto observation_inputs = parsed_records(
-      state, "internet-probation-observation-input",
-      internet_probation_observation_input_from_json);
+  const auto watches = parsed_records(state, "internet-watch",
+                                      sources::internet_watch_from_json);
+  const auto jobs = parsed_records(state, "internet-fetch-job",
+                                   sources::internet_fetch_job_from_json);
+  const auto leases = parsed_records(state, "internet-fetch-lease",
+                                     sources::internet_fetch_lease_from_json);
+  const auto receipts =
+      parsed_records(state, "internet-fetch-receipt",
+                     sources::internet_fetch_receipt_from_json);
+  const auto snapshots =
+      parsed_records(state, "internet-source-snapshot",
+                     sources::internet_source_snapshot_from_json);
+  const auto assessments =
+      parsed_records(state, "internet-policy-assessment",
+                     sources::internet_policy_assessment_from_json);
+  const auto assessment_inputs =
+      parsed_records(state, "internet-source-assessment-input",
+                     internet_source_assessment_input_from_json);
+  const auto extractions =
+      parsed_records(state, "internet-extraction-receipt",
+                     sources::internet_extraction_receipt_from_json);
+  const auto candidates =
+      parsed_records(state, "internet-algorithm-candidate",
+                     internet_algorithm_candidate_from_json);
+  const auto protocols = parsed_records(state, "internet-experiment-protocol",
+                                        internet_experiment_protocol_from_json);
+  const auto observation_inputs =
+      parsed_records(state, "internet-probation-observation-input",
+                     internet_probation_observation_input_from_json);
   const auto promotion_assessments =
       records_of_type(state, "internet-promotion-assessment");
-  const auto terminal_receipts = parsed_records(
-      state, "internet-improvement-action-receipt",
-      internet_improvement_action_receipt_from_json);
+  const auto terminal_receipts =
+      parsed_records(state, "internet-improvement-action-receipt",
+                     internet_improvement_action_receipt_from_json);
 
   std::set<std::string> completed_action_keys;
   for (const auto &[id, receipt] : terminal_receipts) {
@@ -397,22 +469,21 @@ InternetImprovementPlan InternetImprovementDirector::plan(
         active_watches.push_back(iterator->second);
       }
     }
-    std::vector<sources::InternetFetchJob> existing_jobs;
-    for (const auto &[id, job] : jobs) {
-      static_cast<void>(id);
-      existing_jobs.push_back(job);
-    }
     for (const auto &watch : active_watches) {
       const auto window = sources::polling_window(watch, state.planned_at);
+      // The parsed job map already indexes canonical IDs. Do not revalidate
+      // and hash the entire job history once per watch.
       const auto scheduled = sources::schedule_fetch_interval(
-          {watch}, existing_jobs, window.scheduled_interval,
-          window.earliest_start, window.deadline);
+          {watch}, {}, window.scheduled_interval, window.earliest_start,
+          window.deadline);
       for (const auto &job : scheduled) {
+        if (jobs.contains(job.object_id()))
+          continue;
         add_action(make_action(
             state, policy, InternetDirectedActionKind::schedule_fetch,
             job.watch_id, "internet-watch", {}, job.expected_watch_generation,
-            {job.watch_id}, {}, {}, {{"job", sources::to_json(job)}}, 3500,
-            500, 500, 0U, 1U, job.retry_ceiling));
+            {job.watch_id}, {}, {}, {{"job", sources::to_json(job)}}, 3500, 500,
+            500, 0U, 1U, job.retry_ceiling));
       }
     }
 
@@ -435,6 +506,12 @@ InternetImprovementPlan InternetImprovementDirector::plan(
         completed_jobs.insert(receipt.job_id);
       }
     }
+    const auto fetch_selection =
+        select_eligible_internet_fetch_jobs(state, policy.scheduler_limits);
+    std::map<std::string, std::string> fetch_exclusions;
+    for (const auto &excluded : fetch_selection.excluded) {
+      fetch_exclusions.emplace(excluded.job_id, excluded.reason);
+    }
     for (const auto &[job_id, job] : jobs) {
       if (completed_jobs.contains(job_id)) {
         continue;
@@ -444,13 +521,10 @@ InternetImprovementPlan InternetImprovementDirector::plan(
           lease_iterator->second.active()) {
         if (lease_iterator->second.expires_at <= state.planned_at) {
           add_action(make_action(
-              state, policy,
-              InternetDirectedActionKind::recover_expired_lease,
+              state, policy, InternetDirectedActionKind::recover_expired_lease,
               lease_iterator->second.object_id(), "internet-fetch-lease",
-              "ACTIVE", 0,
-              {job_id, lease_iterator->second.object_id()}, {}, {},
-              {{"job_id", job_id}}, 9000, 100, 100, 0U, 1U,
-              job.retry_ceiling));
+              "ACTIVE", 0, {job_id, lease_iterator->second.object_id()}, {}, {},
+              {{"job_id", job_id}}, 9000, 100, 100, 0U, 1U, job.retry_ceiling));
         }
         continue;
       }
@@ -462,22 +536,31 @@ InternetImprovementPlan InternetImprovementDirector::plan(
         }
       }
       std::vector<std::string> blocked;
-      if (attempt_count >= job.retry_ceiling + 1) {
-        blocked.push_back("RETRY_CEILING_REACHED");
+      if (const auto excluded = fetch_exclusions.find(job_id);
+          excluded != fetch_exclusions.end()) {
+        blocked.push_back(excluded->second);
       }
-      add_action(make_action(
+      auto action = make_action(
           state, policy, InternetDirectedActionKind::execute_fetch, job_id,
-          "internet-fetch-job", {}, job.expected_watch_generation, {job_id},
-          {}, {}, {{"attempt_number", attempt_count + 1}}, 5000, 1500, 2000,
+          "internet-fetch-job", {}, job.expected_watch_generation,
+          {job_id, job.watch_id}, {}, {},
+          {{"attempt_number", attempt_count + 1}}, 5000, 1500, 2000,
           job.allocated_response_bytes, job.allocated_cpu_units,
-          job.retry_ceiling, std::move(blocked)));
+          job.retry_ceiling, std::move(blocked));
+      if (action.blocked_reasons.empty()) {
+        action.not_before = std::max(action.not_before, job.earliest_start);
+        action.deadline = std::min(action.deadline, job.deadline);
+        action = canonical_internet_directed_action(std::move(action));
+      }
+      add_action(std::move(action));
     }
 
     for (const auto &[receipt_id, receipt] : receipts) {
       if (!receipt.successful() || receipt.snapshot_id.empty()) {
         continue;
       }
-      std::optional<std::pair<std::string, InternetSourceAssessmentInput>> input;
+      std::optional<std::pair<std::string, InternetSourceAssessmentInput>>
+          input;
       for (const auto &[input_id, candidate_input] : assessment_inputs) {
         if (candidate_input.snapshot_id == receipt.snapshot_id &&
             candidate_input.fetch_receipt_id == receipt_id) {
@@ -485,8 +568,8 @@ InternetImprovementPlan InternetImprovementDirector::plan(
           break;
         }
       }
-      const bool already_assessed = std::ranges::any_of(
-          assessments, [&](const auto &entry) {
+      const bool already_assessed =
+          std::ranges::any_of(assessments, [&](const auto &entry) {
             return entry.second.snapshot_id == receipt.snapshot_id &&
                    entry.second.fetch_receipt_id == receipt_id &&
                    (!input || entry.second.source_policy_id ==
@@ -505,9 +588,9 @@ InternetImprovementPlan InternetImprovementDirector::plan(
       if (input) {
         inputs.push_back(input->first);
         policy_ids.push_back(input->second.source_policy_id);
-        parameters = {{"license_classification",
-                       input->second.license_classification},
-                      {"robots_allowed", input->second.robots_allowed}};
+        parameters = {
+            {"license_classification", input->second.license_classification},
+            {"robots_allowed", input->second.robots_allowed}};
       }
       add_action(make_action(
           state, policy, InternetDirectedActionKind::assess_source,
@@ -520,8 +603,8 @@ InternetImprovementPlan InternetImprovementDirector::plan(
       if (!assessment.admissible()) {
         continue;
       }
-      const bool already_extracted = std::ranges::any_of(
-          extractions, [&](const auto &entry) {
+      const bool already_extracted =
+          std::ranges::any_of(extractions, [&](const auto &entry) {
             return entry.second.snapshot_id == assessment.snapshot_id;
           });
       if (!already_extracted) {
@@ -535,22 +618,11 @@ InternetImprovementPlan InternetImprovementDirector::plan(
     }
 
     for (const auto &[extraction_id, extraction] : extractions) {
-      std::size_t consumed = 0U;
-      for (const auto &[retrieval_id, retrieval] : retrievals) {
-        static_cast<void>(retrieval_id);
-        if (contains(extraction.fragment_ids,
-                     retrieval.payload.at("source_fragment_id")
-                         .get<std::string>())) {
-          ++consumed;
-        }
-      }
-      if (consumed == extraction.fragment_ids.size()) {
+      if (internet_feed_completion_outputs(extraction,
+                                           state.internet_records)) {
         continue;
       }
       std::vector<std::string> blocked;
-      if (consumed != 0U) {
-        blocked.push_back("PARTIAL_EXTRACTION_ALREADY_FED");
-      }
       std::optional<std::string> assessment_id;
       for (const auto &[candidate_id, assessment] : assessments) {
         if (assessment.snapshot_id == extraction.snapshot_id &&
@@ -570,8 +642,8 @@ InternetImprovementPlan InternetImprovementDirector::plan(
           state, policy, InternetDirectedActionKind::feed_extraction,
           extraction_id, "internet-extraction-receipt", {}, 0,
           std::move(inputs), {}, {},
-          {{"source_label", "internet-source"}, {"strict", true}}, 5500,
-          1500, 1000, 0U, 1U, 0, std::move(blocked)));
+          {{"source_label", "internet-source"}, {"strict", true}}, 5500, 1500,
+          1000, 0U, 1U, 0, std::move(blocked)));
     }
   }
 
@@ -588,9 +660,8 @@ InternetImprovementPlan InternetImprovementDirector::plan(
       const auto &candidate = candidate_iterator->second;
       const int opportunity_boost =
           opportunity_priority[candidate.candidate_signature];
-      const bool reasoning_candidate =
-          candidate.status == "VALIDATION_READY" ||
-          candidate.status == "QUARANTINED";
+      const bool reasoning_candidate = candidate.status == "VALIDATION_READY" ||
+                                       candidate.status == "QUARANTINED";
       if (reasoning_candidate && policy.require_reasoning &&
           candidate.reasoning_analysis_ids.empty()) {
         add_action(make_action(
@@ -617,14 +688,46 @@ InternetImprovementPlan InternetImprovementDirector::plan(
         add_action(make_action(
             state, policy, InternetDirectedActionKind::qualify_candidate,
             candidate_id, "internet-algorithm-candidate", candidate.status, 0,
-            {candidate_id}, {}, protocol_id ? std::vector<std::string>{*protocol_id}
-                                           : std::vector<std::string>{},
+            {candidate_id}, {},
+            protocol_id ? std::vector<std::string>{*protocol_id}
+                        : std::vector<std::string>{},
             Json::object(), 6800 + opportunity_boost, 5000, 3000, 0U, 2U, 0,
             std::move(blocked)));
         continue;
       }
       if (candidate.status == "EXPERIMENT_QUALIFIED") {
         std::vector<std::string> blocked;
+        std::string latest_source_id = candidate.source_policy_assessment_id;
+        std::string latest_source_time;
+        bool latest_admissible = true;
+        const auto original_source =
+            assessments.find(candidate.source_policy_assessment_id);
+        if (original_source != assessments.end()) {
+          for (const auto &[assessment_id, assessment] : assessments) {
+            if (assessment.snapshot_id != candidate.snapshot_id ||
+                assessment.source_policy_id !=
+                    original_source->second.source_policy_id) {
+              continue;
+            }
+            const auto fetch = receipts.find(assessment.fetch_receipt_id);
+            if (fetch == receipts.end()) {
+              continue;
+            }
+            const auto fetch_lease = leases.find(fetch->second.lease_id);
+            if (fetch_lease == leases.end() ||
+                fetch_lease->second.acquired_at > state.planned_at) {
+              continue;
+            }
+            const auto &checked = fetch_lease->second.acquired_at;
+            if (checked > latest_source_time ||
+                (checked == latest_source_time && !assessment.admissible() &&
+                 latest_admissible)) {
+              latest_source_id = assessment_id;
+              latest_source_time = checked;
+              latest_admissible = assessment.admissible();
+            }
+          }
+        }
         if (policy.promotion_policy_id.empty() ||
             !contains(state.active_promotion_policy_ids,
                       policy.promotion_policy_id)) {
@@ -634,7 +737,10 @@ InternetImprovementPlan InternetImprovementDirector::plan(
             const auto iterator = promotion_assessments.find(assessment_id);
             if (iterator != promotion_assessments.end() &&
                 iterator->second.payload.value("policy_id", std::string{}) ==
-                    policy.promotion_policy_id) {
+                    policy.promotion_policy_id &&
+                iterator->second.payload.value("source_policy_assessment_ref",
+                                               std::string{}) ==
+                    latest_source_id) {
               blocked.push_back("POLICY_ASSESSMENT_UNCHANGED");
               break;
             }
@@ -643,12 +749,12 @@ InternetImprovementPlan InternetImprovementDirector::plan(
         add_action(make_action(
             state, policy, InternetDirectedActionKind::assess_promotion,
             candidate_id, "internet-algorithm-candidate", candidate.status, 0,
-            {candidate_id},
+            {candidate_id, latest_source_id},
             policy.promotion_policy_id.empty()
                 ? std::vector<std::string>{}
                 : std::vector<std::string>{policy.promotion_policy_id},
-            {}, Json::object(), 7500 + opportunity_boost, 1000, 1000, 0U, 1U,
-            0, std::move(blocked)));
+            {}, Json::object(), 7500 + opportunity_boost, 1000, 1000, 0U, 1U, 0,
+            std::move(blocked)));
         continue;
       }
       if (candidate.status == "POLICY_QUALIFIED") {
@@ -668,7 +774,8 @@ InternetImprovementPlan InternetImprovementDirector::plan(
         bool observation_added = false;
         for (const auto &[input_id, input] : observation_inputs) {
           if (input.candidate_id != candidate_id ||
-              !contains(candidate.probation_admission_ids, input.admission_id)) {
+              !contains(candidate.probation_admission_ids,
+                        input.admission_id)) {
             continue;
           }
           add_action(make_action(
@@ -718,20 +825,16 @@ InternetImprovementPlan InternetImprovementDirector::plan(
   for (auto action : proposed) {
     const bool provider_action =
         action.kind == InternetDirectedActionKind::reason_candidate;
-    const bool fits = action.eligible() &&
-                      static_cast<int>(plan.actions.size()) <
-                          policy.maximum_actions &&
-                      plan.allocated_response_bytes +
-                              action.response_byte_budget <=
-                          policy.maximum_response_bytes &&
-                      plan.allocated_cpu_units + action.cpu_unit_budget <=
-                          policy.maximum_cpu_units &&
-                      plan.allocated_cost_bp + action.cost_bp <=
-                          policy.maximum_cost_bp &&
-                      plan.allocated_risk_bp + action.risk_bp <=
-                          policy.maximum_risk_bp &&
-                      (!provider_action ||
-                       provider_calls < policy.maximum_provider_calls);
+    const bool fits =
+        action.eligible() &&
+        static_cast<int>(plan.actions.size()) < policy.maximum_actions &&
+        plan.allocated_response_bytes + action.response_byte_budget <=
+            policy.maximum_response_bytes &&
+        plan.allocated_cpu_units + action.cpu_unit_budget <=
+            policy.maximum_cpu_units &&
+        plan.allocated_cost_bp + action.cost_bp <= policy.maximum_cost_bp &&
+        plan.allocated_risk_bp + action.risk_bp <= policy.maximum_risk_bp &&
+        (!provider_action || provider_calls < policy.maximum_provider_calls);
     if (fits) {
       plan.allocated_response_bytes += action.response_byte_budget;
       plan.allocated_cpu_units += action.cpu_unit_budget;
@@ -754,40 +857,38 @@ InternetImprovementPlan InternetImprovementDirector::plan(
 }
 
 Json to_json(const InternetDirectorPolicy &value) {
-  return {{"action_deadline", value.action_deadline},
-          {"candidate_scope_id", value.candidate_scope_id},
-          {"enable_acquisition", value.enable_acquisition},
-          {"enable_candidate_advancement",
-           value.enable_candidate_advancement},
-          {"enabled_action_kinds", value.enabled_action_kinds},
-          {"improvement_policy",
-           {{"max_selected", value.improvement_policy.max_selected},
-            {"maximum_risk_bp", value.improvement_policy.maximum_risk_bp},
-            {"minimum_priority_bp",
-             value.improvement_policy.minimum_priority_bp},
-            {"total_cost_budget_bp",
-             value.improvement_policy.total_cost_budget_bp}}},
-          {"maximum_actions", value.maximum_actions},
-          {"maximum_cost_bp", value.maximum_cost_bp},
-          {"maximum_cpu_units", value.maximum_cpu_units},
-          {"maximum_provider_calls", value.maximum_provider_calls},
-          {"maximum_response_bytes", value.maximum_response_bytes},
-          {"maximum_risk_bp", value.maximum_risk_bp},
-          {"policy_signature", value.policy_signature},
-          {"probation_query_signature", value.probation_query_signature},
-          {"promotion_policy_id", value.promotion_policy_id},
-          {"require_reasoning", value.require_reasoning},
-          {"scheduler_limits",
-           {{"global_concurrency",
-             value.scheduler_limits.global_concurrency},
-            {"global_cpu_unit_budget",
-             value.scheduler_limits.global_cpu_unit_budget},
-            {"global_response_byte_budget",
-             value.scheduler_limits.global_response_byte_budget},
-            {"maximum_clock_jump_seconds",
-             value.scheduler_limits.maximum_clock_jump_seconds},
-            {"per_source_group_concurrency",
-             value.scheduler_limits.per_source_group_concurrency}}}};
+  return {
+      {"action_deadline", value.action_deadline},
+      {"candidate_scope_id", value.candidate_scope_id},
+      {"enable_acquisition", value.enable_acquisition},
+      {"enable_candidate_advancement", value.enable_candidate_advancement},
+      {"enabled_action_kinds", value.enabled_action_kinds},
+      {"improvement_policy",
+       {{"max_selected", value.improvement_policy.max_selected},
+        {"maximum_risk_bp", value.improvement_policy.maximum_risk_bp},
+        {"minimum_priority_bp", value.improvement_policy.minimum_priority_bp},
+        {"total_cost_budget_bp",
+         value.improvement_policy.total_cost_budget_bp}}},
+      {"maximum_actions", value.maximum_actions},
+      {"maximum_cost_bp", value.maximum_cost_bp},
+      {"maximum_cpu_units", value.maximum_cpu_units},
+      {"maximum_provider_calls", value.maximum_provider_calls},
+      {"maximum_response_bytes", value.maximum_response_bytes},
+      {"maximum_risk_bp", value.maximum_risk_bp},
+      {"policy_signature", value.policy_signature},
+      {"probation_query_signature", value.probation_query_signature},
+      {"promotion_policy_id", value.promotion_policy_id},
+      {"require_reasoning", value.require_reasoning},
+      {"scheduler_limits",
+       {{"global_concurrency", value.scheduler_limits.global_concurrency},
+        {"global_cpu_unit_budget",
+         value.scheduler_limits.global_cpu_unit_budget},
+        {"global_response_byte_budget",
+         value.scheduler_limits.global_response_byte_budget},
+        {"maximum_clock_jump_seconds",
+         value.scheduler_limits.maximum_clock_jump_seconds},
+        {"per_source_group_concurrency",
+         value.scheduler_limits.per_source_group_concurrency}}}};
 }
 
 Json to_json(const InternetImprovementState &value) {
@@ -796,8 +897,7 @@ Json to_json(const InternetImprovementState &value) {
     records.push_back(to_json(record));
   }
   return {{"active_candidate_ids", value.active_candidate_ids},
-          {"active_promotion_policy_ids",
-           value.active_promotion_policy_ids},
+          {"active_promotion_policy_ids", value.active_promotion_policy_ids},
           {"active_protocol_ids", value.active_protocol_ids},
           {"active_watch_ids", value.active_watch_ids},
           {"cycle_key", value.cycle_key},

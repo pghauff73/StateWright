@@ -16,7 +16,20 @@
 namespace statewright::egcf {
 
 inline constexpr std::string_view internet_experiment_coordinator_version =
-    "statewright-internet-experiment-coordinator-v1";
+    "statewright-internet-experiment-coordinator-v2";
+
+struct InternetExactScalarProgram final {
+  mpq_class slope{0};
+  mpq_class bias{0};
+  int bounded_steps = 0;
+};
+
+// Closed internal IR adapter: IDENTITY, CONST, or MULTIPLY then ADD.
+[[nodiscard]] InternetExactScalarProgram
+internet_exact_scalar_program(const contracts::Json &mapping);
+[[nodiscard]] std::string
+internet_exact_scalar_meaning(const InternetExactScalarProgram &program,
+                              std::string input, std::string_view output);
 
 struct InternetScalarTrialGroup final {
   std::string independence_group;
@@ -63,9 +76,9 @@ class InternetExperimentCoordinator final {
 public:
   explicit InternetExperimentCoordinator(EgcfStore &store);
 
-  [[nodiscard]] InternetExperimentResult qualify(
-      const InternetAlgorithmCandidate &candidate,
-      InternetExperimentRequest request);
+  [[nodiscard]] InternetExperimentResult
+  qualify(const InternetAlgorithmCandidate &candidate,
+          InternetExperimentRequest request);
 
 private:
   EgcfStore &store_;

@@ -51,8 +51,8 @@ class InternetImprovementStateReader final {
 public:
   explicit InternetImprovementStateReader(EgcfStore &store);
 
-  [[nodiscard]] InternetImprovementState
-  read(std::string planned_at, std::string cycle_key);
+  [[nodiscard]] InternetImprovementState read(std::string planned_at,
+                                              std::string cycle_key);
 
 private:
   EgcfStore &store_;
@@ -64,6 +64,13 @@ public:
   plan(const InternetImprovementState &state,
        const InternetDirectorPolicy &policy) const;
 };
+
+// Shared planning/execution gate. Includes the latest watch state, durable
+// completion and retry history before applying the due-job scheduler.
+[[nodiscard]] sources::InternetScheduleSelection
+select_eligible_internet_fetch_jobs(
+    const InternetImprovementState &state,
+    const sources::InternetSchedulerLimits &limits);
 
 [[nodiscard]] InternetDirectorPolicy
 canonical_internet_director_policy(InternetDirectorPolicy policy);
