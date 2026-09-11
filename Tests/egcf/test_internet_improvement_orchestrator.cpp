@@ -2,9 +2,12 @@
 
 #include "statewright/egcf/internet_feed.hpp"
 #include "statewright/egcf/internet_improvement_store.hpp"
+#include "statewright/egcf/internet_chebyshev_t2_experiment.hpp"
+#include "statewright/contracts/typed_id.hpp"
 #include "statewright/sources/policy.hpp"
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers.hpp>
 
 #include <chrono>
 #include <cstddef>
@@ -91,6 +94,125 @@ public:
 };
 
 } // namespace
+
+TEST_CASE("internet polynomial shortcuts cannot qualify or fabricate probation observations",
+          "[internet][polynomial]") {
+  using namespace statewright;
+  using namespace statewright::egcf;
+  bool probation = false;
+  bool resume = false;
+  bool expired = false;
+  SECTION("missing protocol remains deferred") {}
+  SECTION("missing observation measurements remain deferred") { probation = true; }
+  SECTION("previously planned protocol bypass cannot resume") { resume = true; }
+  SECTION("expired protocol bypass cannot resume") { resume = true; expired = true; }
+  SECTION("previously planned fabricated observation cannot resume") {
+    probation = true;
+    resume = true;
+  }
+  SECTION("expired fabricated observation cannot resume") {
+    probation = true;
+    resume = true;
+    expired = true;
+  }
+  const auto root = temporary_root();
+  {
+    EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+    InternetImprovementStore internet(store);
+    InternetAlgorithmCandidate candidate;
+    candidate.source_fragment_id = contracts::typed_id("internet-source-fragment", {{"test_only", true}});
+    candidate.snapshot_id = contracts::typed_id("internet-source-snapshot", {{"test_only", true}});
+    candidate.source_policy_assessment_id = contracts::typed_id("internet-policy-assessment", {{"test_only", true}});
+    candidate.retrieval_receipt_id = contracts::typed_id("internet-retrieval-receipt", {{"test_only", true}});
+    candidate.proposed_saa_ir = internet_exact_polynomial_ir({-1, 0, 2});
+    candidate.semantic_inputs = {"x"};
+    candidate.semantic_outputs = {"y"};
+    candidate.context_resolution_ids = {contracts::typed_id("internet-context-resolution", {{"test_only", true}})};
+    candidate.applicability["translation"]["translator_version"] =
+        "fungrim-chebyshev-quadratic-candidate-v1";
+    candidate.status = probation ? "PROBATIONARY_CANONICAL" : "VALIDATION_READY";
+    if (probation) candidate.probation_admission_ids = {
+        contracts::typed_id("internet-probation-admission", {{"test_only", true}})};
+    candidate = canonical_internet_algorithm_candidate(candidate);
+    // Synthetic lifecycle state only; no source or qualification evidence is
+    // registered, and neither shortcut may treat these references as evidence.
+    const auto candidate_id = store.register_record({
+        .object_type = "internet-algorithm-candidate", .payload = to_json(candidate)});
+    auto request = run_request();
+    request.policy.require_reasoning = false;
+    request.policy.enable_acquisition = false;
+    request.policy.probation_query_signature = "synthetic-query";
+    request.policy.auto_create_probation_observation_input = true;
+    InternetImprovementOrchestrator orchestrator(store);
+    auto plan = orchestrator.plan(request);
+    REQUIRE(plan.actions.empty());
+    REQUIRE(plan.deferred_actions.size() == 1U);
+    const auto blocker = probation ? "PROBATION_OBSERVATION_MEASUREMENTS_REQUIRED"
+                                   : "MISSING_EXPERIMENT_PROTOCOL";
+    REQUIRE(plan.deferred_actions.front().blocked_reasons ==
+            std::vector<std::string>{blocker});
+    const auto head = store.event_head();
+    REQUIRE_THROWS_WITH(qualify_fungrim_chebyshev_t2_exact_rational_candidate(
+        store, candidate_id, request.current_timestamp),
+        "POLYNOMIAL_VERSIONED_GROUNDED_PROTOCOL_REQUIRED");
+    REQUIRE(store.event_head() == head);
+
+    if (resume) {
+      // Simulate a durable plan written before the unsupported shortcuts were
+      // closed. Resuming it must not create or reconcile successful evidence.
+      auto action = plan.deferred_actions.front();
+      action.blocked_reasons.clear();
+      action = canonical_internet_directed_action(action);
+      plan.actions = {action};
+      plan.deferred_actions.clear();
+      plan = canonical_internet_improvement_plan(plan);
+      InternetImprovementRun run;
+      run.plan_id = internet.register_improvement_plan(plan);
+      run.worker_id = request.worker_id;
+      run.started_at = request.current_timestamp;
+      run.requested_budgets = to_json(request.policy);
+      const auto run_id = internet.register_improvement_run(run);
+      InternetImprovementActionLease lease;
+      lease.action_key = action.action_key;
+      lease.run_id = run_id;
+      lease.worker_id = request.worker_id;
+      lease.acquired_at = request.current_timestamp;
+      lease.expires_at = expired ? "2026-09-04T00:00:01Z"
+                                 : request.action_lease_expires_at;
+      static_cast<void>(internet.register_improvement_action_lease(lease));
+      request.current_timestamp = "2026-09-04T00:00:02Z";
+      const auto before_resume = store.event_head();
+      REQUIRE_THROWS_WITH(orchestrator.resume(run_id, request),
+          probation ? "PROBATION_OBSERVATION_MEASUREMENTS_REQUIRED"
+                    : "qualification action requires one protocol");
+      REQUIRE(store.event_head() == before_resume);
+    } else {
+      REQUIRE(orchestrator.run_once(request).status == "NO_ELIGIBLE_WORK");
+      REQUIRE(store.event_head() == head);
+    }
+    REQUIRE(store.list("internet-experiment-qualification").empty());
+    REQUIRE(store.list("internet-probation-observation-input").empty());
+    REQUIRE(store.list("egcf-evidence").empty());
+    REQUIRE(internet.active_candidate_ids() == std::vector<std::string>{candidate_id});
+  }
+  std::filesystem::remove_all(root);
+}
+
+TEST_CASE("internet polynomial fixture group signatures bind their input arrays",
+          "[internet][polynomial]") {
+  using namespace statewright;
+  using namespace statewright::egcf;
+  const auto groups = chebyshev_t2_fixture_groups();
+  const auto design = chebyshev_t2_trial_groups_for_design(groups);
+  REQUIRE(design.size() == groups.size());
+  for (const auto &group : design) {
+    auto material = group;
+    material.erase("group_signature");
+    REQUIRE_FALSE(material.at("inputs").empty());
+    REQUIRE_FALSE(material.at("expected_outputs").empty());
+    REQUIRE(group.at("group_signature") == contracts::sha256_json(material));
+  }
+}
 
 TEST_CASE("internet orchestrator leaves idle polls out of domain history") {
   using namespace statewright;

@@ -798,13 +798,8 @@ InternetImprovementPlan InternetImprovementDirector::plan(
             break;
           }
         }
-        const bool is_fungrim_chebyshev_t2 =
-            candidate.applicability.contains("translation") &&
-            candidate.applicability.at("translation").contains("translator_version") &&
-            candidate.applicability.at("translation").at("translator_version") ==
-                "fungrim-chebyshev-quadratic-candidate-v1";
         std::vector<std::string> blocked;
-        if (!protocol_id && !is_fungrim_chebyshev_t2) {
+        if (!protocol_id) {
           blocked.push_back("MISSING_EXPERIMENT_PROTOCOL");
         }
         add_action(make_action(
@@ -911,7 +906,10 @@ InternetImprovementPlan InternetImprovementDirector::plan(
         }
         if (!observation_added && policy.auto_create_probation_observation_input &&
             candidate.status == "PROBATIONARY_CANONICAL") {
-          std::vector<std::string> blocked;
+          // No measurement collector is wired to this action. Keep the missing
+          // observation explicit instead of synthesizing successful outcomes.
+          std::vector<std::string> blocked = {
+              "PROBATION_OBSERVATION_MEASUREMENTS_REQUIRED"};
           if (candidate.probation_admission_ids.empty()) {
             blocked.push_back("MISSING_PROBATION_ADMISSION");
           }

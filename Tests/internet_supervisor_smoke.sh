@@ -50,9 +50,15 @@ jq -s -e '
   last.details.summary.successful == true and
   last.details.summary.final_status == "NO_ELIGIBLE_WORK" and
   last.details.summary.cycles_started == 1 and
-  (last.details.summary.last_run_id |
-    startswith("internet-improvement-run:sha256:"))
+  last.details.summary.last_run_id == ""
 ' "$event_log" >/dev/null
+
+# Idle polling keeps operational events without manufacturing domain runs.
+"$statewright" internet-improvement "$(jq -cn --arg workspace "$workspace" \
+  '{workspace: $workspace, action: "run-status"}')" | jq -e '
+    .ok == true and (.result.runs | length) == 0 and
+    (.result.plans | length) == 0 and (.result.run_events | length) == 0
+  ' >/dev/null
 
 fake="$root/fake-statewright"
 fake_pid_file="$root/fake.pid"

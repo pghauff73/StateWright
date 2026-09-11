@@ -1,5 +1,4 @@
 #include "statewright/egcf/internet_polynomial_measurement.hpp"
-#include "statewright/egcf/internet_chebyshev_t2_experiment.hpp"
 #include "statewright/egcf/internet_chebyshev_comparison_store.hpp"
 #include "statewright/egcf/internet_improvement_orchestrator.hpp"
 
@@ -265,19 +264,7 @@ existing_outputs_for_action(EgcfStore &store,
     return std::nullopt;
   }
   if (action.kind == InternetDirectedActionKind::create_probation_observation_input) {
-    const std::string admission_id =
-        action.parameters.value("admission_id", std::string{});
-    if (admission_id.empty()) {
-      return std::nullopt;
-    }
-    for (const auto &record : internet.list("internet-probation-observation-input")) {
-      const auto input = internet_probation_observation_input_from_json(record.payload);
-      if (input.candidate_id == action.subject_id &&
-          input.admission_id == admission_id) {
-        return std::vector<std::string>{record.object_id()};
-      }
-    }
-    return std::nullopt;
+    orchestrator_error("PROBATION_OBSERVATION_MEASUREMENTS_REQUIRED");
   }
   if (action.kind == InternetDirectedActionKind::qualify_candidate &&
       action.protocol_ids.size() == 1U) {
@@ -288,18 +275,8 @@ existing_outputs_for_action(EgcfStore &store,
     return std::nullopt;
   }
   if (action.kind == InternetDirectedActionKind::qualify_candidate &&
-      action.protocol_ids.empty()) {
-    const auto candidate = candidate_from_store(store, action.subject_id);
-    if (candidate.applicability.contains("translation") &&
-        candidate.applicability.at("translation").at("translator_version") ==
-            "fungrim-chebyshev-quadratic-candidate-v1") {
-      if (const auto recovery =
-              find_fungrim_chebyshev_t2_recovery(store, action.subject_id)) {
-        return std::vector<std::string>{recovery->qualification_id,
-                                        recovery->updated_candidate_id};
-      }
-    }
-    return std::nullopt;
+      action.protocol_ids.size() != 1U) {
+    orchestrator_error("qualification action requires one protocol");
   }
   if (action.kind == InternetDirectedActionKind::schedule_fetch) {
     const auto job =
@@ -535,83 +512,6 @@ probation_request_from_input(const InternetProbationObservationInput &input) {
 }
 
 std::vector<std::string>
-probation_observation_input_evidence_ids(EgcfStore &store,
-                                        const InternetAlgorithmCandidate &candidate,
-                                        const std::string &admission_id) {
-  std::set<std::string> evidence_ids;
-  for (const auto &qualification_id : candidate.experiment_qualification_ids) {
-    try {
-      const auto qualification =
-          internet_experiment_qualification_from_json(
-              store.get(qualification_id).payload);
-      if (qualification.candidate_id != candidate.object_id()) {
-        continue;
-      }
-      evidence_ids.insert(qualification_id);
-      for (const auto &evidence_id : qualification.evidence_ids) {
-        evidence_ids.insert(evidence_id);
-      }
-    } catch (const std::exception &) {
-    }
-  }
-  if (!candidate.retrieval_receipt_id.empty()) {
-    evidence_ids.insert(candidate.retrieval_receipt_id);
-  }
-  if (!candidate.snapshot_id.empty()) {
-    evidence_ids.insert(candidate.snapshot_id);
-  }
-  if (!admission_id.empty()) {
-    evidence_ids.insert(admission_id);
-  }
-  if (evidence_ids.empty()) {
-    evidence_ids.insert(candidate.object_id());
-  }
-  return {evidence_ids.begin(), evidence_ids.end()};
-}
-
-std::string
-probation_observation_input_context_signature(
-    EgcfStore &store, const InternetAlgorithmCandidate &candidate) {
-  for (const auto &qualification_id : candidate.experiment_qualification_ids) {
-    try {
-      const auto qualification =
-          internet_experiment_qualification_from_json(
-              store.get(qualification_id).payload);
-      if (qualification.candidate_id == candidate.object_id() &&
-          !qualification.context_signature.empty()) {
-        return qualification.context_signature;
-      }
-    } catch (const std::exception &) {
-    }
-  }
-  if (!candidate.snapshot_id.empty()) {
-    return candidate.snapshot_id;
-  }
-  return candidate.object_id();
-}
-
-int probation_next_observation_window(EgcfStore &store,
-                                     const std::string &candidate_id,
-                                     const std::string &admission_id) {
-  int next_window = 0;
-  for (const auto &record :
-       InternetImprovementStore(store).list("internet-probation-observation-input")) {
-    try {
-      const auto input =
-          internet_probation_observation_input_from_json(record.payload);
-      if (input.candidate_id != candidate_id ||
-          input.admission_id != admission_id ||
-          input.window_index < next_window) {
-        continue;
-      }
-      next_window = input.window_index + 1;
-    } catch (const std::exception &) {
-    }
-  }
-  return next_window;
-}
-
-std::vector<std::string>
 execute_action(EgcfStore &store, InternetImprovementStore &internet,
                InternetSourceCoordinator &source,
                const InternetDirectedAction &action,
@@ -784,29 +684,6 @@ execute_action(EgcfStore &store, InternetImprovementStore &internet,
   }
   case InternetDirectedActionKind::qualify_candidate: {
     const auto candidate = candidate_from_store(store, action.subject_id);
-    const bool is_fungrim_chebyshev_t2 =
-        candidate.applicability.contains("translation") &&
-        candidate.applicability.at("translation").at("translator_version") ==
-            "fungrim-chebyshev-quadratic-candidate-v1";
-    if (action.protocol_ids.empty()) {
-      if (!is_fungrim_chebyshev_t2) {
-        orchestrator_error("qualification action requires one protocol");
-      }
-      const auto result =
-          qualify_fungrim_chebyshev_t2_exact_rational_candidate(
-              store, action.subject_id, request.current_timestamp);
-      std::vector<std::string> outputs{
-          result.value("qualification_id", std::string{}),
-          result.value("updated_candidate_id", std::string{}),
-          result.value("baseline_reference_id", std::string{}),
-          result.value("groups_evidence_id", std::string{}),
-          result.value("measurement_evidence_id", std::string{}),
-          result.value("machine_review_evidence_id", std::string{})};
-      outputs.erase(std::remove_if(outputs.begin(), outputs.end(),
-                                  [](const auto &value) { return value.empty(); }),
-                    outputs.end());
-      return outputs;
-    }
     if (action.protocol_ids.size() != 1U) {
       orchestrator_error("qualification action requires one protocol");
     }
@@ -879,56 +756,9 @@ execute_action(EgcfStore &store, InternetImprovementStore &internet,
     }
     return outputs;
   }
-  case InternetDirectedActionKind::create_probation_observation_input: {
-    const std::string admission_id =
-        action.parameters.value("admission_id", std::string{});
-    const std::string query_signature =
-        action.parameters.value("query_signature", std::string{});
-    if (admission_id.empty()) {
-      orchestrator_error(
-          "create probation observation input requires admission ID");
-    }
-    if (query_signature.empty()) {
-      orchestrator_error(
-          "create probation observation input requires query signature");
-    }
-    const auto candidate = candidate_from_store(store, action.subject_id);
-    if (!contains(candidate.probation_admission_ids, admission_id)) {
-      orchestrator_error(
-          "probation observation input admission is not linked to candidate");
-    }
-    InternetProbationObservationInput input;
-    input.candidate_id = action.subject_id;
-    input.admission_id = admission_id;
-    input.query_signature = query_signature;
-    input.context_signature =
-        probation_observation_input_context_signature(store, candidate);
-    input.observed_at = request.current_timestamp;
-    input.window_index =
-        probation_next_observation_window(store, action.subject_id, admission_id);
-    input.candidate_correct = true;
-    input.baseline_correct = true;
-    input.invariant_passed = true;
-    input.benchmark_passed = true;
-    input.integrity_passed = true;
-    input.source_valid = true;
-    input.reproduction_passed = true;
-    input.evidence_ids =
-        probation_observation_input_evidence_ids(store, candidate, admission_id);
-    input.regression_signals = {{"semantic_contradiction", false},
-                               {"falsifier_succeeded", false},
-                               {"corrected_error_recurrence", false},
-                               {"equivalent_failure_retry_regression", false},
-                               {"independence_passed", true},
-                               {"evidence_fresh", true},
-                               {"projection_integrity_passed", true}};
-    input.producer_identity = "statewright-saa-supervisor";
-    input.provenance = {{"source", "internet-improvement-orchestrator"},
-                        {"action_key", action.action_key},
-                        {"admission_id", admission_id},
-                        {"candidate_id", action.subject_id}};
-    return {internet.register_probation_observation_input(input)};
-  }
+  case InternetDirectedActionKind::create_probation_observation_input:
+    // Existing receipts cannot stand in for newly measured observation windows.
+    orchestrator_error("PROBATION_OBSERVATION_MEASUREMENTS_REQUIRED");
   case InternetDirectedActionKind::verify_integrity:
     internet.verify_integrity();
     return {};
@@ -1053,12 +883,6 @@ InternetImprovementRunResult InternetImprovementOrchestrator::resume(
         result.output_ids = resume_internet_polynomial_qualification(
             store_, action.subject_id, action.protocol_ids.front(),
             result.action_lease_id, action.action_key);
-      }
-      if (action.kind == InternetDirectedActionKind::qualify_candidate &&
-          action.protocol_ids.empty()) {
-        result.output_ids = resume_fungrim_chebyshev_t2_qualification(
-            store_, action.subject_id, result.action_lease_id,
-            action.action_key);
       }
       InternetImprovementActionReceipt receipt;
       receipt.action_key = action.action_key;
