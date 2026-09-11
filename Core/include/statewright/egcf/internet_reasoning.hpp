@@ -11,7 +11,15 @@
 namespace statewright::egcf {
 
 inline constexpr std::string_view internet_reasoning_coordinator_version =
-    "statewright-internet-reasoning-coordinator-v1";
+    "statewright-internet-reasoning-coordinator-v2";
+
+inline constexpr std::size_t internet_reasoning_maximum_context_bytes = 16U * 1024U;
+inline constexpr std::size_t internet_reasoning_maximum_fragments = 16U;
+
+// Shared by dispatch and execution. Empty means the complete context fits.
+// Includes kind labels and separators; never truncates source text.
+[[nodiscard]] std::string internet_reasoning_context_blocker(
+    const std::vector<sources::InternetSourceFragment> &fragments);
 
 struct InternetReasoningResult final {
   InternetReasoningAnalysis analysis;

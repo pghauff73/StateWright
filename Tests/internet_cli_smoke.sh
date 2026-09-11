@@ -375,4 +375,246 @@ if "$statewright" internet-improvement "$(jq -cn --arg workspace "$root" \
   exit 1
 fi
 
-printf 'StateWright internet CLI smoke passed without Python or live internet\n'
+# Polynomial command input validation must fail before storing a design or
+# collecting timings. These are rejection tests, not qualification evidence.
+measurement_request=$(jq -cn --arg workspace "$root" '{
+  workspace: $workspace,
+  action: "polynomial-measurement-freeze",
+  candidate_id: "not-a-candidate",
+  protocol_freeze_id: "not-a-freeze",
+  inputs: ["0"],
+  repetitions: 2
+}')
+readiness_request=$(jq -cn --arg workspace "$root" \
+  '{workspace: $workspace, action: "readiness"}')
+before_measurement_checks=$(run internet-improvement "$readiness_request")
+while IFS= read -r test_case; do
+  request=$(jq -c --argjson test_case "$test_case" \
+    '. * $test_case.patch' <<<"$measurement_request")
+  expected=$(jq -er '.expected' <<<"$test_case")
+  if output=$("$statewright" internet-improvement "$request" 2>&1); then
+    printf 'invalid polynomial measurement request succeeded: %s\n' "$request" >&2
+    exit 1
+  fi
+  if ! jq -e --arg expected "$expected" \
+      '.ok == false and (tostring | contains($expected))' <<<"$output" >/dev/null; then
+    printf 'wrong polynomial rejection, expected %s: %s\n' "$expected" "$output" >&2
+    exit 1
+  fi
+done < <(jq -cn '
+  [
+    {patch: {protocol_freeze_id: ""}, expected: "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID"},
+    {patch: {inputs: []}, expected: "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID"},
+    {patch: {inputs: "0"}, expected: "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID"},
+    {patch: {inputs: [range(257) | "0"]}, expected: "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID"},
+    {patch: {repetitions: 1}, expected: "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID"},
+    {patch: {repetitions: 101}, expected: "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID"},
+    {patch: {repetitions: -1}, expected: "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID"},
+    {patch: {repetitions: 2.5}, expected: "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID"},
+    {patch: {repetitions: "2"}, expected: "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID"},
+    {patch: {inputs: [range(256) | "0"], repetitions: 17}, expected: "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID"},
+    {patch: {inputs: [0]}, expected: "POLYNOMIAL_RATIONAL_STRING_REQUIRED"},
+    {patch: {inputs: [""]}, expected: "POLYNOMIAL_RATIONAL_STRING_BOUNDS_INVALID"},
+    {patch: {inputs: [("1" * 161)]}, expected: "POLYNOMIAL_RATIONAL_STRING_BOUNDS_INVALID"},
+    {patch: {inputs: ["-"]}, expected: "POLYNOMIAL_RATIONAL_STRING_INVALID"},
+    {patch: {inputs: ["1/"]}, expected: "POLYNOMIAL_RATIONAL_STRING_INVALID"},
+    {patch: {inputs: ["1/-2"]}, expected: "POLYNOMIAL_RATIONAL_STRING_INVALID"},
+    {patch: {inputs: ["1/2/3"]}, expected: "POLYNOMIAL_RATIONAL_STRING_INVALID"},
+    {patch: {inputs: ["0.5"]}, expected: "POLYNOMIAL_RATIONAL_STRING_INVALID"},
+    {patch: {inputs: [" 0"]}, expected: "POLYNOMIAL_RATIONAL_STRING_INVALID"},
+    {patch: {inputs: ["1/0"]}, expected: "POLYNOMIAL_RATIONAL_DENOMINATOR_INVALID"},
+    {patch: {inputs: ["0/0"]}, expected: "POLYNOMIAL_RATIONAL_DENOMINATOR_INVALID"}
+  ] | .[]')
+after_measurement_checks=$(run internet-improvement "$readiness_request")
+jq -e --argjson before "$before_measurement_checks" \
+  '.result.event_head == $before.result.event_head' <<<"$after_measurement_checks" >/dev/null
+
+# A separate synthetic source exercises the real fetch/extract/translate path.
+# It is not an internet discovery, an independent oracle, or approval evidence.
+polynomial_root="$root/polynomial"
+polynomial_watch=$(run internet-watch "$(jq -c \
+  --arg workspace "$polynomial_root" --arg url "http://127.0.0.1:$port/polynomial" \
+  '.workspace = $workspace | .canonical_url = $url' <<<"$watch_request")")
+polynomial_policy_id=$(jq -er '.result.watch.source_policy_id' <<<"$polynomial_watch")
+polynomial_schedule=$(run internet-poll "$(jq -cn --arg workspace "$polynomial_root" '{
+  workspace: $workspace, action: "schedule",
+  scheduled_interval: "2026-09-03T00:00:00Z",
+  earliest_start: "2026-09-03T00:00:00Z", deadline: "2026-09-03T00:05:00Z",
+  retry_ceiling: 1
+}')")
+polynomial_job_id=$(jq -er '.result.job_ids[0]' <<<"$polynomial_schedule")
+polynomial_lease=$(run internet-poll "$(jq -cn --arg workspace "$polynomial_root" \
+  --arg job_id "$polynomial_job_id" '{workspace: $workspace, action: "lease",
+    job_id: $job_id, worker_id: "polynomial-fixture-worker",
+    acquired_at: "2026-09-03T00:00:01Z", expires_at: "2026-09-03T00:01:01Z"}')")
+polynomial_lease_id=$(jq -er '.result.lease_id' <<<"$polynomial_lease")
+polynomial_capture=$(run internet-fetch "$(jq -cn --arg workspace "$polynomial_root" \
+  --arg job_id "$polynomial_job_id" --arg lease_id "$polynomial_lease_id" '{
+    workspace: $workspace, action: "execute", job_id: $job_id, lease_id: $lease_id,
+    current_timestamp: "2026-09-03T00:00:02Z"}')")
+polynomial_snapshot_id=$(jq -er '.result.snapshot_id' <<<"$polynomial_capture")
+polynomial_fetch_id=$(jq -er '.result.fetch_receipt_id' <<<"$polynomial_capture")
+polynomial_assessment=$(run internet-source "$(jq -cn --arg workspace "$polynomial_root" \
+  --arg snapshot_id "$polynomial_snapshot_id" --arg fetch_receipt_id "$polynomial_fetch_id" \
+  --arg source_policy_id "$polynomial_policy_id" '{workspace: $workspace, action: "assess",
+    snapshot_id: $snapshot_id, fetch_receipt_id: $fetch_receipt_id,
+    source_policy_id: $source_policy_id, robots_allowed: true,
+    license_classification: "CC0-1.0"}')")
+polynomial_assessment_id=$(jq -er '.result.assessment_id' <<<"$polynomial_assessment")
+jq -e '.result.assessment.status == "SOURCE_ADMISSIBLE"' <<<"$polynomial_assessment" >/dev/null
+polynomial_extraction=$(run internet-extract "$(jq -cn --arg workspace "$polynomial_root" \
+  --arg snapshot_id "$polynomial_snapshot_id" '{workspace: $workspace,
+    action: "execute", snapshot_id: $snapshot_id}')")
+polynomial_extraction_id=$(jq -er '.result.extraction_receipt_id' <<<"$polynomial_extraction")
+polynomial_feed_request=$(jq -cn --arg workspace "$polynomial_root" \
+  --arg policy_assessment_id "$polynomial_assessment_id" \
+  --arg extraction_receipt_id "$polynomial_extraction_id" '{workspace: $workspace,
+    action: "feed", policy_assessment_id: $policy_assessment_id,
+    extraction_receipt_id: $extraction_receipt_id,
+    source_label: "synthetic local polynomial fixture, not qualification evidence", strict: true}')
+polynomial_feed=$(run internet-improvement "$polynomial_feed_request")
+jq -e '(.result.candidates | length) == 1 and
+       .result.candidates[0].status == "VALIDATION_READY" and
+       (.result.candidates[0] | tostring | contains("exact-polynomial-source-v1"))' \
+  <<<"$polynomial_feed" >/dev/null
+polynomial_readiness_request=$(jq -cn --arg workspace "$polynomial_root" \
+  '{workspace: $workspace, action: "readiness"}')
+polynomial_before_replay=$(run internet-improvement "$polynomial_readiness_request")
+polynomial_replay=$(run internet-improvement "$polynomial_feed_request")
+jq -e --argjson first "$polynomial_feed" \
+  '.result.complete == true and .result.processed_fragments == 0 and
+   (.result.candidates | length) == 0 and
+   (.result.completion_output_ids | sort) == ($first.result.completion_output_ids | sort)' \
+  <<<"$polynomial_replay" >/dev/null
+polynomial_readiness=$(run internet-improvement "$polynomial_readiness_request")
+jq -e --argjson before "$polynomial_before_replay" \
+  '.result.event_head == $before.result.event_head' <<<"$polynomial_readiness" >/dev/null
+jq -e '(.result.active_protocol_ids | length) == 0 and
+       (.result.configuration_blockers | index("MISSING_EXPERIMENT_PROTOCOL")) != null' \
+  <<<"$polynomial_readiness" >/dev/null
+
+polynomial_candidate_id=$(jq -er '.result.completion_output_ids[] |
+  select(startswith("internet-algorithm-candidate:"))' <<<"$polynomial_feed")
+polynomial_candidate=$(jq -c '.result.candidates[0]' <<<"$polynomial_feed")
+polynomial_ir_hash=$(printf '%s' "$(jq -cS '.proposed_saa_ir' <<<"$polynomial_candidate")" | sha256sum | awk '{print $1}')
+polynomial_contract_hash=$(printf '%s' "$(jq -cS '.applicability.translation.execution_contract' <<<"$polynomial_candidate")" | sha256sum | awk '{print $1}')
+polynomial_body_hash=$(jq -er '.result.artifact_bytes_id | sub("^artifact-bytes:sha256:"; "")' <<<"$polynomial_capture")
+polynomial_baseline=$(run internet-improvement "$(jq -cn --arg workspace "$polynomial_root" \
+  --arg candidate_id "$polynomial_candidate_id" --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{
+    workspace: $workspace, action: "capability-baseline", candidate_id: $candidate_id,
+    recorded_at: $at}')")
+polynomial_baseline_id=$(jq -er '.result.evidence_id' <<<"$polynomial_baseline")
+# The groups below are frozen partitions of one synthetic fixture. They do NOT
+# claim independent implementation, oracle lineage, reviewers, or qualification.
+polynomial_protocol=$(jq -cn --arg candidate_id "$polynomial_candidate_id" \
+  --argjson candidate "$polynomial_candidate" --arg baseline_ref "$polynomial_baseline_id" \
+  --arg ir_hash "$polynomial_ir_hash" --arg contract_hash "$polynomial_contract_hash" \
+  --arg body_hash "$polynomial_body_hash" '{
+    protocol_version: "saa-grounded-polynomial-experiment-v1",
+    applicable_candidate_statuses: ["VALIDATION_READY"],
+    baseline_ref: $baseline_ref, baseline_saa_ir: {},
+    dataset_snapshot_ids: [$candidate.snapshot_id],
+    trial_groups: [
+      {independence_group: "synthetic-fixture-anchors", deterministic_seed: 11,
+       inputs: ["-1", "0"], expected_outputs: ["1", "-1"]},
+      {independence_group: "synthetic-fixture-fractions", deterministic_seed: 29,
+       inputs: ["1/2", "-1/2"], expected_outputs: ["-1/2", "-1/2"]}
+    ],
+    minimum_material_effect: "0", minimum_output: "-1", maximum_output: "1",
+    valid_from: "2026-09-03T00:00:00Z",
+    source_provenance: {grounded: {
+      adoption_mode: "NEW_CAPABILITY", author_identity: "synthetic-cli-fixture",
+      candidate_id: $candidate_id, candidate_ir_sha256: $ir_hash,
+      source_fragment_id: $candidate.source_fragment_id, source_body_sha256: $body_hash,
+      execution_contract_sha256: $contract_hash, measurement_repetitions: 2,
+      claim: {inputs: $candidate.semantic_inputs, outputs: $candidate.semantic_outputs,
+        units: $candidate.units, domain: "Exact rationals in [-1,1]",
+        exclusions: ["Inputs outside the declared domain or resource limits"]},
+      baseline_rationale: "Actual absence query of this disposable catalogue only",
+      measurement_evidence_id: "", review_evidence_ids: [],
+      limitations: ["Synthetic source and author-supplied expected values",
+        "Groups are partitions, not evidence of independent lineage",
+        "Shared GMP, compiler, host, coefficients and validation infrastructure",
+        "No independent oracle review, benchmark scores or integrity observations"]
+    }}
+  }')
+polynomial_freeze=$(run internet-improvement "$(jq -cn --arg workspace "$polynomial_root" \
+  --argjson protocol "$polynomial_protocol" '{workspace: $workspace,
+    action: "polynomial-protocol-freeze", protocol: $protocol}')")
+polynomial_freeze_id=$(jq -er '.result.freeze_evidence_id' <<<"$polynomial_freeze")
+jq -e '.result.qualification_claim == "NONE"' <<<"$polynomial_freeze" >/dev/null
+polynomial_protocol=$(jq -c --arg freeze_id "$polynomial_freeze_id" \
+  '.source_provenance.grounded.freeze_evidence_id = $freeze_id' <<<"$polynomial_protocol")
+polynomial_registration=$(run internet-improvement "$(jq -cn --arg workspace "$polynomial_root" \
+  --argjson protocol "$polynomial_protocol" '{workspace: $workspace,
+    action: "protocol-register", protocol: $protocol}')")
+polynomial_protocol_id=$(jq -er '.result.protocol_id' <<<"$polynomial_registration")
+jq -e '.result.qualification_claim == "NONE" and
+  .result.protocol.protocol_version == "saa-grounded-polynomial-experiment-v1" and
+  (.result.protocol.source_provenance.grounded.review_evidence_ids | length) == 0' \
+  <<<"$polynomial_registration" >/dev/null
+polynomial_design=$(run internet-improvement "$(jq -cn --arg workspace "$polynomial_root" \
+  --arg candidate_id "$polynomial_candidate_id" --arg freeze_id "$polynomial_freeze_id" '{
+    workspace: $workspace, action: "polynomial-measurement-freeze",
+    candidate_id: $candidate_id, protocol_freeze_id: $freeze_id,
+    inputs: ["-1", "0", "1/2", "-1/2"], repetitions: 2}')")
+polynomial_design_id=$(jq -er '.result.design_id' <<<"$polynomial_design")
+polynomial_collect_request=$(jq -cn --arg workspace "$polynomial_root" \
+  --arg design_id "$polynomial_design_id" '{workspace: $workspace,
+    action: "polynomial-measurement-collect", design_id: $design_id}')
+polynomial_measurement=$(run internet-improvement "$polynomial_collect_request")
+jq -e '.result.qualification_claim == "NONE" and
+  (.result.evidence_id | startswith("egcf-evidence:"))' <<<"$polynomial_measurement" >/dev/null
+polynomial_before_collection_replay=$(run internet-improvement "$polynomial_readiness_request")
+polynomial_measurement_replay=$(run internet-improvement "$polynomial_collect_request")
+jq -e --argjson first "$polynomial_measurement" \
+  '.result.evidence_id == $first.result.evidence_id' <<<"$polynomial_measurement_replay" >/dev/null
+polynomial_after_collection_replay=$(run internet-improvement "$polynomial_readiness_request")
+jq -e --argjson before "$polynomial_before_collection_replay" \
+  '.result.event_head == $before.result.event_head' <<<"$polynomial_after_collection_replay" >/dev/null
+polynomial_measurement_id=$(jq -er '.result.evidence_id' <<<"$polynomial_measurement")
+polynomial_measurement_check_request=$(jq -cn --arg workspace "$polynomial_root" \
+  --arg evidence_id "$polynomial_measurement_id" --arg freeze_id "$polynomial_freeze_id" \
+  --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{workspace: $workspace,
+    action: "polynomial-measurement-check", evidence_id: $evidence_id,
+    protocol_freeze_id: $freeze_id, recorded_at: $at}')
+polynomial_measurement_check=$(run internet-improvement "$polynomial_measurement_check_request")
+jq -e '.result.status == "RAW_MEASUREMENT_CHAIN_VALIDATED" and
+  .result.qualification_claim == "NONE" and .result.admission == false and
+  (.result.performance | type) == "object"' <<<"$polynomial_measurement_check" >/dev/null
+for failure in wrong-evidence early-cutoff; do
+  if [[ $failure == wrong-evidence ]]; then
+    invalid_check=$(jq -c --arg design_id "$polynomial_design_id" \
+      '.evidence_id = $design_id' <<<"$polynomial_measurement_check_request")
+    expected=POLYNOMIAL_MEASUREMENT_CHAIN_EVIDENCE_INVALID
+  else
+    invalid_check=$(jq -c '.recorded_at = "2000-01-01T00:00:00Z"' \
+      <<<"$polynomial_measurement_check_request")
+    expected=POLYNOMIAL_MEASUREMENT_CHAIN_BINDING_OR_ORDER_INVALID
+  fi
+  if output=$("$statewright" internet-improvement "$invalid_check" 2>&1); then
+    printf 'invalid polynomial measurement chain succeeded: %s\n' "$failure" >&2
+    exit 1
+  fi
+  jq -e --arg expected "$expected" '.ok == false and (tostring | contains($expected))' \
+    <<<"$output" >/dev/null
+done
+polynomial_after_chain_checks=$(run internet-improvement "$polynomial_readiness_request")
+jq -e --argjson before "$polynomial_after_collection_replay" \
+  '.result.event_head == $before.result.event_head' <<<"$polynomial_after_chain_checks" >/dev/null
+polynomial_check=$(run internet-improvement "$(jq -cn --arg workspace "$polynomial_root" \
+  --arg protocol_id "$polynomial_protocol_id" --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{
+    workspace: $workspace, action: "protocol-check", protocol_id: $protocol_id,
+    recorded_at: $at}')")
+jq -e '.result.status == "PROTOCOL_BLOCKED" and .result.admission == false and
+  (.result.blocker | contains("SUPPORTED_GROUNDED_PROTOCOL_REQUIRED") | not)' \
+  <<<"$polynomial_check" >/dev/null
+polynomial_final_candidates=$(run internet-candidate "$(jq -cn --arg workspace "$polynomial_root" \
+  '{workspace: $workspace, action: "list"}')")
+jq -e '(.result.candidates | length) == 1 and
+  .result.candidates[0].payload.status == "VALIDATION_READY" and
+  (.result.candidates[0].payload.experiment_qualification_ids | length) == 0 and
+  (.result.candidates[0].payload.probation_admission_ids | length) == 0' \
+  <<<"$polynomial_final_candidates" >/dev/null
+
+printf 'StateWright internet CLI smoke passed: legacy lifecycle, 21 polynomial rejection checks, synthetic source and measurement replay, qualification still blocked; no live internet\n'

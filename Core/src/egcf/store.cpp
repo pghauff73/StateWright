@@ -1225,6 +1225,60 @@ EgcfStore::list(std::optional<std::string> object_type) {
   return result;
 }
 
+std::vector<StoredObject> EgcfStore::list_internet_records() {
+  impl_->ensure_projection();
+  auto database = open_database(impl_->projection_path);
+  auto statement = prepare(database.get(),
+      "SELECT object_id, object_type, digest, payload_json, path FROM objects "
+      "WHERE object_type GLOB 'internet-*' OR object_type='brain-feed-batch' "
+      "ORDER BY object_type, object_id");
+  std::vector<StoredObject> result;
+  int status;
+  while ((status = sqlite3_step(statement.get())) == SQLITE_ROW)
+    result.push_back(row_object(statement.get()));
+  if (status != SQLITE_DONE) store_error("cannot list internet records");
+  return result;
+}
+
+std::vector<StoredObject>
+EgcfStore::pending_improvement_records(std::string_view worker_id) {
+  impl_->ensure_projection();
+  auto database = open_database(impl_->projection_path);
+  auto statement = prepare(database.get(), R"SQL(
+    WITH pending AS (
+      SELECT r.object_id, json_extract(r.payload_json, '$.plan_id') AS plan_id
+      FROM objects r
+      WHERE r.object_type='internet-improvement-run'
+        AND (?='' OR json_extract(r.payload_json, '$.worker_id')=?)
+        AND NOT EXISTS (
+          SELECT 1 FROM objects e
+          WHERE e.object_type='internet-improvement-run-event'
+            AND json_extract(e.payload_json, '$.run_id')=r.object_id
+            AND json_extract(e.payload_json, '$.event_type') IN ('COMPLETED','ABANDONED'))
+        AND NOT EXISTS (
+          SELECT 1 FROM objects s
+          WHERE s.object_type='internet-improvement-run'
+            AND json_extract(s.payload_json, '$.resume_of_run_id')=r.object_id)
+    )
+    SELECT object_id, object_type, digest, payload_json, path FROM objects
+    WHERE (object_type='internet-improvement-run' AND object_id IN (SELECT object_id FROM pending))
+       OR (object_type='internet-improvement-plan' AND object_id IN (SELECT plan_id FROM pending))
+       OR (object_type IN ('internet-improvement-run-event',
+                          'internet-improvement-action-lease',
+                          'internet-improvement-action-receipt')
+           AND json_extract(payload_json, '$.run_id') IN (SELECT object_id FROM pending))
+    ORDER BY object_type, object_id
+  )SQL");
+  bind_text(statement.get(), 1, worker_id);
+  bind_text(statement.get(), 2, worker_id);
+  std::vector<StoredObject> result;
+  int status;
+  while ((status = sqlite3_step(statement.get())) == SQLITE_ROW)
+    result.push_back(row_object(statement.get()));
+  if (status != SQLITE_DONE) store_error("cannot query pending improvement records");
+  return result;
+}
+
 std::vector<StoredObject>
 EgcfStore::search_text(std::string_view query,
                        std::optional<std::string> object_type,

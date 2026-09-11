@@ -99,7 +99,7 @@ public:
   [[nodiscard]] BrainFeedBatchReceipt feed(
       std::string batch_id, std::string source_signature,
       std::string source_label, std::vector<BrainFeedItem> items,
-      bool strict = false);
+      bool strict = false, bool resume_exact = false);
   [[nodiscard]] std::vector<BrainFeedDisposition> dispositions();
   [[nodiscard]] std::vector<BrainFeedBatchReceipt> batches();
 

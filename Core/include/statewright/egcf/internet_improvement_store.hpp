@@ -64,6 +64,8 @@ public:
   [[nodiscard]] std::string
   register_algorithm_candidate(const InternetAlgorithmCandidate &candidate);
   [[nodiscard]] std::string
+  register_context_resolution(const InternetContextResolution &resolution);
+  [[nodiscard]] std::string
   register_reasoning_analysis(const InternetReasoningAnalysis &analysis);
   [[nodiscard]] std::string register_experiment_qualification(
       const InternetExperimentQualification &qualification);

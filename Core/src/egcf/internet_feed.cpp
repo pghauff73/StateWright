@@ -5,6 +5,9 @@
 #include "statewright/contracts/typed_id.hpp"
 #include "statewright/egcf/internet_experiment.hpp"
 #include "statewright/egcf/exact_affine_expression.hpp"
+#include "statewright/egcf/grounded_experiment.hpp"
+#include "statewright/egcf/internet_polynomial_translation.hpp"
+#include "statewright/egcf/internet_polynomial_candidate.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -172,6 +175,17 @@ translate_algorithm(const sources::InternetSourceFragment &fragment) {
         {"reference_url", "https://www.w3.org/TR/2024/CRD-css-values-3-20240322/#absolute-lengths"},
         {"slope", factor}, {"bias", "0"},
         {"scope", "Exact numeric CSS unit conversion only; not device pixels, physical screen measurement, or property range validation"}};
+    return result;
+  }
+  if (const auto polynomial = translate_internet_polynomial_fragment(fragment)) {
+    result.name = polynomial->name;
+    result.inputs = polynomial->inputs;
+    result.outputs = polynomial->outputs;
+    result.saa_ir = polynomial->saa_ir;
+    result.invariants = polynomial->invariants;
+    result.termination = polynomial->termination;
+    result.provenance = polynomial->provenance;
+    result.units = polynomial->units;
     return result;
   }
   std::string field_text = fragment.text;
@@ -397,6 +411,12 @@ std::vector<std::string> candidate_ids(const contracts::Json &candidates) {
 void verify_internet_candidate_translation(
     const InternetAlgorithmCandidate &candidate,
     const sources::InternetSourceFragment &fragment) {
+  if (candidate.applicability.value("translation", contracts::Json::object())
+          .value("translator_version", std::string{}) ==
+      "fungrim-chebyshev-quadratic-candidate-v1") {
+    verify_fungrim_quadratic_candidate_translation(candidate, fragment);
+    return;
+  }
   const auto translation = translate_algorithm(fragment);
   if (candidate.source_fragment_id != fragment.object_id() ||
       candidate.snapshot_id != fragment.snapshot_id ||
@@ -409,7 +429,9 @@ void verify_internet_candidate_translation(
       ((translation.provenance.value("translator_version", std::string{}) ==
            "css-absolute-length-in-px-v1" ||
         translation.provenance.value("translator_version", std::string{}) ==
-           "css-absolute-length-to-px-v2") && candidate.units != translation.units) ||
+           "css-absolute-length-to-px-v2" ||
+        translation.provenance.value("translator_version", std::string{}) ==
+           "exact-polynomial-source-v1") && candidate.units != translation.units) ||
       candidate.applicability.value("translation", contracts::Json::object()) !=
           translation.provenance) {
     feed_error(
@@ -423,8 +445,10 @@ InternetFeedCoordinator::InternetFeedCoordinator(EgcfStore &store)
 
 InternetFeedResult InternetFeedCoordinator::process(
     const sources::InternetPolicyAssessment &assessment_value,
-    const sources::InternetExtractionResult &extraction,
-    std::string source_label, bool strict) {
+    const sources::InternetExtractionResult &extraction_value,
+    std::string source_label, bool strict,
+    std::size_t maximum_fragments_per_step) {
+  auto extraction = extraction_value;
   const auto assessment =
       sources::canonical_policy_assessment(assessment_value);
   if (!assessment.admissible() ||
@@ -436,6 +460,36 @@ InternetFeedResult InternetFeedCoordinator::process(
   if (extraction.fragments.size() > maximum_brain_feed_items / 2U) {
     feed_error("internet extraction exceeds bounded brain-feed expansion");
   }
+  InternetFeedResult result;
+  result.total_fragments = extraction.fragments.size();
+  std::vector<StoredObject> progress_records;
+  if (maximum_fragments_per_step != 0) {
+    for (const auto type : {"brain-feed-batch", "internet-retrieval-receipt",
+                            "internet-algorithm-candidate"}) {
+      auto records = store_.list(type);
+      progress_records.insert(progress_records.end(), records.begin(), records.end());
+    }
+    for (const auto &fragment : extraction.fragments)
+      progress_records.push_back({.object_id = fragment.object_id(),
+          .object_type = "internet-source-fragment", .digest = {},
+          .payload = sources::to_json(fragment), .relative_path = {}});
+    std::vector<std::string> completed;
+    if (const auto outputs = internet_feed_completion_outputs(
+            extraction.receipt, progress_records, &completed)) {
+      result.completion_output_ids = *outputs;
+      auto material = to_json(result);
+      material.erase("result_signature");
+      result.result_signature = contracts::sha256_json(material);
+      return result;
+    }
+    const std::set<std::string> done(completed.begin(), completed.end());
+    std::erase_if(extraction.fragments, [&](const auto &fragment) {
+      return done.contains(fragment.object_id());
+    });
+    if (extraction.fragments.size() > maximum_fragments_per_step)
+      extraction.fragments.resize(maximum_fragments_per_step);
+  }
+  result.processed_fragments = extraction.fragments.size();
 
   std::vector<BrainFeedItem> items;
   std::map<std::string, std::string> algorithm_item_by_fragment;
@@ -472,13 +526,12 @@ InternetFeedResult InternetFeedCoordinator::process(
 
   const auto snapshot_parts =
       contracts::parse_typed_id(extraction.receipt.snapshot_id);
-  InternetFeedResult result;
   // Reuse the original durable dispositions. Refeeding an already staged item
   // marks it duplicate and would change novelty after a crash/restart.
   bool batch_found = false;
   for (const auto &batch : brain_feed_.batches()) {
     if (batch.source_signature != snapshot_parts.digest ||
-        batch.dispositions.size() != items.size()) {
+        batch.dispositions.size() < items.size()) {
       continue;
     }
     const bool matches = std::ranges::all_of(items, [&](const auto &item) {
@@ -497,7 +550,7 @@ InternetFeedResult InternetFeedCoordinator::process(
     result.brain_feed_batch =
         brain_feed_.feed("internet-" + snapshot_parts.digest.substr(0U, 16U),
                          snapshot_parts.digest, std::move(source_label),
-                         std::move(items), strict);
+                         std::move(items), strict, true);
   }
   std::map<std::string, BrainFeedDisposition> dispositions;
   for (const auto &disposition : result.brain_feed_batch.dispositions) {
@@ -561,18 +614,16 @@ InternetFeedResult InternetFeedCoordinator::process(
       retrieval.source_policy_assessment_id = assessment.object_id();
       retrieval.related_match_ids = candidate_ids(search.candidates);
       if (translation.unresolved.empty()) {
-        CanonicalAlgorithmQuery exact_query;
-        exact_query.source_structural_hash =
-            saa::canonicalize_mapping(translation.saa_ir).structural_hash;
-        exact_query.semantic_meanings = {internet_exact_scalar_meaning(
-            internet_exact_scalar_program(translation.saa_ir),
-            translation.inputs.front(), translation.outputs.front())};
-        exact_query.input_count = 1;
-        exact_query.output_count = 1;
-        exact_query.limit = 20U;
-        const auto exact = canonical_algorithms_.search(std::move(exact_query));
-        retrieval.exact_match_ids = candidate_ids(exact.candidates);
-        retrieval.canonical_search["exact_structural_search"] = to_json(exact);
+        // Feed and qualification must agree on catalogue presence, including
+        // the full polynomial representation rather than only linear forms.
+        InternetAlgorithmCandidate lookup_candidate;
+        lookup_candidate.proposed_saa_ir = translation.saa_ir;
+        lookup_candidate.semantic_inputs = translation.inputs;
+        lookup_candidate.semantic_outputs = translation.outputs;
+        lookup_candidate.units = translation.units;
+        const auto exact = exact_capability_search(store_, lookup_candidate);
+        retrieval.exact_match_ids = candidate_ids(exact.at("candidates"));
+        retrieval.canonical_search["exact_structural_search"] = exact;
       }
       for (const auto &entry : search.excluded) {
         retrieval.exclusions.push_back(
@@ -657,6 +708,22 @@ InternetFeedResult InternetFeedCoordinator::process(
     result.retrieval_receipts.push_back(std::move(retrieval));
     result.candidates.push_back(std::move(candidate));
   }
+  if (maximum_fragments_per_step != 0) {
+    progress_records.push_back({.object_id = result.brain_feed_batch.object_id(),
+        .object_type = "brain-feed-batch", .digest = {},
+        .payload = to_json(result.brain_feed_batch), .relative_path = {}});
+    for (const auto &receipt : result.retrieval_receipts)
+      progress_records.push_back({.object_id = receipt.object_id(),
+          .object_type = "internet-retrieval-receipt", .digest = {},
+          .payload = to_json(receipt), .relative_path = {}});
+    for (const auto &candidate : result.candidates)
+      progress_records.push_back({.object_id = candidate.object_id(),
+          .object_type = "internet-algorithm-candidate", .digest = {},
+          .payload = to_json(candidate), .relative_path = {}});
+    const auto outputs = internet_feed_completion_outputs(extraction_value.receipt, progress_records);
+    result.complete = outputs.has_value();
+    if (outputs) result.completion_output_ids = *outputs;
+  }
   auto material = to_json(result);
   material.erase("result_signature");
   result.result_signature = contracts::sha256_json(material);
@@ -665,22 +732,28 @@ InternetFeedResult InternetFeedCoordinator::process(
 
 std::optional<std::vector<std::string>> internet_feed_completion_outputs(
     const sources::InternetExtractionReceipt &extraction,
-    const std::vector<StoredObject> &records) {
+    const std::vector<StoredObject> &records,
+    std::vector<std::string> *completed_fragments) {
+  if (completed_fragments) completed_fragments->clear();
   if (extraction.fragment_ids.empty()) {
     return std::vector<std::string>{};
   }
   const auto snapshot = contracts::parse_typed_id(extraction.snapshot_id);
-  std::map<std::string, StoredObject> by_id;
-  std::vector<BrainFeedBatchReceipt> batches;
+  // The director asks about many extractions against the same store snapshot.
+  // Do not copy every payload or re-parse unrelated candidates for each one.
+  std::map<std::string, const StoredObject *> by_id;
+  std::vector<std::pair<std::string, BrainFeedBatchReceipt>> batches;
   std::vector<InternetAlgorithmCandidate> candidates;
   for (const auto &record : records) {
-    by_id.emplace(record.object_id, record);
-    if (record.object_type == "brain-feed-batch") {
+    by_id.emplace(record.object_id, &record);
+    if (record.object_type == "brain-feed-batch" &&
+        record.payload.value("source_signature", std::string{}) == snapshot.digest) {
       const auto batch = brain_feed_batch_from_json(record.payload);
       if (batch.source_signature == snapshot.digest) {
-        batches.push_back(batch);
+        batches.emplace_back(batch.object_id(), batch);
       }
-    } else if (record.object_type == "internet-algorithm-candidate") {
+    } else if (record.object_type == "internet-algorithm-candidate" &&
+               record.payload.value("snapshot_id", std::string{}) == extraction.snapshot_id) {
       const auto candidate =
           internet_algorithm_candidate_from_json(record.payload);
       if (candidate.snapshot_id == extraction.snapshot_id &&
@@ -691,18 +764,18 @@ std::optional<std::vector<std::string>> internet_feed_completion_outputs(
       }
     }
   }
-  for (const auto &batch : batches) {
-    std::vector<std::string> outputs = {batch.object_id()};
-    bool complete = true;
-    for (const auto &fragment_id : extraction.fragment_ids) {
+  std::vector<std::string> outputs;
+  bool complete = true;
+  for (const auto &fragment_id : extraction.fragment_ids) {
+    bool fragment_complete = false;
+    for (const auto &[batch_id, batch] : batches) {
       const auto stored = by_id.find(fragment_id);
       if (stored == by_id.end() ||
-          stored->second.object_type != "internet-source-fragment") {
-        complete = false;
+          stored->second->object_type != "internet-source-fragment") {
         break;
       }
       const auto fragment =
-          sources::internet_source_fragment_from_json(stored->second.payload);
+          sources::internet_source_fragment_from_json(stored->second->payload);
       const auto source_item =
           "internet-source-" +
           contracts::parse_typed_id(fragment_id).digest.substr(0U, 16U);
@@ -710,11 +783,12 @@ std::optional<std::vector<std::string>> internet_feed_completion_outputs(
             return entry.item_id == source_item &&
                    entry.kind == "SOURCE_DOCUMENT";
           })) {
-        complete = false;
-        break;
+        continue;
       }
       if (fragment.fragment_kind != "ALGORITHM_DESCRIPTION") {
-        continue;
+        outputs.push_back(batch_id);
+        fragment_complete = true;
+        break;
       }
       bool candidate_found = false;
       for (const auto &candidate : candidates) {
@@ -723,14 +797,14 @@ std::optional<std::vector<std::string>> internet_feed_completion_outputs(
         }
         const auto receipt = by_id.find(candidate.retrieval_receipt_id);
         if (receipt == by_id.end() ||
-            receipt->second.object_type != "internet-retrieval-receipt") {
+            receipt->second->object_type != "internet-retrieval-receipt") {
           continue;
         }
         const auto retrieval = internet_knowledge_search_receipt_from_json(
-            receipt->second.payload);
+            receipt->second->payload);
         if (retrieval.source_fragment_id == fragment_id &&
             retrieval.snapshot_id == extraction.snapshot_id &&
-            retrieval.brain_feed_batch_id == batch.object_id() &&
+            retrieval.brain_feed_batch_id == batch_id &&
             retrieval.search_complete) {
           outputs.push_back(receipt->first);
           outputs.push_back(candidate.object_id());
@@ -738,15 +812,19 @@ std::optional<std::vector<std::string>> internet_feed_completion_outputs(
           break;
         }
       }
-      if (!candidate_found) {
-        complete = false;
+      if (candidate_found) {
+        outputs.push_back(batch_id);
+        fragment_complete = true;
         break;
       }
     }
-    if (complete) {
-      std::ranges::sort(outputs);
-      return outputs;
-    }
+    if (fragment_complete && completed_fragments) completed_fragments->push_back(fragment_id);
+    complete = complete && fragment_complete;
+  }
+  if (complete) {
+    std::ranges::sort(outputs);
+    outputs.erase(std::unique(outputs.begin(), outputs.end()), outputs.end());
+    return outputs;
   }
   return std::nullopt;
 }
@@ -760,7 +838,12 @@ contracts::Json to_json(const InternetFeedResult &value) {
   for (const auto &candidate : value.candidates) {
     candidates.push_back(to_json(candidate));
   }
-  return {{"brain_feed_batch", to_json(value.brain_feed_batch)},
+  return {{"complete", value.complete},
+          {"processed_fragments", value.processed_fragments},
+          {"total_fragments", value.total_fragments},
+          {"completion_output_ids", value.completion_output_ids},
+          {"brain_feed_batch", value.brain_feed_batch.batch_signature.empty()
+              ? contracts::Json(nullptr) : to_json(value.brain_feed_batch)},
           {"candidates", std::move(candidates)},
           {"result_signature", value.result_signature},
           {"retrieval_receipts", std::move(retrieval)}};

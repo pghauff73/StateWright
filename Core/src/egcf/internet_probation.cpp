@@ -4,6 +4,10 @@
 #include "statewright/common/error.hpp"
 #include "statewright/contracts/hash.hpp"
 #include "statewright/egcf/internet_experiment.hpp"
+#include "statewright/egcf/internet_polynomial_qualification_binding.hpp"
+#include "statewright/egcf/internet_polynomial_store.hpp"
+#include "statewright/egcf/internet_polynomial_promotion.hpp"
+#include "statewright/egcf/internet_polynomial_probation.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -80,6 +84,10 @@ build_canonical_form(const InternetAlgorithmCandidate &candidate,
   }
   const auto spec = saa::structure_from_mapping(candidate.proposed_saa_ir);
   const auto program = internet_exact_scalar_program(candidate.proposed_saa_ir);
+  if (program.polynomial) {
+    // Do not silently turn a nonlinear program into a linear transfer model.
+    probation_error("POLYNOMIAL_NONLINEAR_CANONICAL_FORM_REQUIRED");
+  }
   if (program.slope == 0) {
     probation_error("probationary canonical admission requires a nonconstant "
                     "exact scalar map");
@@ -299,24 +307,61 @@ InternetProbationController::admit(const InternetAlgorithmCandidate &candidate,
       only_id(canonical_candidate.experiment_qualification_ids,
               "probation admission experiment");
   const auto qualification = store_.get(qualification_id);
-  auto bundle = build_canonical_form(canonical_candidate, qualification);
-  const auto canonical_admission = canonical_.admit(
-      bundle.form, bundle.issues, bundle.candidates, bundle.resolutions);
+  if (internet_exact_scalar_program(canonical_candidate.proposed_saa_ir).polynomial) {
+    verify_internet_polynomial_promotion_binding(
+        store_, canonical_candidate, assessment_id);
+    verify_internet_polynomial_qualification_binding(
+        store_, canonical_candidate, qualification_id);
+    const auto form_id = only_id(canonical_candidate.polynomial_form_ids,
+                                "polynomial qualification checkpoint");
+    const auto checkpoint = load_qualified_internet_polynomial_form(store_, form_id);
+    const auto expected_form = make_internet_polynomial_form(
+        canonical_candidate.proposed_saa_ir,
+        canonical_candidate.semantic_inputs.front(),
+        canonical_candidate.semantic_outputs.front());
+    if (checkpoint.at("qualification_id").get<std::string>() != qualification_id ||
+        checkpoint.at("form") != expected_form) {
+      probation_error("POLYNOMIAL_PROBATION_CHECKPOINT_BINDING_MISMATCH");
+    }
+  }
+  CanonicalAdmissionResult canonical_admission{};
+  std::optional<InternetPolynomialCanonicalAdmission> polynomial_admission;
+  std::string canonical_id;
+  std::string canonical_source_id;
+  int generation = 0;
+  if (internet_exact_scalar_program(canonical_candidate.proposed_saa_ir).polynomial) {
+    polynomial_admission = admit_internet_polynomial_canonical(
+        store_, candidate_id, current_timestamp);
+    if (polynomial_admission->native_generation >
+        static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+      probation_error("POLYNOMIAL_PROBATION_GENERATION_EXHAUSTED");
+    }
+    canonical_id = polynomial_admission->canonical_id;
+    canonical_source_id = polynomial_admission->qualified_form_id;
+    generation = static_cast<int>(polynomial_admission->native_generation);
+  } else {
+    auto bundle = build_canonical_form(canonical_candidate, qualification);
+    canonical_admission = canonical_.admit(
+        bundle.form, bundle.issues, bundle.candidates, bundle.resolutions);
+    canonical_id = canonical_admission.canonical_id;
+    canonical_source_id = canonical_admission.source_id;
+    generation = canonical_admission.store_generation;
+  }
   const auto plan = saa::make_probation_plan(
       assessment, policy_id, assessment_id, candidate_id,
       trimmed(std::move(previous_preferred_canonical_ref)));
   const std::string baseline_ref =
       qualification.payload.at("baseline_ref").get<std::string>();
   const std::string admission_id = internet_.register_probation_admission(
-      plan, canonical_admission.canonical_id, canonical_admission.source_id,
-      baseline_ref, canonical_admission.store_generation,
+      plan, canonical_id, canonical_source_id,
+      baseline_ref, generation,
       "PROBATIONARY_CANONICAL");
 
   auto updated_candidate = canonical_candidate;
   updated_candidate.status = "PROBATIONARY_CANONICAL";
   updated_candidate.probation_admission_ids.push_back(admission_id);
   updated_candidate.canonical_algorithm_ids.push_back(
-      canonical_admission.canonical_id);
+      canonical_id);
   updated_candidate =
       canonical_internet_algorithm_candidate(std::move(updated_candidate));
   const std::string updated_candidate_id =
@@ -329,7 +374,8 @@ InternetProbationController::admit(const InternetAlgorithmCandidate &candidate,
       .updated_candidate = std::move(updated_candidate),
       .admission_id = admission_id,
       .updated_candidate_id = updated_candidate_id,
-      .result_signature = {}};
+      .result_signature = {},
+      .polynomial_admission = std::move(polynomial_admission)};
   auto material = to_json(result);
   material.erase("result_signature");
   result.result_signature = contracts::sha256_json(material);
@@ -354,6 +400,10 @@ InternetProbationController::select(const InternetAlgorithmCandidate &candidate,
   const auto plan = plan_from_admission(admission);
   const std::string baseline_ref =
       admission.payload.at("baseline_ref").get<std::string>();
+  if (internet_exact_scalar_program(canonical_candidate.proposed_saa_ir).polynomial) {
+    static_cast<void>(verify_internet_polynomial_probation_binding(
+        store_, canonical_candidate, admission));
+  }
   query_signature = trimmed(std::move(query_signature));
   bool candidate_selected = false;
   std::string explanation;
@@ -399,6 +449,26 @@ InternetProbationController::select(const InternetAlgorithmCandidate &candidate,
   return result;
 }
 
+std::optional<mpq_class> InternetProbationController::execute_selected_polynomial(
+    const InternetAlgorithmCandidate &candidate, std::string query_signature,
+    const mpq_class &input, std::string current_timestamp) {
+  const auto program = internet_exact_scalar_program(candidate.proposed_saa_ir);
+  if (!program.polynomial) {
+    probation_error("POLYNOMIAL_EXECUTION_REQUIRES_POLYNOMIAL_CANDIDATE");
+  }
+  const auto selection = select(candidate, std::move(query_signature));
+  if (!selection.candidate_selected) return std::nullopt;
+  const auto freshness = internet_source_freshness(store_, candidate, current_timestamp);
+  const auto admission = store_.get(selection.admission_id);
+  const auto plan = plan_from_admission(admission);
+  const auto policy = store_.get(plan.policy_ref);
+  if (!freshness.admissible || freshness.age_seconds >
+      policy.payload.at("maximum_source_age_seconds").get<int>()) {
+    probation_error("POLYNOMIAL_EXECUTION_REQUIRES_CURRENT_SOURCE");
+  }
+  return internet_execute_exact_polynomial(*program.polynomial, input);
+}
+
 InternetProbationObservationResult InternetProbationController::observe(
     const InternetAlgorithmCandidate &candidate,
     InternetProbationObservationRequest request) {
@@ -417,6 +487,10 @@ InternetProbationObservationResult InternetProbationController::observe(
   const auto plan = plan_from_admission(admission);
   const std::string canonical_algorithm_ref =
       admission.payload.at("canonical_algorithm_ref").get<std::string>();
+  if (internet_exact_scalar_program(canonical_candidate.proposed_saa_ir).polynomial) {
+    static_cast<void>(verify_internet_polynomial_probation_binding(
+        store_, canonical_candidate, admission));
+  }
   const auto freshness = internet_source_freshness(store_, canonical_candidate,
                                                    request.observed_at);
   const auto promotion = store_.get(plan.promotion_assessment_ref);
@@ -528,12 +602,23 @@ InternetProbationObservationResult InternetProbationController::observe(
 }
 
 contracts::Json to_json(const InternetProbationAdmissionResult &value) {
-  return {{"admission_id", value.admission_id},
+  contracts::Json result = {{"admission_id", value.admission_id},
           {"canonical_admission", to_json(value.canonical_admission)},
           {"plan", saa::to_json(value.plan)},
           {"result_signature", value.result_signature},
           {"updated_candidate", to_json(value.updated_candidate)},
           {"updated_candidate_id", value.updated_candidate_id}};
+  if (value.polynomial_admission) {
+    const auto &polynomial = *value.polynomial_admission;
+    result["canonical_admission"] = nullptr;
+    result["polynomial_admission"] = {
+        {"canonical_id", polynomial.canonical_id},
+        {"qualified_form_id", polynomial.qualified_form_id},
+        {"native_generation", polynomial.native_generation},
+        {"generation_basis", "EGCF_OBJECT_COUNT_V1"},
+        {"created", polynomial.created}};
+  }
+  return result;
 }
 
 contracts::Json to_json(const InternetProbationSelection &value) {

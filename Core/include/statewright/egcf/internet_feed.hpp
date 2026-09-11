@@ -15,6 +15,10 @@ inline constexpr std::string_view internet_feed_coordinator_version =
     "statewright-internet-feed-coordinator-v1";
 
 struct InternetFeedResult final {
+  bool complete = true;
+  std::size_t processed_fragments = 0;
+  std::size_t total_fragments = 0;
+  std::vector<std::string> completion_output_ids;
   BrainFeedBatchReceipt brain_feed_batch;
   std::vector<InternetKnowledgeSearchReceipt> retrieval_receipts;
   std::vector<InternetAlgorithmCandidate> candidates;
@@ -28,7 +32,8 @@ public:
   [[nodiscard]] InternetFeedResult
   process(const sources::InternetPolicyAssessment &assessment,
           const sources::InternetExtractionResult &extraction,
-          std::string source_label, bool strict = false);
+          std::string source_label, bool strict = false,
+          std::size_t maximum_fragments_per_step = 0);
 
 private:
   EgcfStore &store_;
@@ -47,6 +52,7 @@ void verify_internet_candidate_translation(
 [[nodiscard]] std::optional<std::vector<std::string>>
 internet_feed_completion_outputs(
     const sources::InternetExtractionReceipt &extraction,
-    const std::vector<StoredObject> &records);
+    const std::vector<StoredObject> &records,
+    std::vector<std::string> *completed_fragments = nullptr);
 
 } // namespace statewright::egcf

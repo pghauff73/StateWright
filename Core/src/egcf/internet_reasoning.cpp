@@ -52,21 +52,14 @@ contracts::Json fallback_interpretation(
 
 std::string bounded_context(
     const std::vector<sources::InternetSourceFragment> &fragments) {
-  if (fragments.empty() || fragments.size() > 16U) {
-    reasoning_error("internet reasoning requires one to sixteen fragments");
-  }
+  const auto blocker = internet_reasoning_context_blocker(fragments);
+  if (!blocker.empty()) reasoning_error(blocker);
   std::string context;
   for (const auto &fragment : fragments) {
-    if (fragment.text.size() > 1024U) {
-      reasoning_error("internet reasoning fragment exceeds context bound");
-    }
     if (!context.empty()) {
       context += "\n---\n";
     }
     context += fragment.fragment_kind + ": " + fragment.text;
-  }
-  if (context.size() > 16U * 1024U) {
-    reasoning_error("internet reasoning context exceeds total bound");
   }
   return context;
 }
@@ -79,6 +72,29 @@ std::string grammar_identity(EgcfStore &store) {
 
 } // namespace
 
+std::string internet_reasoning_context_blocker(
+    const std::vector<sources::InternetSourceFragment> &fragments) {
+  if (fragments.empty() || fragments.size() > internet_reasoning_maximum_fragments)
+    return "REASONING_CONTEXT_CAPACITY_UNSUPPORTED: fragment_count=" +
+        std::to_string(fragments.size()) + "; allowed=1..16; source_preserved=true";
+  std::size_t used = 0;
+  for (std::size_t i = 0; i < fragments.size(); ++i) {
+    const auto &fragment = fragments[i];
+    // Subtract from the remaining budget, avoiding size_t overflow and any
+    // allocation proportional to oversized source text.
+    for (const auto bytes : {i == 0 ? std::size_t{0} : std::size_t{5},
+                            fragment.fragment_kind.size(), std::size_t{2},
+                            fragment.text.size()}) {
+      if (bytes > internet_reasoning_maximum_context_bytes - used)
+        return "REASONING_CONTEXT_CAPACITY_UNSUPPORTED: limit_bytes=16384; fragment_index=" +
+            std::to_string(i) + "; fragment_text_bytes=" + std::to_string(fragment.text.size()) +
+            "; source_preserved=true; algorithm_quality=NOT_ASSESSED";
+      used += bytes;
+    }
+  }
+  return {};
+}
+
 InternetReasoningCoordinator::InternetReasoningCoordinator(EgcfStore &store)
     : store_(store), internet_(store), evidence_(store), ieps_(evidence_),
       proposals_(store, ieps_) {}
@@ -90,6 +106,18 @@ InternetReasoningResult InternetReasoningCoordinator::analyze(
     std::string model_identity) {
   const auto candidate =
       canonical_internet_algorithm_candidate(candidate_value);
+  // Reject unsupported context before producing any store records or invoking
+  // providers. Capacity failure must not look like an algorithm assessment.
+  const auto context = bounded_context(fragments);
+  bool has_candidate_source = false;
+  for (const auto &value : fragments) {
+    const auto fragment = sources::canonical_source_fragment(value);
+    if (fragment.snapshot_id != candidate.snapshot_id)
+      reasoning_error("reasoning fragment does not belong to candidate snapshot");
+    has_candidate_source = has_candidate_source || fragment.object_id() == candidate.source_fragment_id;
+  }
+  if (!has_candidate_source)
+    reasoning_error("REASONING_CANDIDATE_SOURCE_FRAGMENT_MISSING");
   const std::string candidate_id =
       internet_.register_algorithm_candidate(candidate);
   std::vector<std::string> fragment_ids;
@@ -105,7 +133,9 @@ InternetReasoningResult InternetReasoningCoordinator::analyze(
   }
   const contracts::Json request = {
       {"candidate_id", candidate_id},
-      {"context", bounded_context(fragments)},
+      {"context", context},
+      {"context_budget", {{"maximum_bytes", internet_reasoning_maximum_context_bytes},
+                           {"actual_bytes", context.size()}, {"source_truncated", false}}},
       {"objective",
        "Generate competing interpretations, contradictions, counterexamples, "
        "falsifiers, missing evidence, and unresolved assumptions."},

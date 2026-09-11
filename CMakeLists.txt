@@ -252,6 +252,7 @@ add_library(statewright_egcf STATIC
   Core/src/egcf/governance.cpp
   Core/src/egcf/improvement_loop_store.cpp
   Core/src/egcf/internet_experiment.cpp
+  Core/src/egcf/internet_polynomial.cpp
   Core/src/egcf/internet_improvement_director.cpp
   Core/src/egcf/internet_improvement_orchestrator.cpp
   Core/src/egcf/internet_improvement_supervisor.cpp

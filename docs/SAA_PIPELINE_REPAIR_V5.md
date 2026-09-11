@@ -1,3 +1,5 @@
+> Latest update: bounded captured-source resumption is now enabled after two successful supervisor actions and a passing native integrity check. This supersedes the runtime-pause checkpoint below; live polling remains deferred. See SAA_BOUNDED_INGESTION.md for evidence and remaining work.
+
 > Implementation update (2026-09-06): the v5 binaries now build, 85 focused tests (860 assertions) and seven CLI/supervisor smoke tests pass. Earlier unbuilt/unvalidated statements below describe the pre-implementation checkpoint. Grounded protocol details and trust requirements are in SAA_GROUNDED_EXPERIMENT_PROTOCOL_V2.md. The CSS pilot migration is complete; larger-store feeding was stopped for runtime, and recurring rollout remains paused.
 
 # SAA pipeline repair v5

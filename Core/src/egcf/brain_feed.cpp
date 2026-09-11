@@ -672,7 +672,8 @@ BrainFeedDisposition BrainFeedProcessor::process_new(
 
 BrainFeedBatchReceipt BrainFeedProcessor::feed(
     std::string batch_id, std::string source_signature,
-    std::string source_label, std::vector<BrainFeedItem> items, bool strict) {
+    std::string source_label, std::vector<BrainFeedItem> items, bool strict,
+    bool resume_exact) {
   if (items.size() > maximum_brain_feed_items) {
     feed_error("batch item limit exceeded");
   }
@@ -690,6 +691,11 @@ BrainFeedBatchReceipt BrainFeedProcessor::feed(
     exact.emplace(item.item_signature, item);
     content.emplace(item.content_signature, item);
   }
+  std::vector<EgcfRecord> item_records;
+  std::vector<EgcfRecord> disposition_records;
+  for (const auto &item : items)
+    item_records.push_back({.object_type = "brain-feed-item", .payload = to_json(item)});
+  static_cast<void>(store_.register_records(item_records, "saa_brain_feed_item_registered"));
   for (const auto &item : items) {
     std::vector<std::string> missing;
     for (const auto &reference : item.depends_on) {
@@ -703,16 +709,11 @@ BrainFeedBatchReceipt BrainFeedProcessor::feed(
       }
     }
     if (!missing.empty()) {
-      const auto item_ref = store_.register_record(
-          {.object_type = "brain-feed-item", .payload = to_json(item)},
-          "saa_brain_feed_item_registered");
+      const auto item_ref = item.object_id();
       auto disposition = make_brain_feed_disposition(
           item, "QUARANTINED", "brain-feed-quarantine", {item_ref},
           std::move(missing));
-      static_cast<void>(store_.register_record(
-          {.object_type = "brain-feed-disposition",
-           .payload = to_json(disposition)},
-          "saa_brain_feed_disposition_registered"));
+      disposition_records.push_back({.object_type = "brain-feed-disposition", .payload = to_json(disposition)});
       resolved.push_back(disposition);
       pending.erase(item.item_id);
     }
@@ -729,13 +730,11 @@ BrainFeedBatchReceipt BrainFeedProcessor::feed(
         ++iterator;
         continue;
       }
-      const auto item_ref = store_.register_record(
-          {.object_type = "brain-feed-item", .payload = to_json(item)},
-          "saa_brain_feed_item_registered");
+      const auto item_ref = item.object_id();
       BrainFeedDisposition disposition;
       if (const auto exact_match = exact.find(item.item_signature);
           exact_match != exact.end()) {
-        disposition = make_brain_feed_disposition(
+        disposition = resume_exact ? exact_match->second : make_brain_feed_disposition(
             item, "DUPLICATE_EXACT_ITEM", "brain-feed-deduplication",
             exact_match->second.target_refs,
             {"EXACT_ITEM_ALREADY_PROCESSED"},
@@ -757,10 +756,7 @@ BrainFeedBatchReceipt BrainFeedProcessor::feed(
               {exception.what()});
         }
       }
-      static_cast<void>(store_.register_record(
-          {.object_type = "brain-feed-disposition",
-           .payload = to_json(disposition)},
-          "saa_brain_feed_disposition_registered"));
+      disposition_records.push_back({.object_type = "brain-feed-disposition", .payload = to_json(disposition)});
       resolved.push_back(disposition);
       exact.emplace(item.item_signature, disposition);
       content.emplace(item.content_signature, disposition);
@@ -770,16 +766,11 @@ BrainFeedBatchReceipt BrainFeedProcessor::feed(
     if (!progressed) {
       for (const auto &[unused, item] : pending) {
         static_cast<void>(unused);
-        const auto item_ref = store_.register_record(
-            {.object_type = "brain-feed-item", .payload = to_json(item)},
-            "saa_brain_feed_item_registered");
+        const auto item_ref = item.object_id();
         const auto disposition = make_brain_feed_disposition(
             item, "QUARANTINED", "brain-feed-quarantine", {item_ref},
             {"CYCLIC_OR_UNRESOLVED_BATCH_DEPENDENCY"});
-        static_cast<void>(store_.register_record(
-            {.object_type = "brain-feed-disposition",
-             .payload = to_json(disposition)},
-            "saa_brain_feed_disposition_registered"));
+        disposition_records.push_back({.object_type = "brain-feed-disposition", .payload = to_json(disposition)});
         resolved.push_back(disposition);
       }
       pending.clear();
@@ -794,6 +785,7 @@ BrainFeedBatchReceipt BrainFeedProcessor::feed(
     }
     ordered.push_back(*disposition);
   }
+  static_cast<void>(store_.register_records(disposition_records, "saa_brain_feed_disposition_registered"));
   auto receipt = make_brain_feed_batch_receipt(
       std::move(batch_id), std::move(source_signature),
       std::move(source_label), strict, std::move(ordered));

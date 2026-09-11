@@ -1,12 +1,14 @@
 #pragma once
 
 #include "statewright/egcf/internet_improvement_store.hpp"
+#include "statewright/egcf/internet_polynomial.hpp"
 #include "statewright/egcf/knowledge_governance_store.hpp"
 #include "statewright/saa/algorithm_experiment.hpp"
 #include "statewright/saa/algorithm_ir.hpp"
 #include "statewright/saa/experiment_aggregation.hpp"
 
 #include <gmpxx.h>
+#include <optional>
 
 #include <string>
 #include <string_view>
@@ -22,11 +24,16 @@ struct InternetExactScalarProgram final {
   mpq_class slope{0};
   mpq_class bias{0};
   int bounded_steps = 0;
+  // Present only for explicitly versioned polynomial IR. Slope/bias are legacy
+  // affine fields and MUST NOT be used to execute or classify this variant.
+  std::optional<InternetExactPolynomialProgram> polynomial = std::nullopt;
 };
 
-// Closed internal IR adapter: IDENTITY, CONST, or MULTIPLY then ADD.
+// Legacy IDENTITY/CONST/affine, or the separately versioned closed Horner family.
 [[nodiscard]] InternetExactScalarProgram
 internet_exact_scalar_program(const contracts::Json &mapping);
+[[nodiscard]] mpq_class internet_execute_exact_scalar(
+    const InternetExactScalarProgram &program, const mpq_class &input);
 [[nodiscard]] std::string
 internet_exact_scalar_meaning(const InternetExactScalarProgram &program,
                               std::string input, std::string_view output);

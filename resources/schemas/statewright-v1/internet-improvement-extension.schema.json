@@ -1,5 +1,109 @@
 {
   "$defs": {
+    "internet-polynomial-canonical": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {"const": 1},
+        "canonical_version": {"const": "internet-full-polynomial-canonical-v1"},
+        "candidate_id": {"type": "string", "minLength": 1},
+        "qualified_form_id": {"type": "string", "minLength": 1},
+        "promotion_assessment_id": {"type": "string", "minLength": 1},
+        "form": {"type": "object"},
+        "generation_basis": {"const": "EGCF_OBJECT_COUNT_V1"},
+        "native_generation": {"type": "integer", "minimum": 1},
+        "created_at": {"type": "string", "minLength": 1},
+        "probation_required": {"const": true}
+      },
+      "required": ["schema_version", "canonical_version", "candidate_id", "qualified_form_id", "promotion_assessment_id", "form", "generation_basis", "native_generation", "created_at", "probation_required"]
+    },
+    "internet-polynomial-qualified-form": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {"type": "integer", "enum": [1]},
+        "version": {"type": "string", "enum": ["internet-polynomial-qualified-form-v1"]},
+        "candidate_id": {"type": "string"},
+        "qualification_id": {"type": "string"},
+        "snapshot_id": {"type": "string"},
+        "source_fragment_id": {"type": "string"},
+        "source_policy_assessment_id": {"type": "string"},
+        "form": {"type": "object"},
+        "recorded_at": {"type": "string"},
+        "lifecycle_claim": {"type": "string", "enum": ["QUALIFICATION_BOUND_NOT_ADMITTED"]}
+      },
+      "required": ["schema_version", "version", "candidate_id", "qualification_id", "snapshot_id", "source_fragment_id", "source_policy_assessment_id", "form", "recorded_at", "lifecycle_claim"],
+      "type": "object"
+    },
+    "internet-context-resolution": {
+      "additionalProperties": false,
+      "properties": {
+        "bundle_bytes": {"type": "integer", "minimum": 0},
+        "candidate_id": {"type": "string", "minLength": 1},
+        "conflicts": {"items": {"type": "string"}, "type": "array"},
+        "context_signature": {"type": "string"},
+        "dependency_relationships": {"type": "array"},
+        "domain_branch_error_bound_status": {
+          "enum": [
+            "DOMAIN_BRANCH_AND_ERROR_BOUNDS_QUALIFIED",
+            "DOMAIN_BRANCH_AND_ERROR_BOUNDS_NOT_QUALIFIED",
+            "DOMAIN_BRANCH_AND_ERROR_BOUNDS_INSUFFICIENT"
+          ]
+        },
+        "mathematical_context_review_status": {
+          "enum": [
+            "MATHEMATICAL_CONTEXT_REVIEW_PASSED",
+            "MATHEMATICAL_CONTEXT_REVIEW_FAILED",
+            "MATHEMATICAL_CONTEXT_REVIEW_INSUFFICIENT"
+          ]
+        },
+        "missing_items": {"items": {"type": "string"}, "type": "array"},
+        "operation": {"type": "string", "minLength": 1},
+        "reasoning_limit_bytes": {"type": "integer", "minimum": 1},
+        "resolved_items": {"items": {"type": "string"}, "type": "array"},
+        "resolution_signature": {"type": "string"},
+        "resolver_version": {"type": "string", "minLength": 1},
+        "retrieval_receipt_id": {"type": "string", "minLength": 1},
+        "schema_version": {"const": 1},
+        "snapshot_id": {"type": "string", "minLength": 1},
+        "source_bundle": {"type": "array"},
+        "source_fragment_id": {"type": "string", "minLength": 1},
+        "source_hash": {"type": "string", "minLength": 1},
+        "source_policy_assessment_id": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "minLength": 1},
+        "status": {
+          "enum": [
+            "CONTEXT_RESOLUTION_COMPLETE",
+            "CONTEXT_RESOLUTION_INCOMPLETE",
+            "CONTEXT_RESOLUTION_CONTRADICTORY"
+          ]
+        }
+      },
+      "required": [
+        "bundle_bytes",
+        "candidate_id",
+        "conflicts",
+        "context_signature",
+        "dependency_relationships",
+        "domain_branch_error_bound_status",
+        "mathematical_context_review_status",
+        "missing_items",
+        "operation",
+        "reasoning_limit_bytes",
+        "resolved_items",
+        "resolution_signature",
+        "resolver_version",
+        "retrieval_receipt_id",
+        "schema_version",
+        "snapshot_id",
+        "source_bundle",
+        "source_fragment_id",
+        "source_hash",
+        "source_policy_assessment_id",
+        "source_url",
+        "status"
+      ],
+      "type": "object"
+    },
     "internet-algorithm-candidate": {
       "additionalProperties": false,
       "properties": {
@@ -13,6 +117,14 @@
           "items": {
             "type": "string"
           },
+          "type": "array"
+        },
+        "polynomial_form_ids": {
+          "items": {"type": "string"},
+          "type": "array"
+        },
+        "context_resolution_ids": {
+          "items": {"type": "string"},
           "type": "array"
         },
         "claimed_invariants": {
@@ -807,6 +919,12 @@
     "internet-probation-admission": {
       "additionalProperties": false,
       "properties": {
+        "generation_basis": {
+          "const": "EGCF_OBJECT_COUNT_V1"
+        },
+        "canonical_representation": {
+          "const": "internet-full-polynomial-canonical-v1"
+        },
         "admission_signature": {
           "pattern": "^[0-9a-f]{64}$",
           "type": "string"

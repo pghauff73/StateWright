@@ -1,3 +1,4 @@
+#include "statewright/egcf/internet_polynomial_canonical.hpp"
 #include "statewright/egcf/internet_improvement_store.hpp"
 
 #include "statewright/common/error.hpp"
@@ -266,9 +267,14 @@ std::string InternetImprovementStore::register_extraction_receipt(
 
 std::string InternetImprovementStore::register_extraction(
     const sources::InternetExtractionResult &extraction) {
+  std::vector<EgcfRecord> records;
   for (const auto &fragment : extraction.fragments) {
-    static_cast<void>(register_source_fragment(fragment));
+    const auto canonical = sources::canonical_source_fragment(fragment);
+    require_type(canonical.snapshot_id, "internet-source-snapshot");
+    records.push_back({.object_type = "internet-source-fragment",
+                       .payload = sources::to_json(canonical)});
   }
+  static_cast<void>(store_.register_records(records, "internet_source_fragment_registered"));
   return register_extraction_receipt(extraction.receipt);
 }
 
@@ -302,6 +308,20 @@ std::string InternetImprovementStore::register_algorithm_candidate(
   return store_.register_record({.object_type = "internet-algorithm-candidate",
                                  .payload = to_json(canonical)},
                                 "internet_algorithm_candidate_registered");
+}
+
+std::string InternetImprovementStore::register_context_resolution(
+    const InternetContextResolution &resolution) {
+  const auto canonical = canonical_internet_context_resolution(resolution);
+  require_type(canonical.candidate_id, "internet-algorithm-candidate");
+  require_type(canonical.snapshot_id, "internet-source-snapshot");
+  require_type(canonical.source_fragment_id, "internet-source-fragment");
+  require_type(canonical.source_policy_assessment_id,
+               "internet-policy-assessment");
+  require_type(canonical.retrieval_receipt_id, "internet-retrieval-receipt");
+  return store_.register_record({.object_type = "internet-context-resolution",
+                                 .payload = to_json(canonical)},
+                                "internet_context_resolution_registered");
 }
 
 std::string InternetImprovementStore::register_reasoning_analysis(
@@ -398,6 +418,17 @@ std::string InternetImprovementStore::register_probation_admission(
       {"canonical_store_generation", canonical_store_generation},
       {"plan", saa::to_json(canonical_plan)},
       {"schema_version", 1}};
+  if (canonical_algorithm_ref.starts_with("internet-polynomial-canonical:")) {
+    const auto polynomial = read_internet_polynomial_canonical(store_, canonical_algorithm_ref);
+    if (polynomial.at("candidate_id") != canonical_plan.candidate_ref ||
+        polynomial.at("qualified_form_id") != canonical_source_ref ||
+        polynomial.at("native_generation") != canonical_store_generation ||
+        polynomial.at("promotion_assessment_id") != canonical_plan.promotion_assessment_ref) {
+      internet_store_error("POLYNOMIAL_PROBATION_CANONICAL_BINDING_MISMATCH");
+    }
+    payload["generation_basis"] = "EGCF_OBJECT_COUNT_V1";
+    payload["canonical_representation"] = "internet-full-polynomial-canonical-v1";
+  }
   payload["admission_signature"] = contracts::sha256_json(payload);
   return store_.register_record({.object_type = "internet-probation-admission",
                                  .payload = std::move(payload)},

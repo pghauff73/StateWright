@@ -278,8 +278,12 @@ AutonomousPromotionResult AutonomousPromotionController::assess(
     const auto mode = design.at("adoption_mode").get<std::string>();
     grounded_require(std::ranges::find(modes, mode) != modes.end(), "ADOPTION_MODE_NO_LONGER_AUTHORIZED");
     grounded_require(experiment_review_binding(protocol) == design.at("protocol_binding_sha256").get<std::string>(), "GROUNDED_PROTOCOL_BINDING_CHANGED");
-    for (const auto &id : design.at("review_evidence_ids"))
-      verify_experiment_review(store_.get(id.get<std::string>()).payload.at("content"), trust);
+    if (protocol.source_provenance.at("grounded").value("review_mode", std::string{}) == "AUTOMATED_CSS_V1") {
+      validate_automated_css_review(store_, protocol, experiment_review_binding(protocol), trust);
+    } else {
+      for (const auto &id : design.at("review_evidence_ids"))
+        verify_experiment_review(store_.get(id.get<std::string>()).payload.at("content"), trust);
+    }
     if (mode == "NEW_CAPABILITY")
       grounded_require(exact_capability_search(store_, canonical_candidate).at("candidates").empty(),
                        "CAPABILITY_ALREADY_PRESENT_IN_THIS_CATALOG");

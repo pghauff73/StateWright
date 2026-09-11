@@ -5,12 +5,13 @@
 #include "statewright/sources/http_provider.hpp"
 
 #include <string>
+#include <functional>
 #include <string_view>
 
 namespace statewright::egcf {
 
 inline constexpr std::string_view internet_improvement_orchestrator_version =
-    "statewright-internet-improvement-orchestrator-v1";
+    "statewright-internet-improvement-orchestrator-v2";
 
 struct InternetImprovementRunRequest final {
   std::string cycle_key;
@@ -38,11 +39,14 @@ struct InternetImprovementRunResult final {
 
 class InternetImprovementOrchestrator final {
 public:
+  // Maps the caller's logical UTC origin to execution time. Production callers
+  // include store-open time; fixtures may inject a deterministic clock.
+  using Clock = std::function<std::string(std::string_view)>;
   explicit InternetImprovementOrchestrator(
       EgcfStore &store, sources::HttpFetchProvider *fetch_provider = nullptr,
       providers::ReasoningProvider *reasoning_provider = nullptr,
       std::string reasoning_provider_identity = "deterministic-fallback",
-      std::string model_identity = "none");
+      std::string model_identity = "none", Clock clock = {});
 
   [[nodiscard]] InternetImprovementPlan
   plan(const InternetImprovementRunRequest &request);
@@ -67,6 +71,7 @@ private:
   providers::ReasoningProvider *reasoning_provider_;
   std::string reasoning_provider_identity_;
   std::string model_identity_;
+  Clock clock_;
 };
 
 [[nodiscard]] contracts::Json

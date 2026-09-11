@@ -27,8 +27,11 @@ enum class InternetDirectedActionKind {
   admit_probation,
   select_probation_candidate,
   consume_probation_observation,
+  create_probation_observation_input,
   revalidate_source,
-  verify_integrity
+  verify_integrity,
+  collect_polynomial_measurement,
+  compare_polynomial_reference
 };
 
 [[nodiscard]] std::string_view

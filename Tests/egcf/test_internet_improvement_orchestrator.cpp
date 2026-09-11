@@ -92,16 +92,20 @@ public:
 
 } // namespace
 
-TEST_CASE("internet orchestrator persists a no-work run") {
+TEST_CASE("internet orchestrator leaves idle polls out of domain history") {
   using namespace statewright;
   const auto root = temporary_root();
   egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
   egcf::InternetImprovementOrchestrator orchestrator(store);
+  const auto head = store.event_head();
   const auto result = orchestrator.run_once(run_request());
   REQUIRE(result.status == "NO_ELIGIBLE_WORK");
-  REQUIRE(store.get(result.plan_id).object_type == "internet-improvement-plan");
-  REQUIRE(store.get(result.run_id).object_type == "internet-improvement-run");
-  REQUIRE(orchestrator.run_status(result.run_id).at("run_events").size() == 3U);
+  REQUIRE(result.plan_id.empty());
+  REQUIRE(result.run_id.empty());
+  REQUIRE(orchestrator.run_once(run_request_at("2026-09-04T00:00:01Z")).status == "NO_ELIGIBLE_WORK");
+  REQUIRE(store.event_head() == head);
+  REQUIRE(store.list("internet-improvement-run").empty());
+  REQUIRE(orchestrator.run_status({}, "fixture-worker", true).at("runs").empty());
   std::filesystem::remove_all(root);
 }
 
@@ -176,6 +180,7 @@ TEST_CASE("internet orchestrator reconciles a crash after durable scheduling") {
   REQUIRE(pending_status.at("runs").size() == 1U);
   REQUIRE(pending_status.at("run_events").empty());
   REQUIRE(pending_status.at("action_leases").size() == 1U);
+  REQUIRE(orchestrator.run_status({}, "different-worker", true).at("runs").empty());
 
   auto resumed_request = request;
   resumed_request.current_timestamp = "2026-09-04T00:00:30Z";
@@ -429,4 +434,46 @@ TEST_CASE("internet feed resumes every durable prefix of mixed fragments") {
     std::filesystem::remove_all(resumed_root);
   }
   std::filesystem::remove_all(original_root);
+}
+
+TEST_CASE("internet orchestrator measures execution time and rejects expired dispatch") {
+  using namespace statewright;
+  const auto root = temporary_root();
+  egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+  egcf::InternetImprovementStore internet(store);
+  const auto source_policy = sources::canonical_source_policy({});
+  sources::InternetWatch watch;
+  watch.canonical_url = "https://example.com/execution-clock";
+  watch.source_policy_id = internet.register_source_policy(source_policy);
+  watch.source_group = "example.com";
+  watch.accepted_mime_types = source_policy.accepted_mime_types;
+  static_cast<void>(internet.register_watch(sources::canonical_watch(std::move(watch))));
+  bool expired = false;
+  SECTION("execution and completion use the injected clock") {}
+  SECTION("expired work has no side effects") { expired = true; }
+  int calls = 0;
+  egcf::InternetImprovementOrchestrator orchestrator(
+      store, nullptr, nullptr, "deterministic-fallback", "none",
+      [&](std::string_view) {
+        ++calls;
+        return std::string(expired ? "2026-09-04T00:06:00Z"
+            : calls < 4 ? "2026-09-04T00:00:05Z" : "2026-09-04T00:00:09Z");
+      });
+  const auto head = store.event_head();
+  const auto result = orchestrator.run_once(run_request());
+  if (expired) {
+    REQUIRE(result.status == "STALE");
+    REQUIRE(result.diagnostic == "EXECUTION_WINDOW_EXPIRED_BEFORE_DISPATCH");
+    REQUIRE(store.event_head() == head);
+    REQUIRE(internet.list("internet-fetch-job").empty());
+  } else {
+    REQUIRE(result.status == "COMPLETED");
+    const auto receipt = egcf::internet_improvement_action_receipt_from_json(
+        store.get(result.action_receipt_id).payload);
+    REQUIRE(receipt.started_at == "2026-09-04T00:00:05Z");
+    REQUIRE(receipt.completed_at == "2026-09-04T00:00:09Z");
+    REQUIRE(receipt.observed_preconditions.at("current_timestamp") == receipt.started_at);
+    REQUIRE(orchestrator.run_status({}, "fixture-worker", true).at("runs").empty());
+  }
+  std::filesystem::remove_all(root);
 }

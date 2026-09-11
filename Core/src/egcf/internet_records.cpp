@@ -46,6 +46,10 @@ std::string InternetAlgorithmCandidate::object_id() const {
   return contracts::typed_id("internet-algorithm-candidate", to_json(*this));
 }
 
+std::string InternetContextResolution::object_id() const {
+  return contracts::typed_id("internet-context-resolution", to_json(*this));
+}
+
 std::string InternetReasoningAnalysis::object_id() const {
   return contracts::typed_id("internet-reasoning-analysis", to_json(*this));
 }
@@ -164,6 +168,8 @@ canonical_internet_algorithm_candidate(InternetAlgorithmCandidate candidate) {
   canonical_strings(candidate.promotion_decision_ids);
   canonical_strings(candidate.demotion_decision_ids);
   canonical_strings(candidate.canonical_algorithm_ids);
+  canonical_strings(candidate.polynomial_form_ids);
+  canonical_strings(candidate.context_resolution_ids);
   canonical_strings(candidate.unresolved_assumptions);
   candidate.candidate_signature =
       signature_for(candidate, "candidate_signature");
@@ -226,6 +232,10 @@ internet_algorithm_candidate_from_json(const contracts::Json &value) {
           value.value("demotion_decision_ids", std::vector<std::string>{}),
       .canonical_algorithm_ids =
           value.value("canonical_algorithm_ids", std::vector<std::string>{}),
+      .polynomial_form_ids =
+          value.value("polynomial_form_ids", std::vector<std::string>{}),
+      .context_resolution_ids =
+          value.value("context_resolution_ids", std::vector<std::string>{}),
       .unresolved_assumptions =
           value.at("unresolved_assumptions").get<std::vector<std::string>>(),
       .status = value.at("status").get<std::string>(),
@@ -245,6 +255,98 @@ internet_algorithm_candidate_from_json(const contracts::Json &value) {
       canonical_internet_algorithm_candidate(std::move(candidate));
   if (to_json(canonical) != value) {
     record_error("persisted internet algorithm candidate is invalid");
+  }
+  return canonical;
+}
+
+InternetContextResolution
+canonical_internet_context_resolution(InternetContextResolution resolution) {
+  require_nonempty(resolution.candidate_id, "context resolution candidate ID");
+  require_nonempty(resolution.operation, "context resolution operation");
+  require_nonempty(resolution.source_url, "context resolution source URL");
+  require_nonempty(resolution.retrieval_receipt_id,
+                   "context resolution retrieval receipt ID");
+  require_nonempty(resolution.snapshot_id, "context resolution snapshot ID");
+  require_nonempty(resolution.source_fragment_id,
+                   "context resolution source fragment ID");
+  require_nonempty(resolution.source_policy_assessment_id,
+                   "context resolution policy assessment ID");
+  require_nonempty(resolution.source_hash, "context resolution source hash");
+  require_nonempty(resolution.resolver_version,
+                   "context resolution resolver version");
+  require_nonempty(resolution.mathematical_context_review_status,
+                   "context resolution mathematical review status");
+  require_nonempty(resolution.domain_branch_error_bound_status,
+                   "context resolution domain status");
+  require_nonempty(resolution.status, "context resolution status");
+  if (!resolution.source_bundle.is_array() ||
+      !resolution.dependency_relationships.is_array() ||
+      resolution.reasoning_limit_bytes == 0U) {
+    record_error("internet context resolution structured fields are invalid");
+  }
+  static const std::set<std::string> statuses = {
+      "CONTEXT_RESOLUTION_COMPLETE", "CONTEXT_RESOLUTION_INCOMPLETE",
+      "CONTEXT_RESOLUTION_CONTRADICTORY"};
+  static const std::set<std::string> review_statuses = {
+      "MATHEMATICAL_CONTEXT_REVIEW_PASSED",
+      "MATHEMATICAL_CONTEXT_REVIEW_FAILED",
+      "MATHEMATICAL_CONTEXT_REVIEW_INSUFFICIENT"};
+  static const std::set<std::string> domain_statuses = {
+      "DOMAIN_BRANCH_AND_ERROR_BOUNDS_QUALIFIED",
+      "DOMAIN_BRANCH_AND_ERROR_BOUNDS_NOT_QUALIFIED",
+      "DOMAIN_BRANCH_AND_ERROR_BOUNDS_INSUFFICIENT"};
+  if (!statuses.contains(resolution.status) ||
+      !review_statuses.contains(resolution.mathematical_context_review_status) ||
+      !domain_statuses.contains(resolution.domain_branch_error_bound_status)) {
+    record_error("internet context resolution status is invalid");
+  }
+  canonical_strings(resolution.resolved_items);
+  canonical_strings(resolution.missing_items);
+  canonical_strings(resolution.conflicts);
+  resolution.context_signature =
+      contracts::sha256_json(resolution.source_bundle);
+  resolution.resolution_signature =
+      signature_for(resolution, "resolution_signature");
+  return resolution;
+}
+
+InternetContextResolution
+internet_context_resolution_from_json(const contracts::Json &value) {
+  const auto canonical = canonical_internet_context_resolution(
+      InternetContextResolution{
+          .schema_version = value.at("schema_version").get<int>(),
+          .candidate_id = value.at("candidate_id").get<std::string>(),
+          .operation = value.at("operation").get<std::string>(),
+          .source_url = value.at("source_url").get<std::string>(),
+          .retrieval_receipt_id =
+              value.at("retrieval_receipt_id").get<std::string>(),
+          .snapshot_id = value.at("snapshot_id").get<std::string>(),
+          .source_fragment_id =
+              value.at("source_fragment_id").get<std::string>(),
+          .source_policy_assessment_id =
+              value.at("source_policy_assessment_id").get<std::string>(),
+          .source_hash = value.at("source_hash").get<std::string>(),
+          .source_bundle = value.at("source_bundle"),
+          .resolved_items =
+              value.at("resolved_items").get<std::vector<std::string>>(),
+          .missing_items =
+              value.at("missing_items").get<std::vector<std::string>>(),
+          .conflicts = value.at("conflicts").get<std::vector<std::string>>(),
+          .dependency_relationships = value.at("dependency_relationships"),
+          .bundle_bytes = value.at("bundle_bytes").get<std::size_t>(),
+          .reasoning_limit_bytes =
+              value.at("reasoning_limit_bytes").get<std::size_t>(),
+          .resolver_version = value.at("resolver_version").get<std::string>(),
+          .mathematical_context_review_status =
+              value.at("mathematical_context_review_status").get<std::string>(),
+          .domain_branch_error_bound_status =
+              value.at("domain_branch_error_bound_status").get<std::string>(),
+          .status = value.at("status").get<std::string>(),
+          .context_signature = value.at("context_signature").get<std::string>(),
+          .resolution_signature =
+              value.at("resolution_signature").get<std::string>()});
+  if (to_json(canonical) != value) {
+    record_error("persisted internet context resolution is invalid");
   }
   return canonical;
 }
@@ -355,7 +457,7 @@ contracts::Json to_json(const InternetKnowledgeSearchReceipt &value) {
 }
 
 contracts::Json to_json(const InternetAlgorithmCandidate &value) {
-  return {{"applicability", value.applicability},
+  contracts::Json result = {{"applicability", value.applicability},
           {"candidate_signature", value.candidate_signature},
           {"claimed_invariants", value.claimed_invariants},
           {"equivalent_match_ids", value.equivalent_match_ids},
@@ -385,6 +487,42 @@ contracts::Json to_json(const InternetAlgorithmCandidate &value) {
           {"transfer_match_ids", value.transfer_match_ids},
           {"units", value.units},
           {"unresolved_assumptions", value.unresolved_assumptions}};
+  // Omit the new extension for historical/affine records so their signature
+  // material and immutable object IDs are unchanged.
+  if (!value.polynomial_form_ids.empty()) {
+    result["polynomial_form_ids"] = value.polynomial_form_ids;
+  }
+  if (!value.context_resolution_ids.empty()) {
+    result["context_resolution_ids"] = value.context_resolution_ids;
+  }
+  return result;
+}
+
+contracts::Json to_json(const InternetContextResolution &value) {
+  return {{"bundle_bytes", value.bundle_bytes},
+          {"candidate_id", value.candidate_id},
+          {"conflicts", value.conflicts},
+          {"context_signature", value.context_signature},
+          {"dependency_relationships", value.dependency_relationships},
+          {"domain_branch_error_bound_status",
+           value.domain_branch_error_bound_status},
+          {"mathematical_context_review_status",
+           value.mathematical_context_review_status},
+          {"missing_items", value.missing_items},
+          {"operation", value.operation},
+          {"reasoning_limit_bytes", value.reasoning_limit_bytes},
+          {"resolved_items", value.resolved_items},
+          {"resolution_signature", value.resolution_signature},
+          {"resolver_version", value.resolver_version},
+          {"retrieval_receipt_id", value.retrieval_receipt_id},
+          {"schema_version", value.schema_version},
+          {"snapshot_id", value.snapshot_id},
+          {"source_bundle", value.source_bundle},
+          {"source_fragment_id", value.source_fragment_id},
+          {"source_hash", value.source_hash},
+          {"source_policy_assessment_id", value.source_policy_assessment_id},
+          {"source_url", value.source_url},
+          {"status", value.status}};
 }
 
 contracts::Json to_json(const InternetReasoningAnalysis &value) {

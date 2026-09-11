@@ -1,11 +1,14 @@
 #include "statewright/egcf/internet_improvement_director.hpp"
 
 #include "statewright/egcf/internet_records.hpp"
+#include "statewright/sources/extraction.hpp"
 #include "statewright/sources/policy.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
+#include <span>
+#include <string_view>
 
 TEST_CASE("internet improvement director deterministically schedules watches") {
   using namespace statewright;
@@ -240,8 +243,15 @@ TEST_CASE(
     "internet improvement director reasons about quarantined candidates") {
   using namespace statewright;
 
+  const std::string_view source_text =
+      "Identity algorithm; inputs: x; outputs: y; procedure: return the input\n";
+  const auto extraction = sources::extract_internet_snapshot(
+      "fixture-snapshot", "text/plain",
+      std::as_bytes(std::span(source_text.data(), source_text.size())));
+  REQUIRE(extraction.fragments.size() == 1U);
+  const auto &fragment = extraction.fragments.front();
   egcf::InternetAlgorithmCandidate candidate;
-  candidate.source_fragment_id = "fixture-fragment";
+  candidate.source_fragment_id = fragment.object_id();
   candidate.snapshot_id = "fixture-snapshot";
   candidate.source_policy_assessment_id = "fixture-assessment";
   candidate.retrieval_receipt_id = "fixture-retrieval";
@@ -261,6 +271,11 @@ TEST_CASE(
                              .digest = {},
                              .payload = egcf::to_json(candidate),
                              .relative_path = {}}};
+  state.internet_records.push_back({.object_id = fragment.object_id(),
+                                    .object_type = "internet-source-fragment",
+                                    .digest = {},
+                                    .payload = sources::to_json(fragment),
+                                    .relative_path = {}});
 
   egcf::InternetDirectorPolicy policy;
   policy.enable_acquisition = false;
@@ -496,5 +511,90 @@ TEST_CASE(
     REQUIRE(plan.deferred_actions.size() == 1U);
     REQUIRE(plan.deferred_actions.front().blocked_reasons ==
             std::vector<std::string>{"POLICY_ASSESSMENT_UNCHANGED"});
+  }
+}
+
+TEST_CASE("internet improvement director distinguishes completion failure and bounded retry") {
+  using namespace statewright;
+  const std::string_view text = "Identity algorithm; inputs: x; outputs: y; procedure: return the input\n";
+  const auto extraction = sources::extract_internet_snapshot(
+      "fixture-snapshot", "text/plain", std::as_bytes(std::span(text.data(), text.size())));
+  REQUIRE(extraction.fragments.size() == 1U);
+  const auto &fragment = extraction.fragments.front();
+  egcf::InternetAlgorithmCandidate candidate;
+  candidate.source_fragment_id = fragment.object_id();
+  candidate.snapshot_id = fragment.snapshot_id;
+  candidate.source_policy_assessment_id = "fixture-assessment";
+  candidate.retrieval_receipt_id = "fixture-retrieval";
+  candidate.status = "QUARANTINED";
+  candidate = egcf::canonical_internet_algorithm_candidate(std::move(candidate));
+  egcf::InternetImprovementState state;
+  state.event_head = "GENESIS";
+  state.projection_digest = std::string(64U, 'b');
+  state.planned_at = "2026-09-04T00:00:00Z";
+  state.cycle_key = state.planned_at;
+  state.active_candidate_ids = {candidate.object_id()};
+  state.internet_records = {
+      {.object_id=candidate.object_id(), .object_type="internet-algorithm-candidate",
+       .digest={}, .payload=egcf::to_json(candidate), .relative_path={}},
+      {.object_id=fragment.object_id(), .object_type="internet-source-fragment",
+       .digest={}, .payload=sources::to_json(fragment), .relative_path={}}};
+  egcf::InternetDirectorPolicy policy;
+  policy.enable_acquisition = false;
+  policy.action_deadline = "2026-09-04T00:05:00Z";
+  egcf::InternetImprovementDirector director;
+  const auto first = director.plan(state, policy);
+  REQUIRE(first.actions.size() == 1U);
+  auto record = [&](const egcf::InternetDirectedAction &action,
+                    std::string terminal, std::string error) {
+    egcf::InternetImprovementActionReceipt receipt;
+    receipt.action_key = action.action_key;
+    receipt.plan_id = "fixture-plan";
+    receipt.run_id = "fixture-run";
+    receipt.lease_id = "fixture-lease";
+    receipt.executor_version = "fixture-executor";
+    receipt.started_at = state.planned_at;
+    receipt.completed_at = state.planned_at;
+    receipt.terminal_state = std::move(terminal);
+    receipt.error_code = std::move(error);
+    receipt.disposition = receipt.terminal_state == "STALE" ? "STALE" : "EXECUTED";
+    receipt = egcf::canonical_internet_improvement_action_receipt(std::move(receipt));
+    state.internet_records.push_back({.object_id=receipt.object_id(),
+        .object_type="internet-improvement-action-receipt", .digest={},
+        .payload=egcf::to_json(receipt), .relative_path={}});
+  };
+  SECTION("completed actions remain deduplicated") {
+    record(first.actions.front(), "COMPLETED", "");
+    const auto plan = director.plan(state, policy);
+    REQUIRE(plan.actions.empty());
+    REQUIRE(plan.deferred_actions.empty());
+  }
+  SECTION("policy failures remain visible without retry") {
+    record(first.actions.front(), "FAILED", "policy_denied");
+    const auto plan = director.plan(state, policy);
+    REQUIRE(plan.actions.empty());
+    REQUIRE(plan.deferred_actions.size() == 1U);
+    REQUIRE(plan.deferred_actions.front().blocked_reasons.front() == "ACTION_FAILED_NON_RETRYABLE");
+  }
+  SECTION("transient failure retries stop at the ceiling") {
+    auto action = first.actions.front();
+    for (int attempt = 1; attempt <= 2; ++attempt) {
+      record(action, "FAILED", "filesystem_failure");
+      const auto plan = director.plan(state, policy);
+      REQUIRE(plan.actions.size() == 1U);
+      REQUIRE(plan.actions.front().action_key != action.action_key);
+      REQUIRE(plan.actions.front().parameters.at("retry_attempt") == attempt);
+      action = plan.actions.front();
+    }
+    record(action, "FAILED", "filesystem_failure");
+    const auto exhausted = director.plan(state, policy);
+    REQUIRE(exhausted.actions.empty());
+    REQUIRE(exhausted.deferred_actions.front().blocked_reasons.front() == "ACTION_RETRY_LIMIT_REACHED");
+  }
+  SECTION("stale receipts do not masquerade as successful completion") {
+    record(first.actions.front(), "STALE", "STALE_PRECONDITION");
+    const auto plan = director.plan(state, policy);
+    REQUIRE(plan.actions.size() == 1U);
+    REQUIRE(plan.actions.front().parameters.at("retry_attempt") == 1);
   }
 }

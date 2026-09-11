@@ -1,5 +1,6 @@
 #include "statewright/egcf/internet_feed.hpp"
 #include "statewright/egcf/internet_reasoning.hpp"
+#include "statewright/egcf/internet_improvement_director.hpp"
 
 #include "statewright/contracts/hash.hpp"
 #include "statewright/providers/reasoning_provider.hpp"
@@ -112,6 +113,66 @@ PreparedCandidate prepare_candidate(statewright::egcf::EgcfStore &store) {
 }
 
 } // namespace
+
+TEST_CASE("internet reasoning budgets complete sections including framing") {
+  using namespace statewright;
+  sources::InternetSourceFragment fragment;
+  fragment.fragment_kind = "algorithm";
+  fragment.text = std::string(egcf::internet_reasoning_maximum_context_bytes - 11U, 'x');
+  REQUIRE(egcf::internet_reasoning_context_blocker({fragment}).empty());
+  fragment.text += 'x';
+  REQUIRE(egcf::internet_reasoning_context_blocker({fragment}).starts_with("REASONING_CONTEXT_CAPACITY_UNSUPPORTED"));
+  fragment.text = std::string(8180U, 'x');
+  REQUIRE_FALSE(egcf::internet_reasoning_context_blocker({fragment, fragment}).empty());
+  fragment.text = "complete";
+  REQUIRE(egcf::internet_reasoning_context_blocker(std::vector(16U, fragment)).empty());
+  REQUIRE_FALSE(egcf::internet_reasoning_context_blocker(std::vector(17U, fragment)).empty());
+  REQUIRE_FALSE(egcf::internet_reasoning_context_blocker({}).empty());
+}
+
+TEST_CASE("internet reasoning preserves long complete context and defers oversized dispatch") {
+  using namespace statewright;
+  const auto root = temporary_root();
+  egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+  auto prepared = prepare_candidate(store);
+  auto fragment = prepared.fragments.front();
+  fragment.text += std::string(2048U, 'x');
+  fragment = sources::canonical_source_fragment(std::move(fragment));
+  static_cast<void>(egcf::InternetImprovementStore(store).register_source_fragment(fragment));
+  prepared.candidate.source_fragment_id = fragment.object_id();
+  prepared.candidate = egcf::canonical_internet_algorithm_candidate(prepared.candidate);
+  egcf::InternetReasoningCoordinator coordinator(store);
+  const auto result = coordinator.analyze(prepared.candidate, {fragment});
+  REQUIRE(result.analysis.request.at("context") == fragment.fragment_kind + ": " + fragment.text);
+  REQUIRE_FALSE(result.analysis.authoritative);
+
+  fragment.text = std::string(17000U, 'x');
+  fragment = sources::canonical_source_fragment(std::move(fragment));
+  prepared.candidate.source_fragment_id = fragment.object_id();
+  prepared.candidate = egcf::canonical_internet_algorithm_candidate(prepared.candidate);
+  const auto head = store.event_head();
+  REQUIRE_THROWS(coordinator.analyze(prepared.candidate, {fragment}));
+  REQUIRE(store.event_head() == head);
+  egcf::InternetImprovementState state;
+  state.event_head = "GENESIS";
+  state.projection_digest = std::string(64U, 'a');
+  state.planned_at = "2026-09-07T00:00:00Z";
+  state.cycle_key = state.planned_at;
+  state.active_candidate_ids = {prepared.candidate.object_id()};
+  state.internet_records = {
+      {.object_id = prepared.candidate.object_id(), .object_type = "internet-algorithm-candidate",
+       .digest = {}, .payload = egcf::to_json(prepared.candidate), .relative_path = {}},
+      {.object_id = fragment.object_id(), .object_type = "internet-source-fragment",
+       .digest = {}, .payload = sources::to_json(fragment), .relative_path = {}}};
+  egcf::InternetDirectorPolicy policy;
+  policy.require_reasoning = true;
+  policy.action_deadline = "2026-09-07T00:02:00Z";
+  const auto plan = egcf::InternetImprovementDirector{}.plan(state, policy);
+  REQUIRE(plan.actions.empty());
+  REQUIRE(plan.deferred_actions.size() == 1U);
+  REQUIRE(plan.deferred_actions.front().blocked_reasons.front().starts_with("REASONING_CONTEXT_CAPACITY_UNSUPPORTED"));
+  std::filesystem::remove_all(root);
+}
 
 TEST_CASE("internet reasoning falls back deterministically without a provider") {
   using namespace statewright;

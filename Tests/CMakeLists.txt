@@ -85,6 +85,13 @@ add_executable(statewright_contract_tests
   egcf/test_evidence_assurance.cpp
   egcf/test_improvement_loop_store.cpp
   egcf/test_internet_experiment.cpp
+  egcf/test_internet_polynomial.cpp
+  egcf/test_internet_polynomial_fungrim_context.cpp
+  egcf/test_internet_polynomial_bounds.cpp
+  egcf/test_internet_chebyshev_integer_reference.cpp
+  egcf/test_internet_chebyshev_reference_design.cpp
+  egcf/test_internet_chebyshev_comparison_store.cpp
+  egcf/test_internet_reference_oracle.cpp
   egcf/test_internet_improvement_director.cpp
   egcf/test_internet_improvement_orchestrator.cpp
   egcf/test_internet_improvement_supervisor.cpp

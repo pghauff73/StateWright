@@ -17,6 +17,15 @@
 #include "statewright/egcf/internet_improvement_orchestrator.hpp"
 #include "statewright/egcf/internet_improvement_store.hpp"
 #include "statewright/egcf/internet_metrics.hpp"
+#include "statewright/egcf/internet_polynomial_measurement.hpp"
+#include "statewright/egcf/internet_polynomial_fungrim_context.hpp"
+#include "statewright/egcf/internet_polynomial_candidate.hpp"
+#include "statewright/egcf/internet_context_resolution.hpp"
+#include "statewright/egcf/internet_polynomial_bounds.hpp"
+#include "statewright/egcf/internet_chebyshev_reference_design.hpp"
+#include "statewright/egcf/internet_chebyshev_comparison.hpp"
+#include "statewright/egcf/internet_chebyshev_comparison_store.hpp"
+#include "statewright/egcf/internet_polynomial_protocol.hpp"
 #include "statewright/egcf/internet_probation.hpp"
 #include "statewright/egcf/internet_reasoning.hpp"
 #include "statewright/egcf/internet_source_coordinator.hpp"
@@ -39,6 +48,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cstdlib>
 #include <ctime>
 #include <filesystem>
@@ -1410,6 +1420,91 @@ preflight_result(const Json &report, const Json &entry,
 
 [[nodiscard]] Json execute_internet_improvement(const Json &request) {
   const std::string action = request.value("action", std::string("status"));
+  if (action == "automated-css-freeze") {
+    egcf::EgcfStore store(request_root(request), resource_root(request));
+    const auto candidate = candidate_from_store(store, request.at("candidate_id").get<std::string>());
+    const auto at = request.at("recorded_at").get<std::string>();
+    auto protocol = internet_experiment_protocol(request);
+    auto &ground = protocol.source_provenance["grounded"];
+    egcf::grounded_require(protocol.protocol_version == egcf::grounded_experiment_version &&
+        ground.at("candidate_id") == candidate.object_id() &&
+        ground.at("adoption_mode") == "NEW_CAPABILITY",
+        "AUTOMATED_CSS_GROUNDED_NEW_CAPABILITY_PROTOCOL_REQUIRED");
+    ground["review_mode"] = "AUTOMATED_CSS_V1";
+    const auto design = egcf::run_automated_css_experiment(store, candidate, true);
+    egcf::grounded_require(protocol.trial_groups == design.at("trial_groups"),
+                          "AUTOMATED_CSS_FROZEN_GROUPS_MISMATCH");
+    const auto search = egcf::exact_capability_search(store, candidate);
+    egcf::grounded_require(search.at("candidates").empty(), "CAPABILITY_ALREADY_PRESENT_IN_THIS_CATALOG");
+    const Json baseline = {{"kind", "CANONICAL_CATALOG_UNSUPPORTED_BASELINE_V1"},
+        {"candidate_id", candidate.object_id()}, {"workspace", store.workspace_root().string()},
+        {"event_head", store.event_head()}, {"search", search}};
+    protocol.baseline_ref = egcf::register_grounded_evidence(store, candidate, baseline,
+        "capability-baseline", "native-canonical-catalog-query", "catalog-baseline", at);
+    protocol.baseline_saa_ir = Json::object();
+    ground["baseline_rationale"] = "CANONICAL_CATALOG_LOOKUP_ONLY";
+    protocol = egcf::canonical_internet_experiment_protocol(std::move(protocol));
+    const Json content = {{"kind", "AUTOMATED_CSS_FREEZE_V2"}, {"design", design},
+        {"protocol_design", egcf::automated_css_protocol_design(protocol)}};
+    const auto id = egcf::register_grounded_evidence(store, candidate, content,
+        "pre-execution-design-freeze", "native-automated-css-v2", "experiment-design", at);
+    protocol.source_provenance["grounded"]["freeze_evidence_id"] = id;
+    protocol = egcf::canonical_internet_experiment_protocol(std::move(protocol));
+    return {{"status", "EXPERIMENT_DESIGN_FROZEN"}, {"freeze_evidence_id", id},
+        {"protocol", egcf::to_json(protocol)}, {"candidate_executed", false}, {"admission", false}};
+  }
+  if (action == "automated-css-design") {
+    egcf::EgcfStore store(request_root(request), resource_root(request));
+    const auto candidate = candidate_from_store(store, request.at("candidate_id").get<std::string>());
+    return {{"design", egcf::run_automated_css_experiment(store, candidate, true)},
+        {"candidate_executed", false}, {"admission", false}};
+  }
+  if (action == "automated-css-experiment" || action == "automated-css-review-register") {
+    egcf::EgcfStore store(request_root(request), resource_root(request));
+    const auto candidate = candidate_from_store(store, request.at("candidate_id").get<std::string>());
+    const auto at = request.at("recorded_at").get<std::string>();
+    const auto freeze_id = request.at("freeze_evidence_id").get<std::string>();
+    static_cast<void>(egcf::validate_automated_css_freeze(store, candidate, freeze_id));
+    if (action == "automated-css-experiment") {
+      Json experiment;
+      try {
+        experiment = egcf::run_automated_css_experiment(store, candidate);
+      } catch (const std::exception &error) {
+        experiment = {{"passed", false}, {"status", "EXECUTION_ERROR"}, {"diagnostic", error.what()}};
+      }
+      const bool passed = experiment.at("passed").get<bool>();
+      const Json content = {{"kind", "AUTOMATED_CSS_RUN_V2"},
+          {"freeze_evidence_id", freeze_id}, {"experiment", experiment}};
+      const auto id = egcf::register_grounded_evidence(store, candidate, content,
+          "exact-affine-proof-and-two-reference-experiment", "native-automated-css-v2",
+          "css-machine-methods", at, passed);
+      return {{"status", passed ? "EXPERIMENT_EVIDENCE_RECORDED" : "EXPERIMENT_FAILED"},
+          {"evidence_id", id}, {"experiment", experiment}, {"admission", false},
+          {"remaining_requirements", {"MACHINE_REVIEW",
+              "MEASURED_BENCHMARK_AND_INTEGRITY_EVIDENCE", "PROMOTION_POLICY", "REAL_PROBATION_OBSERVATIONS"}}};
+    }
+    const auto experiment = egcf::run_automated_css_experiment(store, candidate);
+    auto protocol = internet_experiment_protocol(request);
+    auto &ground = protocol.source_provenance["grounded"];
+    egcf::grounded_require(ground.at("candidate_id") == candidate.object_id(), "AUTOMATED_CSS_CANDIDATE_MISMATCH");
+    ground["review_mode"] = "AUTOMATED_CSS_V1";
+    ground["freeze_evidence_id"] = freeze_id;
+    ground["experiment_evidence_id"] = request.at("experiment_evidence_id");
+    ground["review_evidence_ids"] = Json::array();
+    protocol = egcf::canonical_internet_experiment_protocol(std::move(protocol));
+    const auto binding = egcf::experiment_review_binding(protocol);
+    const Json content = {{"kind", "AUTOMATED_CSS_REVIEW_V1"},
+        {"protocol_binding_sha256", binding}, {"experiment", experiment}};
+    const auto id = egcf::register_grounded_evidence(store, candidate, content,
+        "replayable-machine-review", "native-automated-css-v1", "css-machine-methods", at);
+    protocol.source_provenance["grounded"]["review_evidence_ids"] = {id};
+    protocol = egcf::canonical_internet_experiment_protocol(std::move(protocol));
+    egcf::validate_automated_css_review(store, protocol, binding, egcf::experiment_trust_policy(store));
+    egcf::InternetImprovementStore internet(store);
+    const auto protocol_id = internet.register_experiment_protocol(protocol);
+    return {{"status", "MACHINE_REVIEW_REGISTERED"}, {"protocol_id", protocol_id},
+        {"review_evidence_id", id}, {"protocol", egcf::to_json(protocol)}, {"admission", false}};
+  }
   if (action == "metrics") {
     egcf::EgcfStore store(request_root(request), resource_root(request));
     return egcf::internet_improvement_metrics(store);
@@ -1445,8 +1540,9 @@ preflight_result(const Json &report, const Json &entry,
     if (action == "protocol-binding")
       return {{"binding_sha256", egcf::experiment_review_binding(protocol)},
               {"note", "Sign this binding only after independent review; it is not an approval."}};
-    egcf::grounded_require(protocol.protocol_version == egcf::grounded_experiment_version,
-                          "GROUNDED_PROTOCOL_V2_REQUIRED");
+    egcf::grounded_require(protocol.protocol_version == egcf::grounded_experiment_version ||
+                          protocol.protocol_version == egcf::internet_polynomial_protocol_version,
+                          "SUPPORTED_GROUNDED_PROTOCOL_REQUIRED");
     auto execution = egcf::to_json(protocol);
     execution["protocol_id"] = protocol.object_id();
     execution["recorded_at"] = request.at("recorded_at");
@@ -1485,10 +1581,11 @@ preflight_result(const Json &report, const Json &entry,
     limits.maximum_fragments = request.value("maximum_fragments", 256U);
     const auto extracted = sources.extract(previous.snapshot_id, limits);
     egcf::InternetFeedCoordinator feed(store);
-    return Json{{"status", "REPROCESSED"}, {"historical_assessment_id", record.object_id()},
+    const auto fed = feed.process(assessment.assessment, extracted.extraction,
+        "versioned-source-reprocessing", true, request.value("maximum_fragments_per_step", 8U));
+    return Json{{"status", fed.complete ? "REPROCESSED" : "IN_PROGRESS"}, {"historical_assessment_id", record.object_id()},
         {"extraction", egcf::to_json(extracted)},
-        {"feed", egcf::to_json(feed.process(assessment.assessment, extracted.extraction,
-                                          "versioned-source-reprocessing", true))}};
+        {"feed", egcf::to_json(fed)}};
   }
   if (action == "feed") {
     egcf::EgcfStore store(request_root(request), resource_root(request));
@@ -1505,7 +1602,7 @@ preflight_result(const Json &report, const Json &entry,
         extraction_from_store(
             store, request.at("extraction_receipt_id").get<std::string>()),
         request.value("source_label", std::string("internet-source")),
-        request.value("strict", true)));
+        request.value("strict", true), request.value("maximum_fragments_per_step", 8U)));
   }
   if (action == "reason") {
     egcf::EgcfStore store(request_root(request), resource_root(request));
@@ -1549,8 +1646,183 @@ preflight_result(const Json &report, const Json &entry,
     forwarded["action"] = action.substr(std::string("probation-").size());
     return execute_internet_probation(forwarded);
   }
+  const auto execution_origin = std::chrono::steady_clock::now();
   egcf::EgcfStore store(request_root(request), resource_root(request));
   egcf::InternetImprovementStore internet(store);
+  if (action == "polynomial-candidate-register" || action == "polynomial-candidate-inspect") {
+    return egcf::register_fungrim_quadratic_candidate(store,
+        request.at("proposal_evidence_id").get<std::string>(),
+        request.at("retrieval_receipt_id").get<std::string>(),
+        action == "polynomial-candidate-inspect");
+  }
+  if (action == "polynomial-context-resolve" ||
+      action == "polynomial-context-resolve-inspect") {
+    return egcf::to_json(egcf::resolve_fungrim_chebyshev_quadratic_candidate_context(
+        store, request.at("candidate_id").get<std::string>(),
+        request.value("reasoning_limit_bytes",
+                      egcf::internet_reasoning_maximum_context_bytes),
+        action == "polynomial-context-resolve-inspect"));
+  }
+  if (action == "polynomial-protocol-freeze") {
+    const auto protocol = internet_experiment_protocol(request);
+    return {{"freeze_evidence_id", egcf::freeze_internet_polynomial_protocol(store, protocol)},
+            {"qualification_claim", "NONE"},
+            {"note", "Attach this ID as source_provenance.grounded.freeze_evidence_id before registration."}};
+  }
+  if (action == "polynomial-context-inspect" || action == "polynomial-translation-preview" ||
+      action == "polynomial-translation-freeze") {
+    const auto fragment_id = request.at("fragment_id").get<std::string>();
+    const auto record = store.get(fragment_id);
+    egcf::grounded_require(record.object_type == "internet-source-fragment",
+                          "POLYNOMIAL_CONTEXT_NATIVE_FRAGMENT_REQUIRED");
+    static_cast<void>(sources::internet_source_fragment_from_json(record.payload));
+    if (action == "polynomial-translation-freeze") {
+      const auto assessment_id = request.at("policy_assessment_id").get<std::string>();
+      const auto assessment_record = store.get(assessment_id);
+      const auto snapshot_id = record.payload.at("snapshot_id").get<std::string>();
+      const auto snapshot = store.get(snapshot_id);
+      egcf::grounded_require(assessment_record.object_type == "internet-policy-assessment" &&
+          snapshot.object_type == "internet-source-snapshot",
+          "POLYNOMIAL_TRANSLATION_NATIVE_SOURCE_BINDING_REQUIRED");
+      const auto assessment = sources::internet_policy_assessment_from_json(assessment_record.payload);
+      egcf::grounded_require(assessment.admissible() && assessment.snapshot_id == snapshot_id,
+                            "POLYNOMIAL_TRANSLATION_ADMISSIBLE_SOURCE_ASSESSMENT_REQUIRED");
+      const auto proposal = egcf::bind_fungrim_quadratic_translation_to_snapshot(record.payload, snapshot.payload);
+      egcf::grounded_require(proposal.has_value(), "POLYNOMIAL_TRANSLATION_SOURCE_BYTES_OR_CONTEXT_INVALID");
+      const auto &notices = record.payload.at("metadata").at("source_review").at("license_notices");
+      egcf::grounded_require(notices.is_array() && !notices.empty(),
+                            "POLYNOMIAL_TRANSLATION_SOURCE_NOTICES_REQUIRED");
+      egcf::EvidenceInput input;
+      input.subject_id = fragment_id;
+      input.category = "POLYNOMIAL_TRANSLATION_PROPOSAL";
+      input.producer = "fungrim-chebyshev-quadratic-horner-proposal-v1";
+      input.method = "SOURCE_BOUND_HORNER_TRANSLATION_PROPOSAL";
+      input.source_snapshot_hash = proposal->at("source_body_sha256").get<std::string>();
+      input.independence_group = "shared-native-polynomial-source-translation-v1";
+      input.limitations = {"Not mathematical review or independent correctness evidence",
+          "No benchmark scores, integrity observations, qualification or acceptance",
+          "Historical source assessment; no renewed live-source fetch permission",
+          "Does not register a candidate or clear historical quarantine"};
+      input.content = {{"kind", "POLYNOMIAL_SOURCE_TRANSLATION_PROPOSAL_V1"},
+          {"fragment_id", fragment_id}, {"snapshot_id", snapshot_id},
+          {"policy_assessment_id", assessment_id}, {"source_notices", notices},
+          {"proposal", *proposal}, {"qualification_claim", "NONE"}};
+      return {{"evidence_id", egcf::EvidenceManager(store).collect(std::move(input))},
+              {"status", "TRANSLATED_PROPOSAL_REVIEW_REQUIRED"},
+              {"qualification_claim", "NONE"}, {"admission", false}};
+    }
+    if (action == "polynomial-translation-preview") {
+      const auto proposal = egcf::preview_fungrim_chebyshev_quadratic_translation(record.payload);
+      return {{"fragment_id", fragment_id},
+              {"proposal", proposal ? *proposal : Json(nullptr)},
+              {"status", proposal ? "TRANSLATED_PROPOSAL_REVIEW_REQUIRED" : "SOURCE_CONTEXT_UNSUPPORTED"},
+              {"qualification_claim", "NONE"}, {"admission", false}};
+    }
+    const auto context = egcf::inspect_fungrim_chebyshev_quadratic_context(record.payload);
+    return {{"fragment_id", fragment_id},
+            {"context", context ? *context : Json(nullptr)},
+            {"status", context ? "SOURCE_CONTEXT_LOCATED_NOT_REVIEWED" : "SOURCE_CONTEXT_UNSUPPORTED"},
+            {"qualification_claim", "NONE"}, {"admission", false}};
+  }
+  if (action == "polynomial-measurement-freeze") {
+    const auto freeze_id = request.at("protocol_freeze_id").get<std::string>();
+    const auto &values = request.at("inputs");
+    const auto &repetitions_value = request.at("repetitions");
+    egcf::grounded_require(!freeze_id.empty() && values.is_array() &&
+        !values.empty() && values.size() <= 256U && repetitions_value.is_number_integer() &&
+        repetitions_value >= 2 && repetitions_value <= 100,
+        "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID");
+    const auto repetitions = repetitions_value.get<std::size_t>();
+    egcf::grounded_require(values.size() * repetitions <= 4096U,
+                          "POLYNOMIAL_MEASUREMENT_DESIGN_BOUNDS_INVALID");
+    std::vector<mpq_class> inputs;
+    inputs.reserve(values.size());
+    for (const auto &value : values) {
+      egcf::grounded_require(value.is_string(), "POLYNOMIAL_RATIONAL_STRING_REQUIRED");
+      const auto rational = value.get<std::string>();
+      egcf::grounded_require(!rational.empty() && rational.size() <= 160U,
+                            "POLYNOMIAL_RATIONAL_STRING_BOUNDS_INVALID");
+      std::size_t index = rational.front() == '-' ? 1U : 0U;
+      const auto numerator_start = index;
+      while (index < rational.size() && rational[index] >= '0' && rational[index] <= '9') ++index;
+      egcf::grounded_require(index > numerator_start, "POLYNOMIAL_RATIONAL_STRING_INVALID");
+      if (index < rational.size() && rational[index] == '/') {
+        const auto denominator_start = ++index;
+        while (index < rational.size() && rational[index] >= '0' && rational[index] <= '9') ++index;
+        egcf::grounded_require(index > denominator_start, "POLYNOMIAL_RATIONAL_STRING_INVALID");
+      }
+      egcf::grounded_require(index == rational.size(), "POLYNOMIAL_RATIONAL_STRING_INVALID");
+      inputs.emplace_back(rational, 10);
+      egcf::grounded_require(inputs.back().get_den() > 0,
+                            "POLYNOMIAL_RATIONAL_DENOMINATOR_INVALID");
+    }
+    return {{"design_id", egcf::freeze_internet_polynomial_measurement(store,
+                request.at("candidate_id").get<std::string>(), inputs, repetitions, freeze_id)},
+            {"qualification_claim", "NONE"}};
+  }
+  if (action == "polynomial-measurement-collect") {
+    return {{"evidence_id", egcf::collect_internet_polynomial_measurement(store,
+                request.at("design_id").get<std::string>())},
+            {"qualification_claim", "NONE"},
+            {"note", "Raw paired measurements are not independent review or qualification."}};
+  }
+  if (action == "polynomial-measurement-check") {
+    const auto evidence_id = request.at("evidence_id").get<std::string>();
+    const auto freeze_id = request.at("protocol_freeze_id").get<std::string>();
+    const auto recorded_at = request.at("recorded_at").get<std::string>();
+    egcf::verify_internet_polynomial_measurement_chain(store, evidence_id, freeze_id, recorded_at);
+    const auto evidence = egcf::evidence_artifact_from_json(store.get(evidence_id).payload);
+    const auto design = egcf::evidence_artifact_from_json(
+        store.get(evidence.content.at("design_id").get<std::string>()).payload);
+    return {{"status", "RAW_MEASUREMENT_CHAIN_VALIDATED"},
+            {"evidence_id", evidence_id}, {"protocol_freeze_id", freeze_id},
+            {"performance", egcf::summarize_internet_polynomial_performance(
+                evidence.content.at("measurement"), design.content)},
+            {"qualification_claim", "NONE"}, {"admission", false},
+            {"note", "Read-only provenance and timing checks; not independent review, benchmark qualification or longitudinal integrity evidence."}};
+  }
+  if (action == "polynomial-bound-derive" || action == "polynomial-reference-freeze" ||
+      action == "polynomial-reference-compare") {
+    const auto evidence_id = request.at("evidence_id").get<std::string>();
+    const auto record = store.get(evidence_id);
+    egcf::grounded_require(record.object_type == "egcf-evidence",
+                          "POLYNOMIAL_BOUND_NATIVE_PROPOSAL_REQUIRED");
+    const auto evidence = egcf::evidence_artifact_from_json(record.payload);
+    egcf::grounded_require(!evidence.simulated &&
+        evidence.category == "POLYNOMIAL_TRANSLATION_PROPOSAL" &&
+        evidence.sha256 == contracts::sha256_json(evidence.content) &&
+        evidence.content.at("kind") == "POLYNOMIAL_SOURCE_TRANSLATION_PROPOSAL_V1",
+        "POLYNOMIAL_BOUND_PROPOSAL_EVIDENCE_INVALID");
+    if (action == "polynomial-reference-compare") {
+      const auto design_id = request.at("design_id").get<std::string>();
+      const auto comparison_id = egcf::chebyshev_comparison_work(store, design_id, false, evidence_id,
+          request.value("protocol_freeze_id", std::string{}));
+      const auto result = egcf::evidence_artifact_from_json(store.get(comparison_id).payload);
+      return {{"evidence_id", comparison_id}, {"comparison", result.content.at("comparison")},
+              {"qualification_claim", "NONE"}, {"admission", false}};
+    }
+    if (action == "polynomial-reference-freeze") {
+      const auto design = egcf::build_chebyshev_reference_design(evidence_id, evidence.sha256,
+          evidence.content.at("proposal"), request.at("groups"));
+      egcf::EvidenceInput input;
+      input.subject_id = evidence_id;
+      input.category = "POLYNOMIAL_REFERENCE_DESIGN";
+      input.producer = egcf::internet_chebyshev_integer_reference_version;
+      input.method = "REFERENCE_OUTPUTS_FROZEN_BEFORE_CANDIDATE_EVALUATION";
+      input.source_snapshot_hash = evidence.source_snapshot_hash;
+      input.independence_group = "shared-native-chebyshev-reference-design-v1";
+      input.limitations = {"No independent-review verdict; shared author, compiler and host",
+          "Test partitions are not independent experiment groups",
+          "Does not register a qualification protocol or advance a candidate"};
+      input.content = design;
+      return {{"evidence_id", egcf::EvidenceManager(store).collect(std::move(input))},
+              {"design", design}, {"qualification_claim", "NONE"}, {"admission", false}};
+    }
+    return {{"proposal_evidence_id", evidence_id},
+            {"derivation", egcf::derive_internet_polynomial_bounds(
+                evidence.content.at("proposal").at("proposed_saa_ir"))},
+            {"qualification_claim", "NONE"}, {"admission", false}};
+  }
   if (action == "readiness") {
     const auto protocols = store.active_ids("internet-experiment-protocol");
     const auto policies = store.active_ids("internet-promotion-policy");
@@ -1578,6 +1850,12 @@ preflight_result(const Json &report, const Json &entry,
   }
   if (action == "protocol-register") {
     const auto protocol = internet_experiment_protocol(request);
+    if (protocol.protocol_version == egcf::internet_polynomial_protocol_version) {
+      const auto id = egcf::register_frozen_internet_polynomial_protocol(store, protocol,
+          protocol.source_provenance.at("grounded").at("freeze_evidence_id").get<std::string>());
+      return {{"protocol", store.get(id).payload}, {"protocol_id", id},
+              {"qualification_claim", "NONE"}};
+    }
     return {{"protocol", egcf::to_json(protocol)},
             {"protocol_id", internet.register_experiment_protocol(protocol)}};
   }
@@ -1608,7 +1886,13 @@ preflight_result(const Json &report, const Json &entry,
           internet_experiment_protocol(request)));
     }
     sources::CurlHttpFetchProvider fetch_provider;
-    egcf::InternetImprovementOrchestrator orchestrator(store, &fetch_provider);
+    egcf::InternetImprovementOrchestrator orchestrator(
+        store, &fetch_provider, nullptr, "deterministic-fallback", "none",
+        [execution_origin](std::string_view origin) {
+          return timestamp_after(origin, static_cast<int>(
+              std::chrono::duration_cast<std::chrono::seconds>(
+                  std::chrono::steady_clock::now() - execution_origin).count()));
+        });
     auto run_request = internet_improvement_run_request(request);
     if (action == "advance") {
       run_request.policy.maximum_actions = 1;

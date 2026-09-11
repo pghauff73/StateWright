@@ -76,6 +76,13 @@ void require_sha256(std::string_view value, std::string_view label) {
 
 [[nodiscard]] InternetExactScalarProgram
 supported_scalar_program(const Json &mapping) {
+  if (mapping.contains("metadata") && mapping.at("metadata").is_object() &&
+      mapping.at("metadata").contains("internet_exact_polynomial")) {
+    auto polynomial = internet_exact_polynomial_program(mapping);
+    const int steps = static_cast<int>(mapping.at("nodes").size());
+    return {.slope = 0, .bias = 0, .bounded_steps = steps,
+            .polynomial = std::move(polynomial)};
+  }
   const auto spec = saa::structure_from_mapping(mapping);
   saa::validate_structure(spec);
   if (spec.inputs.size() != 1U || spec.outputs.size() != 1U ||
@@ -167,7 +174,7 @@ supported_scalar_program(const Json &mapping) {
 
 [[nodiscard]] mpq_class execute(const InternetExactScalarProgram &program,
                                 const mpq_class &input) {
-  return program.slope * input + program.bias;
+  return internet_execute_exact_scalar(program, input);
 }
 
 [[nodiscard]] mpq_class
@@ -219,7 +226,8 @@ register_evidence(EgcfStore &store, std::string subject_id,
       .claim_ids = {},
       .requirement_ids = std::move(requirement_ids),
       .category = "controlled-experiment",
-      .producer = "deterministic-internet-saa-ir-adapter-v1",
+      .producer = content.value("execution_family", std::string{}) == internet_polynomial_version
+          ? std::string(internet_polynomial_version) : "deterministic-internet-saa-ir-adapter-v1",
       .method = "controlled-ab-experiment",
       .source_snapshot_hash = std::move(source_snapshot_hash),
       .target = "internal-saa-ir",
@@ -231,8 +239,9 @@ register_evidence(EgcfStore &store, std::string subject_id,
       .created_at = std::move(recorded_at),
       .sha256 = contracts::sha256_json(content),
       .success = true,
-      .limitations =
-          {"exact scalar IDENTITY, CONST and two-node affine subset only"},
+      .limitations = content.value("execution_family", std::string{}) == internet_polynomial_version
+          ? std::vector<std::string>{"Bounded exact rational polynomial trials; not a proof of approximation to another function"}
+          : std::vector<std::string>{"exact scalar IDENTITY, CONST and two-node affine subset only"},
       .independence_group = std::move(independence_group),
       .simulated = false,
       .path = {},
@@ -288,9 +297,19 @@ InternetExactScalarProgram internet_exact_scalar_program(const Json &mapping) {
   return supported_scalar_program(mapping);
 }
 
+mpq_class internet_execute_exact_scalar(const InternetExactScalarProgram &program,
+                                        const mpq_class &input) {
+  if (program.polynomial) return internet_execute_exact_polynomial(*program.polynomial, input);
+  return program.slope * input + program.bias;
+}
+
 std::string
 internet_exact_scalar_meaning(const InternetExactScalarProgram &program,
                               std::string input, std::string_view output) {
+  if (program.polynomial) {
+    return input + " [exact rational polynomial output " + std::string(output) +
+        "; contract=" + contracts::sha256_json(internet_polynomial_contract(*program.polynomial)) + "]";
+  }
   if (program.slope != 1 || program.bias != 0) {
     input += " [exact affine output " + std::string(output) + " = " +
              program.slope.get_str() + " * input + " + program.bias.get_str() +
@@ -410,12 +429,18 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
   if (grounding.enabled) request.independent_review = true;
   const auto candidate_ir =
       saa::canonicalize_mapping(canonical_candidate.proposed_saa_ir);
-  const auto baseline_ir = saa::canonicalize_mapping(
-      grounding.new_capability ? grounding.oracle_ir : request.baseline_saa_ir);
+  // A catalog-absence baseline has no executable implementation. The reviewed
+  // oracle checks expected values above; it must not be recast as a deployment.
+  const auto baseline_ir = [&] {
+    using Mapping = decltype(saa::canonicalize_mapping(request.baseline_saa_ir));
+    if (grounding.new_capability) return std::optional<Mapping>{};
+    return std::optional<Mapping>{saa::canonicalize_mapping(request.baseline_saa_ir)};
+  }();
   const auto candidate_program =
       supported_scalar_program(canonical_candidate.proposed_saa_ir);
-  const auto baseline_program =
-      supported_scalar_program(grounding.new_capability ? grounding.oracle_ir : request.baseline_saa_ir);
+  const auto baseline_program = grounding.new_capability
+      ? std::optional<InternetExactScalarProgram>{}
+      : std::optional<InternetExactScalarProgram>{supported_scalar_program(request.baseline_saa_ir)};
   const auto fragment_record =
       store_.get(canonical_candidate.source_fragment_id);
   if (fragment_record.object_type != "internet-source-fragment") {
@@ -424,12 +449,15 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
   verify_internet_candidate_translation(
       canonical_candidate,
       sources::internet_source_fragment_from_json(fragment_record.payload));
-  if (candidate_program.bounded_steps == 2) {
+  if (candidate_program.polynomial || candidate_program.bounded_steps == 2) {
     std::set<mpq_class> seen_inputs;
+    const std::size_t minimum_inputs = candidate_program.polynomial
+        ? std::max<std::size_t>(2, candidate_program.polynomial->coefficients.size()) : 2;
     for (const auto &group : request.trial_groups) {
-      if (group.inputs.size() < 2U) {
-        experiment_error("affine qualification requires two distinct trials "
-                         "per independent group");
+      if (group.inputs.size() < minimum_inputs) {
+        experiment_error(candidate_program.polynomial
+            ? "polynomial qualification requires degree+1 (at least two) distinct trials per group"
+            : "affine qualification requires two distinct trials per independent group");
       }
       for (const auto &input : group.inputs) {
         if (!seen_inputs.insert(input).second) {
@@ -468,7 +496,7 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
   qualification.dataset_snapshot_ids = request.dataset_snapshot_ids;
   qualification.context_signature = request.context_signature;
   qualification.canonical_candidate_ir = saa::to_json(candidate_ir);
-  qualification.canonical_baseline_ir = grounding.new_capability ? Json::object() : saa::to_json(baseline_ir);
+  qualification.canonical_baseline_ir = grounding.new_capability ? Json::object() : saa::to_json(*baseline_ir);
   qualification.identical_frozen_contexts = true;
 
   std::vector<std::string> requirements = benchmark_requirements();
@@ -532,6 +560,10 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
       {"bounded execution", "output within bounds"},
       {"frozen fixture execution"}, request.minimum_trials_per_group, true);
   qualification.experiment_design = saa::to_json(design);
+  if (candidate_program.polynomial) {
+    qualification.experiment_design["execution_contract"] =
+        internet_polynomial_contract(*candidate_program.polynomial);
+  }
   if (grounding.enabled) {
     qualification.experiment_design["grounded_protocol_id"] = request.protocol_id;
     qualification.experiment_design["protocol_binding_sha256"] = grounding.binding;
@@ -546,12 +578,12 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
   bool all_outputs_within_bounds = true;
   bool all_exact_outputs = true;
   for (const auto &group : request.trial_groups) {
-    const mpq_class baseline_error =
-        mean_absolute_error(baseline_program, group);
+    const mpq_class baseline_error = grounding.new_capability
+        ? mpq_class{0} : mean_absolute_error(*baseline_program, group);
     const mpq_class candidate_error =
         mean_absolute_error(candidate_program, group);
     const bool baseline_bounds = grounding.new_capability ||
-        outputs_within_bounds(baseline_program, group, request.minimum_output,
+        outputs_within_bounds(*baseline_program, group, request.minimum_output,
                               request.maximum_output);
     const bool candidate_bounds =
         outputs_within_bounds(candidate_program, group, request.minimum_output,
@@ -571,13 +603,17 @@ InternetExperimentResult InternetExperimentCoordinator::qualify(
     invariants_passed = invariants_passed && baseline_bounds &&
                         candidate_bounds && source_correct;
 
-    const Json common_content = {
+    Json common_content = {
         {"context_signature", request.context_signature},
         {"deterministic_seed", group.deterministic_seed},
         {"expected_outputs", rational_values(group.expected_outputs)},
         {"inputs", rational_values(group.inputs)}};
+    if (candidate_program.polynomial) {
+      common_content["execution_family"] = internet_polynomial_version;
+      common_content["execution_contract"] = internet_polynomial_contract(*candidate_program.polynomial);
+    }
     Json baseline_content = common_content;
-    baseline_content["ir_structural_hash"] = baseline_ir.structural_hash;
+    if (baseline_ir) baseline_content["ir_structural_hash"] = baseline_ir->structural_hash;
     baseline_content["mean_absolute_error"] = rational_text(baseline_error);
     baseline_content["output_within_bounds"] = baseline_bounds;
     baseline_content["variant"] = "baseline";

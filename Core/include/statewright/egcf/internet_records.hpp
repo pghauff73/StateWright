@@ -60,9 +60,38 @@ struct InternetAlgorithmCandidate final {
   std::vector<std::string> promotion_decision_ids;
   std::vector<std::string> demotion_decision_ids;
   std::vector<std::string> canonical_algorithm_ids;
+  std::vector<std::string> polynomial_form_ids = {};
+  std::vector<std::string> context_resolution_ids = {};
   std::vector<std::string> unresolved_assumptions;
   std::string status;
   std::string candidate_signature;
+
+  [[nodiscard]] std::string object_id() const;
+};
+
+struct InternetContextResolution final {
+  int schema_version = 1;
+  std::string candidate_id;
+  std::string operation;
+  std::string source_url;
+  std::string retrieval_receipt_id;
+  std::string snapshot_id;
+  std::string source_fragment_id;
+  std::string source_policy_assessment_id;
+  std::string source_hash;
+  contracts::Json source_bundle = contracts::Json::array();
+  std::vector<std::string> resolved_items;
+  std::vector<std::string> missing_items;
+  std::vector<std::string> conflicts;
+  contracts::Json dependency_relationships = contracts::Json::array();
+  std::size_t bundle_bytes = 0U;
+  std::size_t reasoning_limit_bytes = 0U;
+  std::string resolver_version;
+  std::string mathematical_context_review_status;
+  std::string domain_branch_error_bound_status;
+  std::string status;
+  std::string context_signature;
+  std::string resolution_signature;
 
   [[nodiscard]] std::string object_id() const;
 };
@@ -134,6 +163,10 @@ internet_knowledge_search_receipt_from_json(const contracts::Json &value);
 canonical_internet_algorithm_candidate(InternetAlgorithmCandidate candidate);
 [[nodiscard]] InternetAlgorithmCandidate
 internet_algorithm_candidate_from_json(const contracts::Json &value);
+[[nodiscard]] InternetContextResolution
+canonical_internet_context_resolution(InternetContextResolution resolution);
+[[nodiscard]] InternetContextResolution
+internet_context_resolution_from_json(const contracts::Json &value);
 [[nodiscard]] InternetReasoningAnalysis
 canonical_internet_reasoning_analysis(InternetReasoningAnalysis analysis);
 [[nodiscard]] InternetExperimentQualification
@@ -142,6 +175,7 @@ canonical_internet_experiment_qualification(
 [[nodiscard]] contracts::Json
 to_json(const InternetKnowledgeSearchReceipt &value);
 [[nodiscard]] contracts::Json to_json(const InternetAlgorithmCandidate &value);
+[[nodiscard]] contracts::Json to_json(const InternetContextResolution &value);
 [[nodiscard]] contracts::Json to_json(const InternetReasoningAnalysis &value);
 [[nodiscard]] contracts::Json
 to_json(const InternetExperimentQualification &value);

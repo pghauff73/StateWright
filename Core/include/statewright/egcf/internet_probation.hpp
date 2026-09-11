@@ -3,6 +3,7 @@
 #include "statewright/egcf/canonical_algorithm_store.hpp"
 #include "statewright/egcf/internet_improvement_store.hpp"
 #include "statewright/egcf/knowledge_governance_store.hpp"
+#include "statewright/egcf/internet_polynomial_canonical.hpp"
 
 #include <optional>
 #include <string>
@@ -21,6 +22,7 @@ struct InternetProbationAdmissionResult final {
   std::string admission_id;
   std::string updated_candidate_id;
   std::string result_signature;
+  std::optional<InternetPolynomialCanonicalAdmission> polynomial_admission = std::nullopt;
 };
 
 struct InternetProbationSelection final {
@@ -79,6 +81,10 @@ public:
   [[nodiscard]] InternetProbationObservationResult
   observe(const InternetAlgorithmCandidate &candidate,
           InternetProbationObservationRequest request);
+  // No fallback execution, measurement receipts or qualification claims.
+  [[nodiscard]] std::optional<mpq_class> execute_selected_polynomial(
+      const InternetAlgorithmCandidate &candidate, std::string query_signature,
+      const mpq_class &input, std::string current_timestamp);
 
 private:
   EgcfStore &store_;

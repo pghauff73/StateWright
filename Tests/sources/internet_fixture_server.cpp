@@ -99,6 +99,9 @@ int main(int argc, char **argv) {
     }
     constexpr std::string_view body =
         "Identity algorithm; inputs: x; outputs: y; procedure: return the input\n";
+    constexpr std::string_view polynomial_body =
+        "Quadratic algorithm; Inputs: x; Outputs: y; Domain: [-1,1]; "
+        "Arithmetic: exact rational; Units: dimensionless; Procedure: y = 2*x^2 - 1\n";
     while (stopping == 0) {
       const int descriptor =
           ::accept4(listener, nullptr, nullptr, SOCK_CLOEXEC);
@@ -119,7 +122,8 @@ int main(int argc, char **argv) {
         }
         request.append(buffer.data(), static_cast<std::size_t>(count));
       }
-      respond(descriptor, body);
+      respond(descriptor, request.starts_with("GET /polynomial HTTP/")
+                              ? polynomial_body : body);
       static_cast<void>(::close(descriptor));
     }
     if (listener_descriptor >= 0) {

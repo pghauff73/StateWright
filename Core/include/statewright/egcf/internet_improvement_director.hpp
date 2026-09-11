@@ -6,6 +6,7 @@
 #include "statewright/sources/scheduler.hpp"
 
 #include <string>
+#include <map>
 #include <string_view>
 #include <vector>
 
@@ -24,6 +25,7 @@ struct InternetDirectorPolicy final {
   bool require_reasoning = true;
   bool enable_acquisition = true;
   bool enable_candidate_advancement = true;
+  bool auto_create_probation_observation_input = true;
   std::string candidate_scope_id;
   std::string action_deadline;
   std::string promotion_policy_id;
@@ -32,6 +34,10 @@ struct InternetDirectorPolicy final {
   sources::InternetSchedulerLimits scheduler_limits;
   saa::ImprovementSchedulingPolicy improvement_policy;
   std::string policy_signature;
+  std::vector<std::string> polynomial_measurement_design_ids = {};
+  std::vector<std::string> polynomial_reference_design_ids = {};
+  std::string polynomial_proposal_scope_id;
+  std::map<std::string, std::string> polynomial_reference_protocol_freeze_ids;
 };
 
 struct InternetImprovementState final {

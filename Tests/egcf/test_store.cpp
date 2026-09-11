@@ -51,7 +51,7 @@ Json read_json_file(const std::filesystem::path &path) {
 
 TEST_CASE("EGCF schema registry covers every durable record type") {
   const statewright::egcf::RecordSchemaRegistry schemas(STATEWRIGHT_RESOURCE_ROOT);
-  REQUIRE(schemas.object_types().size() == 56U);
+  REQUIRE(schemas.object_types().size() == 59U);
   REQUIRE(schemas.schema_for("intent").at("additionalProperties") == false);
   REQUIRE_THROWS_AS(schemas.schema_for("Intent"), statewright::common::Error);
 

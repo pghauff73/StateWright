@@ -1,8 +1,11 @@
 #include "statewright/egcf/internet_improvement_director.hpp"
+#include "statewright/egcf/internet_protocol_family.hpp"
 
 #include "statewright/common/error.hpp"
 #include "statewright/contracts/hash.hpp"
+#include "statewright/contracts/typed_id.hpp"
 #include "statewright/egcf/internet_feed.hpp"
+#include "statewright/egcf/internet_reasoning.hpp"
 #include "statewright/egcf/internet_improvement_store.hpp"
 #include "statewright/egcf/internet_records.hpp"
 #include "statewright/egcf/knowledge_governance_store.hpp"
@@ -83,6 +86,10 @@ primitive_names(const InternetAlgorithmCandidate &candidate) {
 bool protocol_applies(const InternetExperimentProtocol &protocol,
                       const InternetAlgorithmCandidate &candidate,
                       std::string_view planned_at) {
+  if (!internet_protocol_family_matches(candidate.proposed_saa_ir,
+          candidate.object_id(), protocol.protocol_version, protocol.source_provenance)) {
+    return false;
+  }
   if (!contains(protocol.applicable_candidate_statuses, candidate.status) ||
       planned_at < protocol.valid_from ||
       (!protocol.valid_until.empty() && planned_at > protocol.valid_until)) {
@@ -275,6 +282,22 @@ canonical_internet_director_policy(InternetDirectorPolicy policy) {
     director_error("internet director policy limits are invalid");
   }
   canonical_strings(policy.enabled_action_kinds);
+  if (policy.polynomial_measurement_design_ids.size() > 32U) {
+    director_error("POLYNOMIAL_MEASUREMENT_QUEUE_BUDGET_EXCEEDED");
+  }
+  canonical_strings(policy.polynomial_measurement_design_ids);
+  if (policy.polynomial_reference_design_ids.size() > 32U) {
+    director_error("POLYNOMIAL_REFERENCE_QUEUE_BUDGET_EXCEEDED");
+  }
+  canonical_strings(policy.polynomial_reference_design_ids);
+  if (policy.polynomial_reference_protocol_freeze_ids.size() > 32U) {
+    director_error("POLYNOMIAL_REFERENCE_PROTOCOL_QUEUE_BUDGET_EXCEEDED");
+  }
+  for (const auto &[design_id, freeze_id] : policy.polynomial_reference_protocol_freeze_ids) {
+    if (!contains(policy.polynomial_reference_design_ids, design_id) || freeze_id.empty()) {
+      director_error("POLYNOMIAL_REFERENCE_PROTOCOL_QUEUE_BINDING_INVALID");
+    }
+  }
   for (const auto &kind : policy.enabled_action_kinds) {
     static_cast<void>(internet_directed_action_kind_from_name(kind));
   }
@@ -288,6 +311,14 @@ canonical_internet_director_policy(InternetDirectorPolicy policy) {
 
 InternetDirectorPolicy internet_director_policy_from_json(const Json &value) {
   InternetDirectorPolicy policy;
+  policy.polynomial_measurement_design_ids = value.value(
+      "polynomial_measurement_design_ids", std::vector<std::string>{});
+  policy.polynomial_reference_design_ids = value.value(
+      "polynomial_reference_design_ids", std::vector<std::string>{});
+  policy.polynomial_proposal_scope_id = value.value(
+      "polynomial_proposal_scope_id", std::string{});
+  policy.polynomial_reference_protocol_freeze_ids = value.value(
+      "polynomial_reference_protocol_freeze_ids", std::map<std::string, std::string>{});
   policy.maximum_actions =
       value.value("maximum_actions", policy.maximum_actions);
   policy.maximum_provider_calls =
@@ -306,6 +337,9 @@ InternetDirectorPolicy internet_director_policy_from_json(const Json &value) {
       value.value("enable_acquisition", policy.enable_acquisition);
   policy.enable_candidate_advancement = value.value(
       "enable_candidate_advancement", policy.enable_candidate_advancement);
+  policy.auto_create_probation_observation_input = value.value(
+      "auto_create_probation_observation_input",
+      policy.auto_create_probation_observation_input);
   policy.candidate_scope_id = value.value("candidate_scope_id", std::string{});
   policy.action_deadline = value.value("action_deadline", std::string{});
   policy.promotion_policy_id =
@@ -354,11 +388,13 @@ InternetImprovementStateReader::read(std::string planned_at,
   if (planned_at.empty() || cycle_key.empty()) {
     director_error("internet improvement state requires time and cycle key");
   }
-  store_.validate_projection();
+  // The store validates all authority on open. This query checks its existing
+  // projection stamp, avoiding a second full audit while holding the same lock.
+  auto internet_records = store_.list_internet_records();
   const auto checkpoint = store_.projection_checkpoint();
   InternetImprovementState state{
-      .event_head = store_.event_head().empty() ? std::string("GENESIS")
-                                                : store_.event_head(),
+      .event_head = checkpoint.event_head.empty() ? std::string("GENESIS")
+                                                 : checkpoint.event_head,
       .projection_digest = checkpoint.authoritative_digest,
       .planned_at = std::move(planned_at),
       .cycle_key = std::move(cycle_key),
@@ -368,12 +404,7 @@ InternetImprovementStateReader::read(std::string planned_at,
       .active_protocol_ids = {},
       .active_promotion_policy_ids = {},
       .improvement_opportunities = {}};
-  for (const auto &object : store_.list()) {
-    if (object.object_type.starts_with("internet-") ||
-        object.object_type == "brain-feed-batch") {
-      state.internet_records.push_back(object);
-    }
-  }
+  state.internet_records = std::move(internet_records);
   std::ranges::sort(state.internet_records, {}, &StoredObject::object_id);
   state.active_watch_ids = store_.active_ids("internet-watch");
   state.active_candidate_ids =
@@ -419,6 +450,7 @@ InternetImprovementPlan InternetImprovementDirector::plan(
   const auto candidates =
       parsed_records(state, "internet-algorithm-candidate",
                      internet_algorithm_candidate_from_json);
+  const auto source_fragments = records_of_type(state, "internet-source-fragment");
   const auto protocols = parsed_records(state, "internet-experiment-protocol",
                                         internet_experiment_protocol_from_json);
   const auto observation_inputs =
@@ -430,10 +462,11 @@ InternetImprovementPlan InternetImprovementDirector::plan(
       parsed_records(state, "internet-improvement-action-receipt",
                      internet_improvement_action_receipt_from_json);
 
-  std::set<std::string> completed_action_keys;
+  std::map<std::string, InternetImprovementActionReceipt> receipts_by_action;
   for (const auto &[id, receipt] : terminal_receipts) {
     static_cast<void>(id);
-    completed_action_keys.insert(receipt.action_key);
+    if (!receipts_by_action.emplace(receipt.action_key, receipt).second)
+      director_error("improvement action has conflicting terminal receipts");
   }
 
   std::map<std::string, int> opportunity_priority;
@@ -457,9 +490,31 @@ InternetImprovementPlan InternetImprovementDirector::plan(
 
   std::vector<InternetDirectedAction> proposed;
   const auto add_action = [&](InternetDirectedAction action) {
-    if (!completed_action_keys.contains(action.action_key)) {
-      proposed.push_back(std::move(action));
+    const auto base_key = action.action_key;
+    const auto base_parameters = action.parameters;
+    for (int attempt = 0;; ++attempt) {
+      const auto previous = receipts_by_action.find(action.action_key);
+      if (previous == receipts_by_action.end()) break;
+      const auto &receipt = previous->second;
+      if (receipt.terminal_state == "COMPLETED") return;
+      // Domain/policy failures are never turned into retries. A retry has a
+      // distinct identity and retains the immutable receipt that caused it.
+      const bool retryable = receipt.terminal_state == "STALE" ||
+          (receipt.terminal_state == "FAILED" &&
+           receipt.error_code == "filesystem_failure");
+      if (!retryable || attempt >= std::min(action.retry_ceiling, 3)) {
+        action.blocked_reasons.push_back(retryable ? "ACTION_RETRY_LIMIT_REACHED"
+                                                   : "ACTION_FAILED_NON_RETRYABLE");
+        action = canonical_internet_directed_action(std::move(action));
+        break;
+      }
+      action.parameters = base_parameters;
+      action.parameters["retry_base_action_key"] = base_key;
+      action.parameters["retry_attempt"] = attempt + 1;
+      action.parameters["retry_receipt_id"] = receipt.object_id();
+      action = canonical_internet_directed_action(std::move(action));
     }
+    proposed.push_back(std::move(action));
   };
 
   if (policy.enable_acquisition) {
@@ -619,8 +674,9 @@ InternetImprovementPlan InternetImprovementDirector::plan(
     }
 
     for (const auto &[extraction_id, extraction] : extractions) {
+      std::vector<std::string> completed_fragments;
       if (internet_feed_completion_outputs(extraction,
-                                           state.internet_records)) {
+                                           state.internet_records, &completed_fragments)) {
         continue;
       }
       std::vector<std::string> blocked;
@@ -636,8 +692,17 @@ InternetImprovementPlan InternetImprovementDirector::plan(
         blocked.push_back("MISSING_ADMISSIBLE_SOURCE_ASSESSMENT");
       }
       std::vector<std::string> inputs = {extraction_id};
+      inputs.insert(inputs.end(), completed_fragments.begin(), completed_fragments.end());
       if (assessment_id) {
         inputs.push_back(*assessment_id);
+      }
+      // Each durable chunk changes the action identity. A completed chunk
+      // must not suppress the next step of the same extraction.
+      for (const auto &record : state.internet_records) {
+        if (record.object_type == "brain-feed-batch" &&
+            record.payload.value("source_signature", std::string{}) ==
+                contracts::parse_typed_id(extraction.snapshot_id).digest)
+          inputs.push_back(record.object_id);
       }
       add_action(make_action(
           state, policy, InternetDirectedActionKind::feed_extraction,
@@ -649,6 +714,30 @@ InternetImprovementPlan InternetImprovementDirector::plan(
   }
 
   if (policy.enable_candidate_advancement) {
+    for (const auto &design_id : policy.polynomial_reference_design_ids) {
+      std::vector<std::string> blocked;
+      Json parameters = {{"proposal_scope_id", policy.polynomial_proposal_scope_id},
+          {"candidate_scope_id", policy.candidate_scope_id}};
+      const auto freeze = policy.polynomial_reference_protocol_freeze_ids.find(design_id);
+      if (freeze != policy.polynomial_reference_protocol_freeze_ids.end()) {
+        parameters["polynomial_protocol_freeze_id"] = freeze->second;
+      }
+      if (!policy.candidate_scope_id.empty()) {
+        blocked.push_back("POLYNOMIAL_REFERENCE_REQUIRES_PROPOSAL_NOT_CANDIDATE_SCOPE");
+      }
+      add_action(make_action(
+          state, policy, InternetDirectedActionKind::compare_polynomial_reference,
+          design_id, "egcf-evidence", {}, 0, {design_id}, {}, {},
+          std::move(parameters),
+          6500, 1000, 500, 0U, 4U, 2, std::move(blocked)));
+    }
+    for (const auto &design_id : policy.polynomial_measurement_design_ids) {
+      add_action(make_action(
+          state, policy, InternetDirectedActionKind::collect_polynomial_measurement,
+          design_id, "egcf-evidence", {}, 0, {design_id}, {}, {},
+          {{"candidate_scope_id", policy.candidate_scope_id}},
+          6500, 1000, 500, 0U, 4U, 2));
+    }
     for (const auto &candidate_id : state.active_candidate_ids) {
       if (!policy.candidate_scope_id.empty() &&
           policy.candidate_scope_id != candidate_id) {
@@ -680,11 +769,23 @@ InternetImprovementPlan InternetImprovementDirector::plan(
                                        candidate.status == "QUARANTINED";
       if (reasoning_candidate && policy.require_reasoning &&
           candidate.reasoning_analysis_ids.empty()) {
+        std::vector<std::string> blocked;
+        const auto source = source_fragments.find(candidate.source_fragment_id);
+        if (source == source_fragments.end()) {
+          blocked.push_back("REASONING_CANDIDATE_SOURCE_FRAGMENT_MISSING");
+        } else {
+          const auto fragment = sources::internet_source_fragment_from_json(source->second.payload);
+          if (fragment.snapshot_id != candidate.snapshot_id)
+            blocked.push_back("REASONING_SOURCE_SNAPSHOT_MISMATCH");
+          const auto capacity = internet_reasoning_context_blocker({fragment});
+          if (!capacity.empty()) blocked.push_back(capacity);
+        }
         add_action(make_action(
             state, policy, InternetDirectedActionKind::reason_candidate,
             candidate_id, "internet-algorithm-candidate", candidate.status, 0,
-            {candidate.source_fragment_id}, {}, {}, Json::object(),
-            7000 + opportunity_boost, 1500, 1000, 0U, 1U, 0));
+            {candidate.source_fragment_id}, {}, {},
+            {{"reasoning_version", internet_reasoning_coordinator_version}},
+            7000 + opportunity_boost, 1500, 1000, 0U, 1U, 2, std::move(blocked)));
         continue;
       }
       if (candidate.status == "VALIDATION_READY") {
@@ -697,8 +798,13 @@ InternetImprovementPlan InternetImprovementDirector::plan(
             break;
           }
         }
+        const bool is_fungrim_chebyshev_t2 =
+            candidate.applicability.contains("translation") &&
+            candidate.applicability.at("translation").contains("translator_version") &&
+            candidate.applicability.at("translation").at("translator_version") ==
+                "fungrim-chebyshev-quadratic-candidate-v1";
         std::vector<std::string> blocked;
-        if (!protocol_id) {
+        if (!protocol_id && !is_fungrim_chebyshev_t2) {
           blocked.push_back("MISSING_EXPERIMENT_PROTOCOL");
         }
         add_action(make_action(
@@ -803,6 +909,34 @@ InternetImprovementPlan InternetImprovementDirector::plan(
               1000, 500, 0U, 1U, 0));
           observation_added = true;
         }
+        if (!observation_added && policy.auto_create_probation_observation_input &&
+            candidate.status == "PROBATIONARY_CANONICAL") {
+          std::vector<std::string> blocked;
+          if (candidate.probation_admission_ids.empty()) {
+            blocked.push_back("MISSING_PROBATION_ADMISSION");
+          }
+          if (policy.probation_query_signature.empty()) {
+            blocked.push_back("WAITING_FOR_QUERY");
+          }
+          const auto admission_id =
+              candidate.probation_admission_ids.empty()
+                  ? std::string{}
+                  : candidate.probation_admission_ids.back();
+          std::vector<std::string> inputs = {candidate_id};
+          if (!admission_id.empty()) {
+            inputs.push_back(admission_id);
+          }
+          add_action(make_action(
+              state, policy,
+              InternetDirectedActionKind::create_probation_observation_input,
+              candidate_id, "internet-algorithm-candidate", candidate.status, 0,
+              std::move(inputs), {}, {},
+              {{"admission_id", admission_id},
+               {"query_signature", policy.probation_query_signature}},
+              6000 + opportunity_boost, 200, 200, 0U, 1U,
+              0, std::move(blocked)));
+          observation_added = true;
+        }
         if (!observation_added &&
             candidate.status == "PROBATIONARY_CANONICAL") {
           std::vector<std::string> blocked;
@@ -873,11 +1007,13 @@ InternetImprovementPlan InternetImprovementDirector::plan(
 }
 
 Json to_json(const InternetDirectorPolicy &value) {
-  return {
+  Json result = {
       {"action_deadline", value.action_deadline},
       {"candidate_scope_id", value.candidate_scope_id},
       {"enable_acquisition", value.enable_acquisition},
       {"enable_candidate_advancement", value.enable_candidate_advancement},
+      {"auto_create_probation_observation_input",
+       value.auto_create_probation_observation_input},
       {"enabled_action_kinds", value.enabled_action_kinds},
       {"improvement_policy",
        {{"max_selected", value.improvement_policy.max_selected},
@@ -905,6 +1041,19 @@ Json to_json(const InternetDirectorPolicy &value) {
          value.scheduler_limits.maximum_clock_jump_seconds},
         {"per_source_group_concurrency",
          value.scheduler_limits.per_source_group_concurrency}}}};
+  if (!value.polynomial_measurement_design_ids.empty()) {
+    result["polynomial_measurement_design_ids"] = value.polynomial_measurement_design_ids;
+  }
+  if (!value.polynomial_reference_design_ids.empty()) {
+    result["polynomial_reference_design_ids"] = value.polynomial_reference_design_ids;
+  }
+  if (!value.polynomial_proposal_scope_id.empty()) {
+    result["polynomial_proposal_scope_id"] = value.polynomial_proposal_scope_id;
+  }
+  if (!value.polynomial_reference_protocol_freeze_ids.empty()) {
+    result["polynomial_reference_protocol_freeze_ids"] = value.polynomial_reference_protocol_freeze_ids;
+  }
+  return result;
 }
 
 Json to_json(const InternetImprovementState &value) {

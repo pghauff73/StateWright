@@ -110,6 +110,10 @@ public:
   [[nodiscard]] EgcfRecord get(std::string_view object_id) const;
   [[nodiscard]] std::vector<StoredObject>
   list(std::optional<std::string> object_type = std::nullopt);
+  // Filter in the validated projection before materializing JSON payloads.
+  [[nodiscard]] std::vector<StoredObject> list_internet_records();
+  [[nodiscard]] std::vector<StoredObject>
+  pending_improvement_records(std::string_view worker_id);
   [[nodiscard]] std::vector<StoredObject>
   search_text(std::string_view query,
               std::optional<std::string> object_type = std::nullopt,

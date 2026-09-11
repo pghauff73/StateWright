@@ -1,5 +1,13 @@
 #pragma once
 
+#include "statewright/egcf/automated_css_experiment.hpp"
+#include "statewright/egcf/internet_polynomial_protocol_freeze.hpp"
+#include "statewright/egcf/internet_polynomial_measurement.hpp"
+#include "statewright/egcf/internet_polynomial_measurement_coverage.hpp"
+#include "statewright/egcf/internet_polynomial_catalog.hpp"
+#include "statewright/egcf/internet_reference_oracle.hpp"
+#include "statewright/egcf/internet_chebyshev_comparison_store.hpp"
+
 #include "statewright/egcf/internet_experiment.hpp"
 #include "statewright/egcf/internet_feed.hpp"
 #include "statewright/egcf/canonical_algorithm_store.hpp"
@@ -76,6 +84,31 @@ inline std::string experiment_review_binding(const InternetExperimentProtocol &p
 inline contracts::Json exact_capability_search(EgcfStore &store,
                                                const InternetAlgorithmCandidate &candidate) {
   const auto program = internet_exact_scalar_program(candidate.proposed_saa_ir);
+  if (program.polynomial) {
+    auto result = search_internet_polynomial_catalog(store, candidate);
+    auto coefficients = program.polynomial->coefficients;
+    while (coefficients.size() > 1U && coefficients.back() == 0) coefficients.pop_back();
+    if (coefficients.size() <= 2U) {
+      InternetExactScalarProgram legacy;
+      legacy.slope = coefficients.size() == 2U ? coefficients.at(1) : mpq_class(0);
+      legacy.bias = coefficients.at(0);
+      legacy.bounded_steps = 2;
+      CanonicalAlgorithmQuery legacy_query;
+      legacy_query.semantic_meanings = {internet_exact_scalar_meaning(legacy,
+          candidate.semantic_inputs.at(0), candidate.semantic_outputs.at(0))};
+      legacy_query.input_count = 1;
+      legacy_query.output_count = 1;
+      legacy_query.limit = 20;
+      CanonicalAlgorithmStore legacy_store(store);
+      const auto legacy_result = to_json(legacy_store.search(std::move(legacy_query)));
+      result["legacy_scalar_search"] = legacy_result;
+      for (const auto &match : legacy_result.at("candidates")) result["candidates"].push_back(match);
+      result["status"] = result.at("candidates").empty() ? "NO_MATCH" : "RECORDED_CAPABILITY_MATCH";
+      result.erase("result_signature");
+      result["result_signature"] = contracts::sha256_json(result);
+    }
+    return result;
+  }
   CanonicalAlgorithmQuery query;
   query.source_structural_hash = saa::canonicalize_mapping(candidate.proposed_saa_ir).structural_hash;
   query.semantic_meanings = {internet_exact_scalar_meaning(program,
@@ -89,7 +122,8 @@ inline contracts::Json exact_capability_search(EgcfStore &store,
 
 inline std::string register_grounded_evidence(EgcfStore &store,
     const InternetAlgorithmCandidate &candidate, contracts::Json content,
-    std::string method, std::string producer, std::string group, std::string at) {
+    std::string method, std::string producer, std::string group, std::string at,
+    bool success = true) {
   EvidenceArtifact evidence;
   evidence.subject_id = candidate.object_id();
   evidence.category = "controlled-experiment";
@@ -101,7 +135,7 @@ inline std::string register_grounded_evidence(EgcfStore &store,
   evidence.algorithm_id = candidate.object_id();
   evidence.created_at = std::move(at);
   evidence.sha256 = contracts::sha256_json(content);
-  evidence.success = true;
+  evidence.success = success;
   evidence.independence_group = std::move(group);
   evidence.content = std::move(content);
   return store.register_record({.object_type = "egcf-evidence", .payload = to_json(evidence)},
@@ -119,17 +153,27 @@ struct GroundedExperiment {
 inline GroundedExperiment validate_grounded_experiment(EgcfStore &store,
     const InternetAlgorithmCandidate &candidate, const InternetExperimentRequest &request) {
   GroundedExperiment result;
+  const auto candidate_program = internet_exact_scalar_program(candidate.proposed_saa_ir);
+  const bool polynomial = candidate_program.polynomial.has_value();
+  grounded_require(!polynomial || !candidate_program.polynomial->direct_power_sum,
+                   "POLYNOMIAL_CANDIDATE_REQUIRES_HORNER_EXECUTION");
   const auto trust_path = store.workspace_root() / ".ourd-agent/egcf/experiment-trust.json";
   const bool require_grounding = std::filesystem::is_regular_file(trust_path) &&
       experiment_trust_policy(store).value("require_grounded_protocols", true);
   if (request.protocol_id.empty()) {
+    grounded_require(!polynomial, "POLYNOMIAL_VERSIONED_GROUNDED_PROTOCOL_REQUIRED");
     grounded_require(!require_grounding, "GROUNDED_PROTOCOL_V2_REQUIRED");
     return result;
   }
   const auto record = store.get(request.protocol_id);
   grounded_require(record.object_type == "internet-experiment-protocol", "EXPERIMENT_PROTOCOL_TYPE_INVALID");
   const auto protocol = internet_experiment_protocol_from_json(record.payload);
-  if (protocol.protocol_version != grounded_experiment_version) {
+  grounded_require(!polynomial || protocol.protocol_version == internet_polynomial_protocol_version,
+                   "POLYNOMIAL_PROTOCOL_FAMILY_MISMATCH");
+  grounded_require(polynomial || protocol.protocol_version != internet_polynomial_protocol_version,
+                   "POLYNOMIAL_PROTOCOL_REQUIRES_POLYNOMIAL_CANDIDATE");
+  if (protocol.protocol_version != grounded_experiment_version &&
+      protocol.protocol_version != internet_polynomial_protocol_version) {
     grounded_require(!require_grounding, "LEGACY_PROTOCOL_NOT_AUTHORIZED_FOR_THIS_STORE");
     return result;
   }
@@ -138,6 +182,18 @@ inline GroundedExperiment validate_grounded_experiment(EgcfStore &store,
   grounded_require(request.recorded_at >= protocol.valid_from &&
       (protocol.valid_until.empty() || request.recorded_at <= protocol.valid_until), "EXPERIMENT_PROTOCOL_EXPIRED_OR_NOT_YET_VALID");
   const auto &ground = protocol.source_provenance.at("grounded");
+  if (polynomial) {
+    const auto freeze_id = ground.value("freeze_evidence_id", std::string{});
+    grounded_require(!freeze_id.empty(), "POLYNOMIAL_PROTOCOL_FREEZE_REQUIRED");
+    verify_internet_polynomial_protocol_freeze(store, protocol, freeze_id);
+    grounded_require(store.get(freeze_id).payload.at("created_at").get<std::string>() <= request.recorded_at,
+                     "POLYNOMIAL_PROTOCOL_FREEZE_IS_IN_THE_FUTURE");
+    grounded_require(ground.value("review_mode", std::string{}) != "AUTOMATED_CSS_V1",
+                     "CSS_REVIEW_NOT_VALID_FOR_POLYNOMIALS");
+    grounded_require(ground.at("execution_contract_sha256") ==
+        contracts::sha256_json(internet_polynomial_contract(*candidate_program.polynomial)),
+        "POLYNOMIAL_EXECUTION_CONTRACT_MISMATCH");
+  }
   const auto mode = ground.at("adoption_mode").get<std::string>();
   grounded_require(mode == "REPLACEMENT" || mode == "NEW_CAPABILITY", "EXPERIMENT_ADOPTION_MODE_INVALID");
   const auto trust = experiment_trust_policy(store);
@@ -185,10 +241,14 @@ inline GroundedExperiment validate_grounded_experiment(EgcfStore &store,
   }
   grounded_require(request.context_signature == internet_experiment_context_signature(protocol.dataset_snapshot_ids, frozen),
                    "EXPERIMENT_FROZEN_DATASET_MISMATCH");
-  const auto oracle = internet_exact_scalar_program(result.oracle_ir);
+  const auto oracle = internet_reference_oracle_program(result.oracle_ir);
+  verify_internet_reference_oracle_scope(oracle, candidate_program);
+  if (oracle.chebyshev_degree) {
+    verify_chebyshev_qualification_comparison(store, ground, request.recorded_at);
+  }
   for (const auto &group : request.trial_groups)
     for (std::size_t i = 0; i < group.inputs.size(); ++i)
-      grounded_require(oracle.slope * group.inputs[i] + oracle.bias == group.expected_outputs.at(i), "EXPECTED_OUTPUT_NOT_BOUND_TO_REVIEWED_ORACLE");
+      grounded_require(internet_execute_reference_oracle(oracle, group.inputs[i]) == group.expected_outputs.at(i), "EXPECTED_OUTPUT_NOT_BOUND_TO_REVIEWED_ORACLE");
   const auto baseline = store.get(protocol.baseline_ref);
   if (result.new_capability) {
     grounded_require(protocol.baseline_saa_ir.empty() && baseline.object_type == "egcf-evidence" &&
@@ -207,11 +267,34 @@ inline GroundedExperiment validate_grounded_experiment(EgcfStore &store,
         "REPLACEMENT_REQUIRES_CAPTURED_DEPLOYED_BASELINE");
   }
   const auto measurements = store.get(ground.at("measurement_evidence_id").get<std::string>());
+  if (polynomial) {
+    const auto coverage = internet_polynomial_measurement_coverage(measurements.payload.at("content"));
+    grounded_require(coverage.at("status") == "REQUIRES_EVIDENCE_VALIDATION",
+        "POLYNOMIAL_MEASUREMENT_FIELDS_INCOMPLETE: " + coverage.dump());
+    const auto freeze_id = ground.at("freeze_evidence_id").get<std::string>();
+    grounded_require(measurements.payload.at("content").value("polynomial_protocol_freeze_id", std::string{}) == freeze_id &&
+        measurements.payload.at("created_at").get<std::string>() >= store.get(freeze_id).payload.at("created_at").get<std::string>() &&
+        measurements.payload.at("created_at").get<std::string>() <= request.recorded_at,
+        "POLYNOMIAL_MEASUREMENTS_REQUIRE_MATCHING_PRIOR_PROTOCOL_FREEZE");
+    const auto raw_ids = measurements.payload.at("content").value(
+        "polynomial_raw_measurement_ids", std::vector<std::string>{});
+    grounded_require(!raw_ids.empty() && raw_ids.size() <= 32U &&
+        std::set<std::string>(raw_ids.begin(), raw_ids.end()).size() == raw_ids.size(),
+        "POLYNOMIAL_RAW_MEASUREMENT_CHAIN_REQUIRED");
+    for (const auto &raw_id : raw_ids) {
+      verify_internet_polynomial_measurement_chain(store, raw_id, freeze_id,
+          measurements.payload.at("created_at").get<std::string>());
+    }
+  }
   grounded_require(measurements.object_type == "egcf-evidence" && !measurements.payload.at("simulated").get<bool>() &&
       measurements.payload.at("content").at("benchmark_track_scores") == scores &&
       measurements.payload.at("content").at("integrity_snapshots") == integrity,
       "MEASURED_BENCHMARK_AND_INTEGRITY_EVIDENCE_REQUIRED");
   result.review_ids = ground.at("review_evidence_ids").get<std::vector<std::string>>();
+  if (ground.value("review_mode", std::string{}) == "AUTOMATED_CSS_V1") {
+    validate_automated_css_review(store, protocol, result.binding, trust);
+    return result;
+  }
   std::set<std::string> reviewers, groups, methods, reviewer_keys;
   for (const auto &id : result.review_ids) {
     const auto evidence = store.get(id);

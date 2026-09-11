@@ -1,4 +1,7 @@
 #include "statewright/egcf/internet_feed.hpp"
+#include "statewright/egcf/internet_polynomial.hpp"
+#include "statewright/egcf/grounded_experiment.hpp"
+#include "statewright/egcf/internet_polynomial_protocol.hpp"
 
 #include "statewright/contracts/hash.hpp"
 #include "statewright/core/file_io.hpp"
@@ -155,6 +158,90 @@ TEST_CASE("internet feed stages supported SAA IR without canonical admission") {
           first.candidates.front().object_id());
   REQUIRE(repeated.result_signature == first.result_signature);
   REQUIRE(internet.list("internet-retrieval-receipt").size() == 1U);
+  std::filesystem::remove_all(root);
+}
+
+TEST_CASE("internet feed extracts and stages a source-bound polynomial without qualification") {
+  using namespace statewright;
+  const auto root = temporary_root();
+  {
+    egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+    const auto source = fixture(store,
+        "Quadratic algorithm; Inputs: x; Outputs: y; Domain: [-1,1]; "
+        "Arithmetic: exact rational; Units: dimensionless; Procedure: y = 2*x^2 - 1\n");
+    egcf::InternetFeedCoordinator coordinator(store);
+    const auto first = coordinator.process(source.assessment, source.extraction, "test-only-polynomial");
+    REQUIRE(first.complete);
+    REQUIRE(first.candidates.size() == 1);
+    REQUIRE(first.brain_feed_batch.canonical_algorithm_admissions == 0);
+    const auto &candidate = first.candidates.front();
+    REQUIRE(candidate.status == "VALIDATION_READY");
+    REQUIRE(candidate.proposed_saa_ir == egcf::internet_exact_polynomial_ir({-1, 0, 2}));
+    REQUIRE(candidate.applicability.at("translation").at("translator_version") == "exact-polynomial-source-v1");
+    const auto fragment = sources::internet_source_fragment_from_json(
+        store.get(candidate.source_fragment_id).payload);
+    REQUIRE_NOTHROW(egcf::verify_internet_candidate_translation(candidate, fragment));
+    egcf::InternetExperimentRequest request;
+    std::string reason;
+    try {
+      static_cast<void>(egcf::validate_grounded_experiment(store, candidate, request));
+    } catch (const std::exception &error) {
+      reason = error.what();
+    }
+    REQUIRE(reason.find("POLYNOMIAL_VERSIONED_GROUNDED_PROTOCOL_REQUIRED") != std::string::npos);
+    egcf::EvidenceInput baseline_input;
+    baseline_input.subject_id = candidate.object_id();
+    baseline_input.category = "catalogue-presence";
+    baseline_input.producer = "deterministic-test-catalogue-query";
+    baseline_input.method = "NATIVE_CATALOGUE_LOOKUP";
+    baseline_input.source_snapshot_hash = store.get(candidate.snapshot_id).payload.at("body_sha256");
+    baseline_input.success = true;
+    baseline_input.content = {{"kind", "CANONICAL_CATALOG_UNSUPPORTED_BASELINE_V1"},
+        {"candidate_id", candidate.object_id()}, {"workspace", root.string()},
+        {"search", egcf::exact_capability_search(store, candidate)}};
+    const auto baseline_id = egcf::EvidenceManager(store).collect(std::move(baseline_input));
+    egcf::InternetExperimentProtocol protocol;
+    protocol.protocol_version = egcf::internet_polynomial_protocol_version;
+    protocol.applicable_candidate_statuses = {"VALIDATION_READY"};
+    protocol.baseline_ref = baseline_id;
+    protocol.dataset_snapshot_ids = {candidate.snapshot_id};
+    protocol.valid_from = "2026-09-02T00:00:00Z";
+    protocol.trial_groups = contracts::Json::array({
+        {{"group_id", "test-only-anchors"}, {"inputs", {"-1", "0"}}, {"expected_outputs", {"1", "-1"}}},
+        {{"group_id", "test-only-fractions"}, {"inputs", {"-1/2", "1/2"}}, {"expected_outputs", {"-1/2", "-1/2"}}}});
+    protocol.source_provenance = {{"grounded", {
+        {"adoption_mode", "NEW_CAPABILITY"}, {"author_identity", "synthetic-fixture-author"},
+        {"candidate_id", candidate.object_id()},
+        {"candidate_ir_sha256", contracts::sha256_json(candidate.proposed_saa_ir)},
+        {"source_fragment_id", candidate.source_fragment_id},
+        {"source_body_sha256", store.get(candidate.snapshot_id).payload.at("body_sha256")},
+        {"execution_contract_sha256", contracts::sha256_json(egcf::internet_polynomial_contract(
+            egcf::internet_exact_polynomial_program(candidate.proposed_saa_ir)))},
+        {"claim", {{"inputs", candidate.semantic_inputs}, {"outputs", candidate.semantic_outputs},
+            {"units", candidate.units}, {"domain", "exact rationals in [-1,1]"},
+            {"exclusions", {"outside declared domain", "resource-limited evaluations"}}}},
+        {"reference_oracle_ir", egcf::internet_exact_polynomial_reference_ir({-1, 0, 2})},
+        {"baseline_rationale", "CANONICAL_CATALOG_LOOKUP_ONLY"},
+        {"measurement_evidence_id", ""}, {"review_evidence_ids", contracts::Json::array()}}}};
+    const auto frozen_id = egcf::freeze_internet_polynomial_protocol(store, protocol);
+    const auto protocol_id = egcf::register_frozen_internet_polynomial_protocol(store, protocol, frozen_id);
+    REQUIRE(store.get(protocol_id).object_type == "internet-experiment-protocol");
+    REQUIRE(store.get(protocol_id).payload.at("protocol_version") == egcf::internet_polynomial_protocol_version);
+    REQUIRE(store.get(protocol_id).payload.at("source_provenance").at("grounded").at("review_evidence_ids").empty());
+    const auto registration_head = store.event_head();
+    REQUIRE(egcf::register_frozen_internet_polynomial_protocol(store, protocol, frozen_id) == protocol_id);
+    REQUIRE(store.event_head() == registration_head);
+    auto altered_protocol = protocol;
+    altered_protocol.minimum_output = "-5";
+    REQUIRE_THROWS(egcf::register_frozen_internet_polynomial_protocol(store, altered_protocol, frozen_id));
+    const auto repeated = coordinator.process(source.assessment, source.extraction, "test-only-polynomial");
+    REQUIRE(repeated.candidates.size() == 1);
+    REQUIRE(repeated.candidates.front().object_id() == candidate.object_id());
+    REQUIRE(repeated.result_signature == first.result_signature);
+    REQUIRE(store.list("internet-experiment-qualification").empty());
+    REQUIRE(store.list("internet-polynomial-canonical").empty());
+    REQUIRE(store.list("internet-probation-admission").empty());
+  }
   std::filesystem::remove_all(root);
 }
 
@@ -368,6 +455,50 @@ TEST_CASE("internet feed never detaches an affine procedure from section conditi
     REQUIRE(result.candidates.size() == 1U);
     REQUIRE(result.candidates.front().status == "QUARANTINED");
     REQUIRE(result.candidates.front().proposed_saa_ir.empty());
+  }
+  std::filesystem::remove_all(root);
+}
+
+TEST_CASE("internet feed resumes bounded fragments across store reopen") {
+  using namespace statewright;
+  const auto root = temporary_root();
+  FeedFixture source;
+  std::string first_candidate;
+  {
+    egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+    source = fixture(store,
+        "First algorithm; inputs: x; outputs: y; procedure: return x\n"
+        "Second algorithm; inputs: a; outputs: b; procedure: return a\n");
+    REQUIRE(source.extraction.fragments.size() == 2U);
+    const auto first = egcf::InternetFeedCoordinator(store).process(
+        source.assessment, source.extraction, "bounded", true, 1U);
+    REQUIRE_FALSE(first.complete);
+    REQUIRE(first.processed_fragments == 1U);
+    REQUIRE(first.total_fragments == 2U);
+    REQUIRE(first.candidates.size() == 1U);
+    first_candidate = first.candidates.front().object_id();
+    REQUIRE(first.candidates.front().status == "VALIDATION_READY");
+    REQUIRE_FALSE(egcf::internet_feed_completion_outputs(source.extraction.receipt, store.list()));
+  }
+  {
+    egcf::EgcfStore store(root, STATEWRIGHT_RESOURCE_ROOT);
+    egcf::InternetFeedCoordinator coordinator(store);
+    const auto second = coordinator.process(source.assessment, source.extraction,
+                                            "bounded", true, 1U);
+    REQUIRE(second.complete);
+    REQUIRE(second.processed_fragments == 1U);
+    REQUIRE(second.candidates.size() == 1U);
+    REQUIRE(second.candidates.front().status == "VALIDATION_READY");
+    REQUIRE(second.candidates.front().object_id() != first_candidate);
+    REQUIRE(egcf::internet_feed_completion_outputs(source.extraction.receipt, store.list()));
+    const auto head = store.event_head();
+    const auto repeated = coordinator.process(source.assessment, source.extraction,
+                                              "bounded", true, 1U);
+    REQUIRE(repeated.complete);
+    REQUIRE(repeated.processed_fragments == 0U);
+    REQUIRE(store.event_head() == head);
+    REQUIRE(store.list("internet-algorithm-candidate").size() == 2U);
+    store.validate_projection();
   }
   std::filesystem::remove_all(root);
 }

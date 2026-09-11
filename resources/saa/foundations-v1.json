@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "catalogue_version": "saa-foundations-v1",
+  "scope": "Offline dependency planning; not an admission or source-policy registry",
+  "inventory": {
+    "basis": "Code inspection; not an execution test",
+    "structural_registry": "Core/src/saa/algorithm_ir.cpp",
+    "qualification_adapter": "Core/src/egcf/internet_experiment.cpp",
+    "qualification_shapes": ["one scalar input -> IDENTITY", "one scalar input -> CONST", "one scalar input -> MULTIPLY by nonzero rational -> ADD rational"],
+    "restrictions": ["At most two nodes", "No states, parameters or control edges", "Exact rational evaluation", "Structural primitive membership does not establish executable qualification support"]
+  },
+  "sources": {
+    "numeric_semantics": {"url": "https://tc39.es/ecma262/2024/multipage/ecmascript-data-types-and-values.html#sec-numeric-types", "role": "numeric contracts", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null},
+    "math_semantics": {"url": "https://tc39.es/ecma262/2024/multipage/numbers-and-dates.html#sec-math-object", "role": "piecewise operation contracts", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null},
+    "arithmetic_error": {"url": "https://dlmf.nist.gov/3.1", "role": "arithmetic and error measures", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null},
+    "mpfr_algorithms": {"url": "https://www.mpfr.org/algorithms.pdf", "role": "algorithms and method-specific proofs; not independent evidence by itself", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null},
+    "polynomials": {"url": "https://dlmf.nist.gov/3.3", "role": "polynomial/interpolation context; exact relevant sections still require extraction", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null},
+    "gcd": {"url": "https://gmplib.org/manual/Binary-GCD", "role": "integer algorithm", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null},
+    "combinations": {"url": "https://gmplib.org/manual/Binomial-Coefficients-Algorithm", "role": "integer algorithm", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null},
+    "sqrt": {"url": "https://netlib.org/fdlibm/e_sqrt.c", "role": "floating-point implementation, not an exact-rational implementation", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null},
+    "elementary": {"url": "https://dlmf.nist.gov/4.2", "role": "definitions and branches", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null},
+    "airy_impl": {"url": "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/include/boost/math/special_functions/airy.hpp", "role": "same-revision implementation dependency evidence", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null},
+    "airy_bessel": {"url": "https://dlmf.nist.gov/9.6", "role": "Airy/Bessel mathematical relations", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null},
+    "bessel_impl": {"url": "https://raw.githubusercontent.com/boostorg/math/5e088ffe2ed0e237b9069e3a7352865283d8f196/include/boost/math/special_functions/bessel.hpp", "role": "dependency locator; implementation closure not inspected", "policy_status": "NOT_ASSESSED", "snapshot_sha256": null}
+  },
+  "operations": {
+    "add": {"kind": "existing_structural_primitive", "primitive": "ADD", "dependencies": [], "sources": ["numeric_semantics", "arithmetic_error"], "blockers": ["GENERAL_BINARY_QUALIFICATION_ADAPTER_MISSING"]},
+    "multiply": {"kind": "existing_structural_primitive", "primitive": "MULTIPLY", "dependencies": [], "sources": ["numeric_semantics", "arithmetic_error"], "blockers": ["GENERAL_BINARY_QUALIFICATION_ADAPTER_MISSING"]},
+    "divide": {"kind": "existing_structural_primitive", "primitive": "DIVIDE", "dependencies": [], "sources": ["numeric_semantics"], "blockers": ["DIVISION_QUALIFICATION_ADAPTER_MISSING"]},
+    "subtract": {"kind": "existing_structural_primitive", "primitive": "SUBTRACT", "dependencies": [], "sources": ["numeric_semantics"], "blockers": ["GENERAL_BINARY_QUALIFICATION_ADAPTER_MISSING"]},
+    "compare": {"kind": "existing_structural_primitive", "primitive": "COMPARE_LT", "dependencies": [], "sources": ["numeric_semantics"], "blockers": ["PREDICATE_QUALIFICATION_ADAPTER_MISSING"]},
+    "abs": {"kind": "existing_structural_primitive", "primitive": "ABS", "dependencies": [], "sources": ["math_semantics"], "blockers": ["PIECEWISE_QUALIFICATION_ADAPTER_MISSING"]},
+    "min": {"kind": "existing_structural_primitive", "primitive": "MIN", "dependencies": [], "sources": ["math_semantics"], "blockers": ["PIECEWISE_QUALIFICATION_ADAPTER_MISSING"]},
+    "max": {"kind": "existing_structural_primitive", "primitive": "MAX", "dependencies": [], "sources": ["math_semantics"], "blockers": ["PIECEWISE_QUALIFICATION_ADAPTER_MISSING"]},
+    "constant": {"kind": "existing_qualification_shape", "dependencies": [], "sources": ["numeric_semantics"], "blockers": [], "scope": "Exact rational CONST shape only; not arbitrary irrational constants"},
+    "polynomial_exact_rational": {"kind": "proposed_foundation", "dependencies": ["add", "multiply", "constant"], "sources": ["polynomials", "arithmetic_error"], "contract": "resources/saa/contracts/polynomial-exact-rational-v1.json", "blockers": ["GENERAL_DAG_QUALIFICATION_ADAPTER_MISSING", "SOURCE_BOUND_TRANSLATOR_MISSING", "INDEPENDENT_EXPERIMENT_EVIDENCE_MISSING"], "scope": "Proposed fixed-degree, fixed-coefficient Horner family; not an Airy approximation"},
+    "integer_power": {"kind": "proposed_foundation", "dependencies": ["multiply", "constant"], "sources": ["mpfr_algorithms"], "blockers": ["BOUNDED_POWER_TRANSLATOR_MISSING", "GENERAL_DAG_QUALIFICATION_ADAPTER_MISSING"]},
+    "rounding_scaling": {"kind": "unresolved_dependency", "dependencies": [], "sources": ["arithmetic_error", "mpfr_algorithms"], "blockers": ["NUMERIC_REPRESENTATION_CONTRACT_MISSING"]},
+    "sqrt": {"kind": "unresolved_dependency", "dependencies": ["rounding_scaling"], "sources": ["sqrt", "mpfr_algorithms"], "blockers": ["METHOD_AND_DEPENDENCY_CLOSURE_NOT_REVIEWED", "NUMERICAL_QUALIFICATION_ADAPTER_MISSING"]},
+    "real_power": {"kind": "unresolved_dependency", "dependencies": ["rounding_scaling"], "sources": ["elementary", "mpfr_algorithms"], "blockers": ["METHOD_AND_DEPENDENCY_CLOSURE_NOT_REVIEWED"]},
+    "pi": {"kind": "unresolved_dependency", "dependencies": ["rounding_scaling"], "sources": ["mpfr_algorithms"], "blockers": ["CONSTANT_PRECISION_AND_ERROR_CONTRACT_MISSING"]},
+    "gamma": {"kind": "unresolved_dependency", "dependencies": ["rounding_scaling"], "sources": ["mpfr_algorithms"], "blockers": ["METHOD_AND_DEPENDENCY_CLOSURE_NOT_REVIEWED"]},
+    "bessel_j": {"kind": "unresolved_dependency", "dependencies": ["rounding_scaling"], "sources": ["bessel_impl"], "blockers": ["BESSEL_J_IMPLEMENTATION_CLOSURE_MISSING", "DOMAIN_BRANCH_AND_ERROR_BOUNDS_NOT_QUALIFIED"]},
+    "bessel_k": {"kind": "unresolved_dependency", "dependencies": ["rounding_scaling"], "sources": ["bessel_impl"], "blockers": ["BESSEL_K_IMPLEMENTATION_CLOSURE_MISSING", "DOMAIN_BRANCH_AND_ERROR_BOUNDS_NOT_QUALIFIED"]},
+    "airy_ai": {"kind": "higher_level_candidate", "dependencies": ["compare", "abs", "add", "multiply", "divide", "sqrt", "constant", "pi", "real_power", "gamma", "bessel_j", "bessel_k"], "sources": ["airy_impl", "airy_bessel"], "blockers": ["AIRY_CONTEXT_REVIEW_INCOMPLETE", "COMPOSED_ERROR_CONTRACT_MISSING"], "scope": "Observed top-level real Ai implementation dependencies, not a complete transitive closure", "branches": {"negative": ["bessel_j", "sqrt"], "nonnegative_near_zero": ["gamma", "real_power"], "positive_outside_near_zero": ["bessel_k", "sqrt", "pi"]}},
+    "gcd": {"kind": "optional_foundation", "dependencies": ["abs", "subtract", "min"], "sources": ["gcd"], "blockers": ["INTEGER_SHIFT_AND_TERMINATION_CONTRACT_MISSING"], "scope": "Not established as a direct dependency of selected Airy implementation"},
+    "binomial": {"kind": "optional_foundation", "dependencies": ["multiply", "divide"], "sources": ["combinations"], "blockers": ["EXACT_INTEGER_DIVISION_AND_DOMAIN_CONTRACT_MISSING"]}
+  }
+}

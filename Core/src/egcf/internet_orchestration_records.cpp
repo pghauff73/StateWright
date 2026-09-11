@@ -94,10 +94,16 @@ internet_directed_action_kind_name(InternetDirectedActionKind kind) {
     return "SELECT_PROBATION_CANDIDATE";
   case InternetDirectedActionKind::consume_probation_observation:
     return "CONSUME_PROBATION_OBSERVATION";
+  case InternetDirectedActionKind::create_probation_observation_input:
+    return "CREATE_PROBATION_OBSERVATION_INPUT";
   case InternetDirectedActionKind::revalidate_source:
     return "REVALIDATE_SOURCE";
   case InternetDirectedActionKind::verify_integrity:
     return "VERIFY_INTEGRITY";
+  case InternetDirectedActionKind::collect_polynomial_measurement:
+    return "COLLECT_POLYNOMIAL_MEASUREMENT";
+  case InternetDirectedActionKind::compare_polynomial_reference:
+    return "COMPARE_POLYNOMIAL_REFERENCE";
   }
   orchestration_record_error("unknown internet directed action kind");
 }
@@ -121,8 +127,12 @@ internet_directed_action_kind_from_name(std::string_view name) {
        InternetDirectedActionKind::select_probation_candidate},
       {"CONSUME_PROBATION_OBSERVATION",
        InternetDirectedActionKind::consume_probation_observation},
+      {"CREATE_PROBATION_OBSERVATION_INPUT",
+       InternetDirectedActionKind::create_probation_observation_input},
       {"REVALIDATE_SOURCE", InternetDirectedActionKind::revalidate_source},
-      {"VERIFY_INTEGRITY", InternetDirectedActionKind::verify_integrity}};
+      {"VERIFY_INTEGRITY", InternetDirectedActionKind::verify_integrity},
+      {"COLLECT_POLYNOMIAL_MEASUREMENT", InternetDirectedActionKind::collect_polynomial_measurement},
+      {"COMPARE_POLYNOMIAL_REFERENCE", InternetDirectedActionKind::compare_polynomial_reference}};
   for (const auto &[candidate, kind] : values) {
     if (candidate == name) {
       return kind;

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "contract_id": "polynomial-exact-rational-v1",
+  "status": "PROPOSED_NOT_SOURCE_REVIEWED_OR_QUALIFIED",
+  "operation": "p(x) = sum(c[i] * x^i, i=0..degree)",
+  "input": {"name": "x", "type": "exact_rational", "minimum": "-1", "maximum": "1", "maximum_numerator_bits": 256, "maximum_denominator_bits": 256},
+  "coefficients": {"binding": "fixed and hashed per candidate, not runtime parameters", "order": "ascending power", "minimum_count": 1, "maximum_count": 17, "maximum_numerator_bits": 256, "maximum_denominator_bits": 256},
+  "output": {"type": "exact_rational", "canonicalization": "positive denominator and coprime numerator/denominator"},
+  "method": {"name": "Horner", "initial": "r = c[degree]", "step": "r = r*x + c[i] for i descending from degree-1 to 0", "maximum_arithmetic_steps": 32, "degree_zero": "Return c[0]", "evaluation_order": "Fixed descending coefficient order; no floating-point reassociation"},
+  "resource_policy": {"maximum_intermediate_integer_bits": 16384, "on_limit": "RESOURCE_LIMIT, never an approximate or truncated result"},
+  "invalid_inputs": ["zero denominator", "nonfinite or floating-point input", "input outside interval", "degree outside 0..16", "coefficient or input bit limit exceeded"],
+  "error_contract": {"arithmetic_error": "Zero only for successful exact-rational evaluation", "approximation_error": "Not specified: evaluating a polynomial does not certify approximation to another function"},
+  "baseline": {"method": "Direct power-sum evaluation", "numeric_semantics": "Same exact rational arithmetic, coefficients and resource policy", "claim": "No speedup claimed before measurements"},
+  "experiment_plan": {"status": "NOT_REGISTERED", "groups": ["published or independently derived reference examples", "frozen held-out rational inputs including interval endpoints", "degree/resource/invalid-input boundaries"], "oracle": "Separate direct-form implementation; document shared arithmetic backend and do not claim full implementation independence", "negative_controls": ["wrong coefficient order", "omitted constant term", "wrong multiplication operand"], "required_evidence": ["source review", "independence review", "raw correctness results", "real repeated benchmark measurements", "machine review", "real integrity observations required by policy"]},
+  "blocked_by": ["SOURCE_BOUND_TRANSLATOR_MISSING", "GENERAL_DAG_QUALIFICATION_ADAPTER_MISSING", "NATIVE_EXPERIMENT_PROTOCOL_NOT_REGISTERED"],
+  "scope_note": "Design contract only. No translator, runtime domain enforcement, experiments or admission are implemented by this file."
+}
